@@ -832,139 +832,368 @@ if (showAdmin && isAdmin) {
   return (
     <AdminDashboard
       onBack={() => setShowAdmin(false)}
-    />
-  );
-}
+/* =========================================================
+   ESPACES ED B-CENTER : ADMIN, FORMATRICE ET CLIENT
+========================================================= */
 
-return (
-  <main className="home-screen">
-    <header className="home-header">
-      <Brand />
+function HomeScreen({ session, onLogout }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-      <button
-        type="button"
-        className="menu-toggle"
-        onClick={() =>
-          setMenuOpen((current) => !current)
+  const [profile, setProfile] = useState(null);
+  const [userRole, setUserRole] = useState('client');
+
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState('');
+
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [showTrainer, setShowTrainer] = useState(false);
+
+  const isAdmin = userRole === 'admin';
+  const isTrainer = userRole === 'formatrice';
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      setProfileLoading(true);
+      setProfileError('');
+
+      try {
+        const userId = session?.user?.id;
+
+        if (!userId) {
+          throw new Error('Session utilisateur introuvable.');
         }
-        aria-label={
-          menuOpen
-            ? 'Fermer le menu'
-            : 'Ouvrir le menu'
+
+        const [
+          { data: profileData, error: profileErr },
+          { data: roleData, error: roleErr },
+        ] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, full_name, email, created_at')
+            .eq('id', userId)
+            .maybeSingle(),
+
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId)
+            .maybeSingle(),
+        ]);
+
+        if (profileErr) throw profileErr;
+        if (roleErr) throw roleErr;
+
+        const databaseRole = roleData?.role;
+        const allowedRoles = ['admin', 'formatrice', 'client'];
+
+        if (!allowedRoles.includes(databaseRole)) {
+          throw new Error(
+            'Rôle absent ou non reconnu pour ce compte.'
+          );
         }
-        aria-expanded={menuOpen}
-      >
-        {menuOpen ? (
-          <X size={22} />
-        ) : (
-          <Menu size={22} />
-        )}
-      </button>
 
-      {menuOpen && (
-        <nav className="home-menu">
-          <a
-            href="#services"
-            onClick={() => setMenuOpen(false)}
-          >
-            Nos services
-          </a>
+        if (active) {
+          setProfile(profileData);
+          setUserRole(databaseRole);
+        }
+      } catch (err) {
+        console.error(
+          'Erreur de chargement du profil :',
+          err
+        );
 
-          <a
-            href="mailto:edbusinesscenter@gmail.com"
-            onClick={() => setMenuOpen(false)}
-          >
-            Nous contacter
-          </a>
+        if (active) {
+          setProfileError(
+            'Impossible de charger ton profil. Vérifie les autorisations Supabase.'
+          );
 
-          <a
-            href="https://bassomodominique9-debug.github.io/Suivi/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Suivi et évaluation des apprenants
-          </a>
+          setUserRole('client');
+        }
+      } finally {
+        if (active) {
+          setProfileLoading(false);
+        }
+      }
+    }
 
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => {
-                setShowAdmin(true);
-                setMenuOpen(false);
-              }}
-            >
-              <ShieldCheck size={17} />
-              Administration
-            </button>
-          )}
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
+
+  async function handleLogoutClick() {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+
+    try {
+      await onLogout();
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
+  const userName =
+    profile?.full_name ||
+    session?.user?.user_metadata?.full_name ||
+    session?.user?.email?.split('@')[0] ||
+    'Membre';
+
+  // Accès à l'administration uniquement pour le rôle admin.
+  if (showAdmin && isAdmin && !profileLoading) {
+    return (
+      <AdminDashboard
+        onBack={() => setShowAdmin(false)}
+      />
+    );
+  }
+
+  // Espace formatrice distinct de l'administration.
+  if (showTrainer && isTrainer && !profileLoading) {
+    return (
+      <main className="home-screen">
+        <header className="home-header">
+          <Brand />
 
           <button
             type="button"
-            onClick={handleLogoutClick}
-            disabled={loggingOut}
+            className="primary-button"
+            onClick={() => setShowTrainer(false)}
           >
-            <LogOut size={17} />
-            {loggingOut
-              ? 'Déconnexion…'
-              : 'Se déconnecter'}
+            <ArrowLeft size={18} />
+            Retour à mon espace
           </button>
-        </nav>
-      )}
-    </header>
+        </header>
 
-    <section className="home-welcome">
-      <div className="eyebrow">
-        TON ESPACE PERSONNEL
-      </div>
+        <section className="home-welcome">
+          <div className="eyebrow">
+            ESPACE PÉDAGOGIQUE
+          </div>
 
-      <h1>
-        👋 Hello, ravi de te revoir,
-        <br />
-        <span>{userName} !</span>
-      </h1>
+          <h1>
+            🎓 Bienvenue, <span>{userName} !</span>
+          </h1>
 
-      <p>
-        Continue à apprendre, à pratiquer et à entreprendre
-        avec ED B-CENTER.
-      </p>
+          <p>
+            Bienvenue dans ton espace formatrice ED B-CENTER.
+            Tu pourras y retrouver les formations qui te seront
+            attribuées et suivre tes apprenants.
+          </p>
+        </section>
 
-      {profileLoading && (
-        <p role="status">
-          Chargement de ton profil…
-        </p>
-      )}
+        <section className="services-section">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">
+                TON ACTIVITÉ PÉDAGOGIQUE
+              </div>
 
-      {profileError && (
-        <p role="status">{profileError}</p>
-      )}
+              <h2>Mon espace formatrice</h2>
 
-      {isAdmin && (
+              <p>
+                Un espace dédié à tes activités pédagogiques.
+              </p>
+            </div>
+          </div>
+
+          <div className="service-carousel">
+            <article className="service-card is-active">
+              <div className="service-icon">
+                <GraduationCap size={28} />
+              </div>
+
+              <h3>Mes formations</h3>
+
+              <p>
+                Espace prévu pour les formations qui te seront
+                attribuées.
+              </p>
+            </article>
+
+            <article className="service-card is-active">
+              <div className="service-icon">
+                <BookOpen size={28} />
+              </div>
+
+              <h3>Mes apprenants</h3>
+
+              <p>
+                Espace prévu pour le suivi des apprenants
+                de tes formations.
+              </p>
+            </article>
+          </div>
+
+          <p role="status">
+            Les données réelles des formations et des apprenants
+            seront ajoutées lors de la prochaine étape.
+          </p>
+        </section>
+      </main>
+    );
+  }
+  return (
+    <main className="home-screen">
+      <header className="home-header">
+        <Brand />
+
         <button
           type="button"
-          className="primary-button"
-          onClick={() => setShowAdmin(true)}
+          className="menu-toggle"
+          onClick={() => setMenuOpen((current) => !current)}
+          aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+          aria-expanded={menuOpen}
         >
-          <ShieldCheck size={19} />
-          Ouvrir le tableau de bord
-          <ArrowRight size={19} />
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
-      )}
-    </section>
 
-    <ServiceCarousel />
+        {menuOpen && (
+          <nav className="home-menu">
+            <a
+              href="#services"
+              onClick={() => setMenuOpen(false)}
+            >
+              Nos services
+            </a>
 
-    <footer className="home-footer">
-      <Brand />
+            <a
+              href="mailto:edbusinesscenter@gmail.com"
+              onClick={() => setMenuOpen(false)}
+            >
+              Nous contacter
+            </a>
 
-      <div className="home-footer-links">
-        <a href="mailto:edbusinesscenter@gmail.com">
-          E-mail
-        </a>
-      </div>
-    </footer>
-  </main>
+            <a
+              href="https://bassomodominique9-debug.github.io/Suivi/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Suivi et évaluation des apprenants
+            </a>
+
+            {!profileLoading && isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAdmin(true);
+                  setMenuOpen(false);
+                }}
+              >
+                <ShieldCheck size={17} />
+                Administration
+              </button>
+            )}
+
+            {!profileLoading && isTrainer && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTrainer(true);
+                  setMenuOpen(false);
+                }}
+              >
+                <GraduationCap size={17} />
+                Espace formatrice
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleLogoutClick}
+              disabled={loggingOut}
+            >
+              <LogOut size={17} />
+
+              {loggingOut
+                ? 'Déconnexion…'
+                : 'Se déconnecter'}
+            </button>
+          </nav>
+        )}
+      </header>
+
+      <section className="home-welcome">
+        <div className="eyebrow">
+          TON ESPACE PERSONNEL
+        </div>
+
+        <h1>
+          👋 Hello, ravi de te revoir,
+          <br />
+          <span>{userName} !</span>
+        </h1>
+
+        <p>
+          Continue à apprendre, à pratiquer et à entreprendre
+          avec ED B-CENTER.
+        </p>
+
+        {profileLoading && (
+          <p role="status">
+            Chargement de ton profil et de tes autorisations…
+          </p>
+        )}
+
+        {profileError && (
+          <p role="alert">
+            {profileError}
+          </p>
+        )}
+
+        {!profileLoading && !profileError && (
+          <p>
+            {isAdmin
+              ? '👑 Tu es connecté en tant qu’administrateur.'
+              : isTrainer
+                ? '🎓 Tu es connecté en tant que formatrice.'
+                : '👤 Tu es connecté en tant que membre.'}
+          </p>
+        )}
+
+        {!profileLoading && isAdmin && (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setShowAdmin(true)}
+          >
+            <ShieldCheck size={19} />
+            Ouvrir le tableau de bord administrateur
+            <ArrowRight size={19} />
+          </button>
+        )}
+
+        {!profileLoading && isTrainer && (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setShowTrainer(true)}
+          >
+            <GraduationCap size={19} />
+            Ouvrir mon espace formatrice
+            <ArrowRight size={19} />
+          </button>
+        )}
+      </section>
+
+      <ServiceCarousel />
+
+      <footer className="home-footer">
+        <Brand />
+
+        <div className="home-footer-links">
+          <a href="mailto:edbusinesscenter@gmail.com">
+            E-mail
+          </a>
+        </div>
+      </footer>
+    </main>
   );
-}
+  }
 
 /* =========================================================
    APPLICATION PRINCIPALE
