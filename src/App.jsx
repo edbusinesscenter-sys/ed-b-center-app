@@ -897,7 +897,8 @@ function HomeScreen({ session, onLogout }) {
 
         if (active) {
           setProfile(profileData);
-          setUserRole(databaseRole);
+          setUserRole(databaseRole);console.log('Rôle récupéré depuis Supabase :', databaseRole);
+console.log('Utilisateur connecté :', userId);
         }
       } catch (err) {
         console.error(
