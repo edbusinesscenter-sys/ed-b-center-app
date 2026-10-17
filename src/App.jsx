@@ -938,7 +938,12 @@ console.log('Utilisateur connecté :', userId);
       setLoggingOut(false);
     }
   }
-
+  const userRole = profile?.role || 'client';
+  const isAdmin = userRole === 'admin';
+  const isTrainer = userRole === 'formatrice';
+  const showAdmin = isAdmin;
+  const showTrainer = isTrainer;
+    
   const userName =
     profile?.full_name ||
     session?.user?.user_metadata?.full_name ||
