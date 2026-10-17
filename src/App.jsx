@@ -16,16 +16,14 @@ import {
   UserRound,
   CheckCircle2,
   LogOut,
-  Headphones,
   Sparkles,
   Menu,
   X,
   ShieldCheck,
-  Users,
-  MessageCircle,
 } from 'lucide-react';
 
 import { supabase } from './supabaseClient';
+import AdminDashboard from './AdminDashboard';
 
 /* =========================================================
    SERVICES ED B-CENTER
@@ -109,7 +107,9 @@ function Brand({ light = false }) {
   );
 }
 
-function LoadingScreen({ message = 'Préparation de ton espace…' }) {
+function LoadingScreen({
+  message = 'Préparation de ton espace…',
+}) {
   return (
     <main className="loading-screen" aria-live="polite">
       <div className="loading-mark">
@@ -196,10 +196,8 @@ function AuthScreen({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -241,7 +239,6 @@ function AuthScreen({
             options: {
               data: {
                 full_name: fullName.trim(),
-                role: 'client',
               },
             },
           });
@@ -283,27 +280,32 @@ function AuthScreen({
       const errorMessage = String(err?.message || '');
 
       if (
-        errorMessage.toLowerCase().includes('invalid login credentials')
+        errorMessage
+          .toLowerCase()
+          .includes('invalid login credentials')
       ) {
         setError(
           'Adresse e-mail ou mot de passe incorrect.'
         );
       } else if (
-        errorMessage.toLowerCase().includes('user already registered')
+        errorMessage
+          .toLowerCase()
+          .includes('user already registered')
       ) {
         setError(
           'Cette adresse possède déjà un compte. Essaie de te connecter.'
         );
       } else if (
-        errorMessage.toLowerCase().includes('email not confirmed')
+        errorMessage
+          .toLowerCase()
+          .includes('email not confirmed')
       ) {
         setError(
           'Confirme ton adresse e-mail avant de te connecter.'
         );
       } else {
         setError(
-          errorMessage ||
-            'Une erreur est survenue. Réessaie.'
+          errorMessage || 'Une erreur est survenue. Réessaie.'
         );
       }
     } finally {
@@ -437,14 +439,6 @@ function AuthScreen({
                 placeholder="nom@exemple.com"
                 required
               />
-
-              {email.includes('@') &&
-                email.includes('.') && (
-                  <CheckCircle2
-                    className="valid-icon"
-                    size={18}
-                  />
-                )}
             </div>
           </label>
 
@@ -562,7 +556,6 @@ function AuthScreen({
 function ServiceCarousel() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
-
   const startX = useRef(0);
 
   useEffect(() => {
@@ -738,226 +731,238 @@ function ServiceCarousel() {
 }
 
 /* =========================================================
-   ACCUEIL MEMBRE
+   ACCUEIL MEMBRE ET CHARGEMENT DU PROFIL
 ========================================================= */
 
 function HomeScreen({ session, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState('');
+  const [showAdmin, setShowAdmin] = useState(false);
 
-  const userName =
-    session?.user?.user_metadata?.full_name ||
-    session?.user?.email?.split('@')[0] ||
-    'Membre';
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      setProfileLoading(true);
+      setProfileError('');
+
+      try {
+        const userId = session?.user?.id;
+
+        if (!userId) {
+          throw new Error(
+            'Session utilisateur introuvable.'
+          );
+        }
+
+        const [
+          { data: profileData, error: profileErr },
+          { data: roleData, error: roleErr },
+        ] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, full_name, email, created_at')
+            .eq('id', userId)
+            .maybeSingle(),
+
+          supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId)
+            .maybeSingle(),
+        ]);
+
+        if (profileErr) throw profileErr;
+        if (roleErr) throw roleErr;
+
+        if (active) {
+          setProfile(profileData);
+          setIsAdmin(roleData?.role === 'admin');
+        }
+      } catch (err) {
+        console.error(
+          'Erreur de chargement du profil :',
+          err
+        );
+
+        if (active) {
+          setProfileError(
+            'Impossible de charger toutes les informations du profil.'
+          );
+
+          setIsAdmin(false);
+        }
+      } finally {
+        if (active) {
+          setProfileLoading(false);
+        }
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
 
   async function handleLogoutClick() {
-    if (loggingOut) return;
+  if (loggingOut) return;
 
-    setLoggingOut(true);
+  setLoggingOut(true);
 
-    try {
-      await onLogout();
-    } finally {
-      setLoggingOut(false);
-    }
+  try {
+    await onLogout();
+  } finally {
+    setLoggingOut(false);
   }
+}
 
+const userName =
+  profile?.full_name ||
+  session?.user?.user_metadata?.full_name ||
+  session?.user?.email?.split('@')[0] ||
+  'Membre';
+
+if (showAdmin && isAdmin) {
   return (
-    <main className="home-screen">
-      <header className="home-header">
-        <Brand />
+    <AdminDashboard
+      onBack={() => setShowAdmin(false)}
+    />
+  );
+}
 
-        <button
-          type="button"
-          className="menu-toggle"
-          onClick={() =>
-            setMenuOpen((current) => !current)
-          }
-          aria-label={
-            menuOpen
-              ? 'Fermer le menu'
-              : 'Ouvrir le menu'
-          }
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? (
-            <X size={22} />
-          ) : (
-            <Menu size={22} />
-          )}
-        </button>
+return (
+  <main className="home-screen">
+    <header className="home-header">
+      <Brand />
 
-        {menuOpen && (
-          <nav className="home-menu">
-            <a
-              href="#services"
-              onClick={() => setMenuOpen(false)}
-            >
-              Nos services
-            </a>
-
-            <a
-              href="mailto:edbusinesscenter@gmail.com"
-              onClick={() => setMenuOpen(false)}
-            >
-              Nous contacter
-            </a>
-
-            <a
-              href="https://bassomodominique9-debug.github.io/Suivi/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Suivi et évaluation des apprenants
-            </a>
-
-            <button
-              type="button"
-              onClick={handleLogoutClick}
-              disabled={loggingOut}
-            >
-              {loggingOut ? (
-                <LoaderCircle
-                  size={17}
-                  className="spin"
-                />
-              ) : (
-                <LogOut size={17} />
-              )}
-
-              {loggingOut
-                ? 'Déconnexion…'
-                : 'Déconnexion'}
-            </button>
-          </nav>
+      <button
+        type="button"
+        className="menu-toggle"
+        onClick={() =>
+          setMenuOpen((current) => !current)
+        }
+        aria-label={
+          menuOpen
+            ? 'Fermer le menu'
+            : 'Ouvrir le menu'
+        }
+        aria-expanded={menuOpen}
+      >
+        {menuOpen ? (
+          <X size={22} />
+        ) : (
+          <Menu size={22} />
         )}
-      </header>
+      </button>
 
-      <section className="home-hero">
-        <div className="hero-copy">
-          <div className="eyebrow">
-            TON ESPACE ED B-CENTER
-          </div>
-
-          <h1>
-            Bonjour,
-            <br />
-            <span>{userName}</span> 👋
-          </h1>
-
-          <p>
-            Apprends de nouvelles compétences et transforme
-            tes idées en projets concrets.
-          </p>
-
+      {menuOpen && (
+        <nav className="home-menu">
           <a
-            className="primary-button hero-cta"
             href="#services"
+            onClick={() => setMenuOpen(false)}
           >
-            Explorer les services
-            <ArrowRight size={18} />
+            Nos services
           </a>
-        </div>
 
-        <div className="home-hero-art">
-          <div className="hero-art-circle">
-            <BookOpen size={78} />
-          </div>
-
-          <div className="hero-art-badge">
-            <Sparkles size={20} />
-            Ton potentiel, en action
-          </div>
-        </div>
-      </section>
-
-      <section className="member-benefits">
-        <article className="card">
-          <div className="service-icon">
-            <GraduationCap size={25} />
-          </div>
-
-          <h3>Apprendre</h3>
-
-          <p>
-            Découvre des compétences utiles et des formations
-            pratiques.
-          </p>
-        </article>
-
-        <article className="card">
-          <div className="service-icon">
-            <Users size={25} />
-          </div>
-
-          <h3>Progresser</h3>
-
-          <p>
-            Prépare-toi à développer tes projets et ton
-            expérience.
-          </p>
-        </article>
-
-        <article className="card">
-          <div className="service-icon">
-            <ShieldCheck size={25} />
-          </div>
-
-          <h3>Être accompagné</h3>
-
-          <p>
-            Retrouve les services et les contacts utiles
-            pour avancer.
-          </p>
-        </article>
-      </section>
-
-      <ServiceCarousel />
-
-      <section className="help-banner">
-        <div className="help-icon">
-          <Headphones size={26} />
-        </div>
-
-        <div>
-          <h3>Besoin d’aide ?</h3>
-
-          <p>
-            Notre équipe est là pour t’accompagner.
-          </p>
-        </div>
-
-        <a
-          href="mailto:edbusinesscenter@gmail.com?subject=ED%20HELP"
-          aria-label="Contacter ED HELP"
-        >
-          <MessageCircle size={21} />
-        </a>
-      </section>
-
-      <footer className="home-footer">
-        <Brand />
-
-        <p>
-          © {new Date().getFullYear()} ED B-CENTER ·
-          Apprendre, pratiquer, entreprendre.
-        </p>
-
-        <div className="footer-links">
           <a
-            href="https://wa.me/237690418794"
+            href="mailto:edbusinesscenter@gmail.com"
+            onClick={() => setMenuOpen(false)}
+          >
+            Nous contacter
+          </a>
+
+          <a
+            href="https://bassomodominique9-debug.github.io/Suivi/"
             target="_blank"
             rel="noreferrer"
           >
-            WhatsApp
+            Suivi et évaluation des apprenants
           </a>
 
-          <a href="mailto:edbusinesscenter@gmail.com">
-            E-mail
-          </a>
-        </div>
-      </footer>
-    </main>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowAdmin(true);
+                setMenuOpen(false);
+              }}
+            >
+              <ShieldCheck size={17} />
+              Administration
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleLogoutClick}
+            disabled={loggingOut}
+          >
+            <LogOut size={17} />
+            {loggingOut
+              ? 'Déconnexion…'
+              : 'Se déconnecter'}
+          </button>
+        </nav>
+      )}
+    </header>
+
+    <section className="home-welcome">
+      <div className="eyebrow">
+        TON ESPACE PERSONNEL
+      </div>
+
+      <h1>
+        👋 Hello, ravi de te revoir,
+        <br />
+        <span>{userName} !</span>
+      </h1>
+
+      <p>
+        Continue à apprendre, à pratiquer et à entreprendre
+        avec ED B-CENTER.
+      </p>
+
+      {profileLoading && (
+        <p role="status">
+          Chargement de ton profil…
+        </p>
+      )}
+
+      {profileError && (
+        <p role="status">{profileError}</p>
+      )}
+
+      {isAdmin && (
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => setShowAdmin(true)}
+        >
+          <ShieldCheck size={19} />
+          Ouvrir le tableau de bord
+          <ArrowRight size={19} />
+        </button>
+      )}
+    </section>
+
+    <ServiceCarousel />
+
+    <footer className="home-footer">
+      <Brand />
+
+      <div className="home-footer-links">
+        <a href="mailto:edbusinesscenter@gmail.com">
+          E-mail
+        </a>
+      </div>
+    </footer>
+  </main>
   );
 }
 
@@ -968,7 +973,6 @@ function HomeScreen({ session, onLogout }) {
 export default function App() {
   const [screen, setScreen] = useState('splash');
   const [authMode, setAuthMode] = useState('login');
-
   const [session, setSession] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionError, setSessionError] = useState('');
@@ -982,16 +986,11 @@ export default function App() {
           await supabase.auth.getSession();
 
         if (!mounted) return;
+        if (error) throw error;
 
-        if (error) {
-          throw error;
-        }
-
-        const currentSession =
-          data?.session ?? null;
+        const currentSession = data?.session ?? null;
 
         setSession(currentSession);
-
         setScreen(
           currentSession ? 'home' : 'splash'
         );
@@ -1042,8 +1041,7 @@ export default function App() {
   }, []);
 
   async function handleLogout() {
-    const { error } =
-      await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
 
     if (error) {
       window.alert(
@@ -1059,9 +1057,7 @@ export default function App() {
   }
 
   if (checkingSession) {
-    return (
-      <LoadingScreen />
-    );
+    return <LoadingScreen />;
   }
 
   if (session) {
