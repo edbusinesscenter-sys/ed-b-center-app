@@ -731,121 +731,16 @@ function ServiceCarousel() {
 }
 
 /* =========================================================
-   ACCUEIL MEMBRE ET CHARGEMENT DU PROFIL
+   ACCUEIL MEMBRE ET ESPACES ED B-CENTER
 ========================================================= */
 
 function HomeScreen({ session, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileError, setProfileError] = useState('');
-  const [showAdmin, setShowAdmin] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadProfile() {
-      setProfileLoading(true);
-      setProfileError('');
-
-      try {
-        const userId = session?.user?.id;
-
-        if (!userId) {
-          throw new Error(
-            'Session utilisateur introuvable.'
-          );
-        }
-
-        const [
-          { data: profileData, error: profileErr },
-          { data: roleData, error: roleErr },
-        ] = await Promise.all([
-          supabase
-            .from('profiles')
-            .select('id, full_name, email, created_at')
-            .eq('id', userId)
-            .maybeSingle(),
-
-          supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userId)
-            .maybeSingle(),
-        ]);
-
-        if (profileErr) throw profileErr;
-        if (roleErr) throw roleErr;
-
-        if (active) {
-          setProfile(profileData);
-          setIsAdmin(roleData?.role === 'admin');
-        }
-      } catch (err) {
-        console.error(
-          'Erreur de chargement du profil :',
-          err
-        );
-
-        if (active) {
-          setProfileError(
-            'Impossible de charger toutes les informations du profil.'
-          );
-
-          setIsAdmin(false);
-        }
-      } finally {
-        if (active) {
-          setProfileLoading(false);
-        }
-      }
-    }
-
-    loadProfile();
-
-    return () => {
-      active = false;
-    };
-  }, [session?.user?.id]);
-
-  async function handleLogoutClick() {
-  if (loggingOut) return;
-
-  setLoggingOut(true);
-
-  try {
-    await onLogout();
-  } finally {
-    setLoggingOut(false);
-  }
-}
-
-const userName =
-  profile?.full_name ||
-  session?.user?.user_metadata?.full_name ||
-  session?.user?.email?.split('@')[0] ||
-  'Membre';
-
-if (showAdmin && isAdmin) {
-  return (
-    <AdminDashboard
-      onBack={() => setShowAdmin(false)}
-/* =========================================================
-   ESPACES ED B-CENTER : ADMIN, FORMATRICE ET CLIENT
-========================================================= */
-
-function HomeScreen({ session, onLogout }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-
   const [profile, setProfile] = useState(null);
   const [userRole, setUserRole] = useState('client');
-
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState('');
-
   const [showAdmin, setShowAdmin] = useState(false);
   const [showTrainer, setShowTrainer] = useState(false);
 
@@ -897,20 +792,20 @@ function HomeScreen({ session, onLogout }) {
 
         if (active) {
           setProfile(profileData);
-          setUserRole(databaseRole);console.log('Rôle récupéré depuis Supabase :', databaseRole);
-console.log('Utilisateur connecté :', userId);
+          setUserRole(databaseRole);
+
+          console.log('Compte connecté :', session.user.email);
+          console.log('Rôle Supabase :', databaseRole);
+          console.log('Identifiant utilisateur :', userId);
         }
       } catch (err) {
-        console.error(
-          'Erreur de chargement du profil :',
-          err
-        );
+        console.error('Erreur de chargement du profil :', err);
 
         if (active) {
           setProfileError(
-            'Impossible de charger ton profil. Vérifie les autorisations Supabase.'
+            err?.message ||
+              'Impossible de charger le profil depuis Supabase.'
           );
-
           setUserRole('client');
         }
       } finally {
@@ -934,24 +829,24 @@ console.log('Utilisateur connecté :', userId);
 
     try {
       await onLogout();
+    } catch (err) {
+      console.error('Erreur de déconnexion :', err);
     } finally {
       setLoggingOut(false);
     }
   }
-  const userRole = profile?.role || 'client';
-  const isAdmin = userRole === 'admin';
-  const isTrainer = userRole === 'formatrice';
-  const showAdmin = isAdmin;
-  const showTrainer = isTrainer;
-    
+
   const userName =
     profile?.full_name ||
     session?.user?.user_metadata?.full_name ||
     session?.user?.email?.split('@')[0] ||
     'Membre';
 
-  // Accès à l'administration uniquement pour le rôle admin.
-  if (showAdmin && isAdmin && !profileLoading) {
+  if (profileLoading) {
+    return <LoadingScreen message="Chargement de ton profil et de tes autorisations…" />;
+  }
+
+  if (showAdmin && isAdmin) {
     return (
       <AdminDashboard
         onBack={() => setShowAdmin(false)}
@@ -959,8 +854,7 @@ console.log('Utilisateur connecté :', userId);
     );
   }
 
-  // Espace formatrice distinct de l'administration.
-  if (showTrainer && isTrainer && !profileLoading) {
+  if (showTrainer && isTrainer) {
     return (
       <main className="home-screen">
         <header className="home-header">
@@ -977,9 +871,7 @@ console.log('Utilisateur connecté :', userId);
         </header>
 
         <section className="home-welcome">
-          <div className="eyebrow">
-            ESPACE PÉDAGOGIQUE
-          </div>
+          <div className="eyebrow">ESPACE PÉDAGOGIQUE</div>
 
           <h1>
             🎓 Bienvenue, <span>{userName} !</span>
@@ -987,23 +879,17 @@ console.log('Utilisateur connecté :', userId);
 
           <p>
             Bienvenue dans ton espace formatrice ED B-CENTER.
-            Tu pourras y retrouver les formations qui te seront
-            attribuées et suivre tes apprenants.
+            Tu pourras y retrouver les formations attribuées
+            et suivre tes apprenants.
           </p>
         </section>
 
         <section className="services-section">
           <div className="section-heading">
             <div>
-              <div className="eyebrow">
-                TON ACTIVITÉ PÉDAGOGIQUE
-              </div>
-
+              <div className="eyebrow">TON ACTIVITÉ PÉDAGOGIQUE</div>
               <h2>Mon espace formatrice</h2>
-
-              <p>
-                Un espace dédié à tes activités pédagogiques.
-              </p>
+              <p>Un espace dédié à tes activités pédagogiques.</p>
             </div>
           </div>
 
@@ -1012,12 +898,9 @@ console.log('Utilisateur connecté :', userId);
               <div className="service-icon">
                 <GraduationCap size={28} />
               </div>
-
               <h3>Mes formations</h3>
-
               <p>
-                Espace prévu pour les formations qui te seront
-                attribuées.
+                Espace prévu pour les formations qui te seront attribuées.
               </p>
             </article>
 
@@ -1025,24 +908,22 @@ console.log('Utilisateur connecté :', userId);
               <div className="service-icon">
                 <BookOpen size={28} />
               </div>
-
               <h3>Mes apprenants</h3>
-
               <p>
-                Espace prévu pour le suivi des apprenants
-                de tes formations.
+                Espace prévu pour le suivi des apprenants de tes formations.
               </p>
             </article>
           </div>
 
           <p role="status">
-            Les données réelles des formations et des apprenants
-            seront ajoutées lors de la prochaine étape.
+            Les données des formations et des apprenants seront ajoutées
+            lors d'une prochaine étape.
           </p>
         </section>
       </main>
     );
   }
+
   return (
     <main className="home-screen">
       <header className="home-header">
@@ -1082,7 +963,7 @@ console.log('Utilisateur connecté :', userId);
               Suivi et évaluation des apprenants
             </a>
 
-            {!profileLoading && isAdmin && (
+            {isAdmin && (
               <button
                 type="button"
                 onClick={() => {
@@ -1095,7 +976,7 @@ console.log('Utilisateur connecté :', userId);
               </button>
             )}
 
-            {!profileLoading && isTrainer && (
+            {isTrainer && (
               <button
                 type="button"
                 onClick={() => {
@@ -1114,19 +995,14 @@ console.log('Utilisateur connecté :', userId);
               disabled={loggingOut}
             >
               <LogOut size={17} />
-
-              {loggingOut
-                ? 'Déconnexion…'
-                : 'Se déconnecter'}
+              {loggingOut ? 'Déconnexion…' : 'Se déconnecter'}
             </button>
           </nav>
         )}
       </header>
 
       <section className="home-welcome">
-        <div className="eyebrow">
-          TON ESPACE PERSONNEL
-        </div>
+        <div className="eyebrow">TON ESPACE PERSONNEL</div>
 
         <h1>
           👋 Hello, ravi de te revoir,
@@ -1139,19 +1015,31 @@ console.log('Utilisateur connecté :', userId);
           avec ED B-CENTER.
         </p>
 
-        {profileLoading && (
-          <p role="status">
-            Chargement de ton profil et de tes autorisations…
-          </p>
-        )}
+        {/* AFFICHAGE TEMPORAIRE POUR LE DIAGNOSTIC */}
+        <div
+          style={{
+            margin: '16px 0',
+            padding: '12px',
+            border: '1px solid #ddd',
+            borderRadius: '10px',
+            fontSize: '13px',
+            overflowWrap: 'anywhere',
+          }}
+        >
+          <strong>Diagnostic du compte</strong>
+          <br />
+          E-mail : {session?.user?.email || 'Non disponible'}
+          <br />
+          Rôle détecté : {userRole}
+        </div>
 
         {profileError && (
           <p role="alert">
-            {profileError}
+            Erreur de chargement : {profileError}
           </p>
         )}
 
-        {!profileLoading && !profileError && (
+        {!profileError && (
           <p>
             {isAdmin
               ? '👑 Tu es connecté en tant qu’administrateur.'
@@ -1161,7 +1049,7 @@ console.log('Utilisateur connecté :', userId);
           </p>
         )}
 
-        {!profileLoading && isAdmin && (
+        {isAdmin && (
           <button
             type="button"
             className="primary-button"
@@ -1173,7 +1061,7 @@ console.log('Utilisateur connecté :', userId);
           </button>
         )}
 
-        {!profileLoading && isTrainer && (
+        {isTrainer && (
           <button
             type="button"
             className="primary-button"
@@ -1190,16 +1078,13 @@ console.log('Utilisateur connecté :', userId);
 
       <footer className="home-footer">
         <Brand />
-
         <div className="home-footer-links">
-          <a href="mailto:edbusinesscenter@gmail.com">
-            E-mail
-          </a>
+          <a href="mailto:edbusinesscenter@gmail.com">E-mail</a>
         </div>
       </footer>
     </main>
   );
-  }
+}
 
 /* =========================================================
    APPLICATION PRINCIPALE
