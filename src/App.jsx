@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,41 +20,63 @@ import {
   Sparkles,
   Menu,
   X,
+  ShieldCheck,
+  Users,
+  MessageCircle,
 } from 'lucide-react';
+
 import { supabase } from './supabaseClient';
+
+/* =========================================================
+   SERVICES ED B-CENTER
+========================================================= */
 
 const services = [
   {
     name: 'ED B-ACADEMY',
-    description: 'Des formations pratiques pour apprendre, pratiquer et entreprendre.',
-    detail: 'Infographie, intelligence artificielle, sourcing et outils de gestion.',
+    description:
+      'Des formations pratiques pour apprendre, pratiquer et entreprendre.',
+    detail:
+      'Infographie, intelligence artificielle, sourcing et outils de gestion.',
     icon: GraduationCap,
   },
   {
     name: 'ED DIGITAL AGENCY',
-    description: 'Développez une image professionnelle et attirez vos clients.',
-    detail: 'Création graphique, identité visuelle et communication digitale.',
+    description:
+      'Développez une image professionnelle et attirez vos clients.',
+    detail:
+      'Création graphique, identité visuelle et communication digitale.',
     icon: Palette,
   },
   {
     name: 'ED B-SOURCING',
-    description: 'Recherchez des produits et préparez vos approvisionnements.',
-    detail: 'Recherche, comparaison, sourcing Chine et précommandes.',
+    description:
+      'Recherchez des produits et préparez vos approvisionnements.',
+    detail:
+      'Recherche, comparaison, sourcing Chine et précommandes.',
     icon: Globe,
   },
   {
     name: 'ED B-CONSULTING',
-    description: 'Structurez vos idées et avancez avec une méthode claire.',
-    detail: 'Conseils pratiques pour les entrepreneurs et porteurs de projets.',
+    description:
+      'Structurez vos idées et avancez avec une méthode claire.',
+    detail:
+      'Conseils pratiques pour les entrepreneurs et porteurs de projets.',
     icon: BriefcaseBusiness,
   },
   {
     name: 'ED B-SOLUTION',
-    description: 'Des solutions numériques adaptées à vos besoins.',
-    detail: 'Outils digitaux et accompagnement vers des méthodes plus efficaces.',
+    description:
+      'Des solutions numériques adaptées à vos besoins.',
+    detail:
+      'Outils digitaux et accompagnement vers des méthodes plus efficaces.',
     icon: Lightbulb,
   },
 ];
+
+/* =========================================================
+   ÉLÉMENTS GRAPHIQUES
+========================================================= */
 
 function Wave({ className = '' }) {
   return (
@@ -75,7 +97,10 @@ function Wave({ className = '' }) {
 function Brand({ light = false }) {
   return (
     <div className={`brand ${light ? 'brand-light' : ''}`}>
-      <div className="brand-mark"><BookOpen size={25} strokeWidth={2.2} /></div>
+      <div className="brand-mark">
+        <BookOpen size={25} strokeWidth={2.2} />
+      </div>
+
       <div>
         <strong>ED B-CENTER</strong>
         <span>APPRENDRE · PRATIQUER · ENTREPRENDRE</span>
@@ -84,42 +109,97 @@ function Brand({ light = false }) {
   );
 }
 
+function LoadingScreen({ message = 'Préparation de ton espace…' }) {
+  return (
+    <main className="loading-screen" aria-live="polite">
+      <div className="loading-mark">
+        <BookOpen size={35} />
+      </div>
+
+      <LoaderCircle className="spin" size={25} />
+
+      <p>{message}</p>
+    </main>
+  );
+}
+
+/* =========================================================
+   ÉCRAN DE BIENVENUE
+========================================================= */
+
 function Splash({ onStart }) {
   return (
     <main className="splash-screen">
       <Wave className="splash-wave splash-wave-top" />
-      <div className="splash-brand"><Brand light /></div>
+
+      <div className="splash-brand">
+        <Brand light />
+      </div>
 
       <div className="splash-center">
         <div className="splash-book">
           <BookOpen size={82} strokeWidth={1.5} />
+
           <span className="book-line book-line-one" />
           <span className="book-line book-line-two" />
         </div>
-        <div className="splash-sparkle"><Sparkles size={24} /></div>
+
+        <div className="splash-sparkle">
+          <Sparkles size={24} />
+        </div>
       </div>
 
       <Wave className="splash-wave splash-wave-bottom" />
 
       <section className="splash-card">
         <div className="eyebrow">TON AVENIR COMMENCE ICI</div>
-        <h1>Apprends aujourd’hui.<br /><span>Construis demain.</span></h1>
-        <p>Des compétences pratiques, des outils numériques et un accompagnement pour passer à l’action.</p>
-        <button className="primary-button" onClick={onStart}>
+
+        <h1>
+          Apprends aujourd’hui.
+          <br />
+          <span>Construis demain.</span>
+        </h1>
+
+        <p>
+          Des compétences pratiques, des outils numériques et un
+          accompagnement pour passer à l’action.
+        </p>
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={onStart}
+        >
           Commencer <ArrowRight size={19} />
         </button>
-        <div className="splash-dots"><i /><i /><i /></div>
+
+        <div className="splash-dots" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
       </section>
     </main>
   );
 }
 
-function AuthScreen({ mode, setMode, onBack, onAuthenticated }) {
+/* =========================================================
+   AUTHENTIFICATION
+========================================================= */
+
+function AuthScreen({
+  mode,
+  setMode,
+  onBack,
+  onAuthenticated,
+}) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -127,8 +207,16 @@ function AuthScreen({ mode, setMode, onBack, onAuthenticated }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
     setError('');
     setMessage('');
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setError('Entre ton adresse e-mail.');
+      return;
+    }
 
     if (isSignup && fullName.trim().length < 2) {
       setError('Entre ton nom complet pour continuer.');
@@ -136,7 +224,9 @@ function AuthScreen({ mode, setMode, onBack, onAuthenticated }) {
     }
 
     if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères.');
+      setError(
+        'Le mot de passe doit contenir au moins 6 caractères.'
+      );
       return;
     }
 
@@ -144,60 +234,122 @@ function AuthScreen({ mode, setMode, onBack, onAuthenticated }) {
 
     try {
       if (isSignup) {
-        const { data, error: authError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            data: {
-              full_name: fullName.trim(),
-              role: 'client',
+        const { data, error: authError } =
+          await supabase.auth.signUp({
+            email: normalizedEmail,
+            password,
+            options: {
+              data: {
+                full_name: fullName.trim(),
+                role: 'client',
+              },
             },
-          },
-        });
+          });
 
-        if (authError) throw authError;
+        if (authError) {
+          throw authError;
+        }
 
         if (data.session) {
           onAuthenticated(data.session);
         } else {
           setMessage(
-            'Compte créé ! Consulte ta boîte mail pour confirmer ton adresse avant de te connecter.'
+            'Compte créé. Consulte ta boîte mail pour confirmer ton adresse avant de te connecter.'
           );
+
+          setPassword('');
           setMode('login');
         }
       } else {
         const { data, error: authError } =
           await supabase.auth.signInWithPassword({
-            email: email.trim(),
+            email: normalizedEmail,
             password,
           });
 
-        if (authError) throw authError;
+        if (authError) {
+          throw authError;
+        }
+
+        if (!data.session) {
+          throw new Error(
+            'Connexion incomplète. Réessaie dans quelques instants.'
+          );
+        }
+
         onAuthenticated(data.session);
       }
     } catch (err) {
-      setError(
-        err?.message === 'Invalid login credentials'
-          ? 'Adresse e-mail ou mot de passe incorrect.'
-          : err?.message || 'Une erreur est survenue. Réessaie.'
-      );
+      const errorMessage = String(err?.message || '');
+
+      if (
+        errorMessage.toLowerCase().includes('invalid login credentials')
+      ) {
+        setError(
+          'Adresse e-mail ou mot de passe incorrect.'
+        );
+      } else if (
+        errorMessage.toLowerCase().includes('user already registered')
+      ) {
+        setError(
+          'Cette adresse possède déjà un compte. Essaie de te connecter.'
+        );
+      } else if (
+        errorMessage.toLowerCase().includes('email not confirmed')
+      ) {
+        setError(
+          'Confirme ton adresse e-mail avant de te connecter.'
+        );
+      } else {
+        setError(
+          errorMessage ||
+            'Une erreur est survenue. Réessaie.'
+        );
+      }
     } finally {
       setLoading(false);
     }
   }
 
+  function switchMode() {
+    setError('');
+    setMessage('');
+    setPassword('');
+    setMode(isSignup ? 'login' : 'signup');
+  }
+
   return (
     <main className="auth-screen">
       <header className="auth-header">
-        <button className="round-back" onClick={onBack} aria-label="Retour">
+        <button
+          type="button"
+          className="round-back"
+          onClick={onBack}
+          aria-label="Retour à l’accueil"
+        >
           <ArrowLeft size={21} />
         </button>
+
         <Brand light />
+
         <div className="auth-header-copy">
-          <div className="eyebrow">BIENVENUE CHEZ ED B-CENTER</div>
-          <h1>{isSignup ? 'Créer un compte' : 'Heureux de te revoir !'}</h1>
-          <p>{isSignup ? 'Prépare-toi à apprendre et à progresser.' : 'Connecte-toi pour continuer ton parcours.'}</p>
+          <div className="eyebrow">
+            BIENVENUE CHEZ ED B-CENTER
+          </div>
+
+          <h1>
+            {isSignup
+              ? 'Créer un compte'
+              : 'Heureux de te revoir !'}
+          </h1>
+
+          <p>
+            {isSignup
+              ? 'Prépare-toi à apprendre et à progresser.'
+              : 'Connecte-toi pour continuer ton parcours.'}
+          </p>
         </div>
+
         <Wave className="auth-wave" />
       </header>
 
@@ -205,186 +357,364 @@ function AuthScreen({ mode, setMode, onBack, onAuthenticated }) {
         <div className="auth-illustration">
           <div className="illustration-orbit orbit-one" />
           <div className="illustration-orbit orbit-two" />
-          <div className="illustration-book"><BookOpen size={54} /></div>
-          <div className="illustration-cap"><GraduationCap size={33} /></div>
-          <div className="illustration-sparkle"><Sparkles size={22} /></div>
-          <div className="illustration-label">APPRENDRE • CRÉER • ÉVOLUER</div>
+
+          <div className="illustration-book">
+            <BookOpen size={54} />
+          </div>
+
+          <div className="illustration-cap">
+            <GraduationCap size={33} />
+          </div>
+
+          <div className="illustration-sparkle">
+            <Sparkles size={22} />
+          </div>
+
+          <div className="illustration-label">
+            APPRENDRE • CRÉER • ÉVOLUER
+          </div>
         </div>
 
         <div className="auth-form-heading">
-          <h2>{isSignup ? 'Rejoins la communauté' : 'Connexion'}</h2>
-          <p>{isSignup ? 'Quelques informations pour commencer.' : 'Entre tes identifiants pour accéder à ton espace.'}</p>
+          <h2>
+            {isSignup
+              ? 'Rejoins la communauté'
+              : 'Connexion'}
+          </h2>
+
+          <p>
+            {isSignup
+              ? 'Quelques informations pour commencer.'
+              : 'Entre tes identifiants pour accéder à ton espace.'}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form
+          onSubmit={handleSubmit}
+          className="auth-form"
+        >
           {isSignup && (
             <label className="field">
               <span>Nom complet</span>
+
               <div className="input-wrap">
                 <UserRound size={19} />
+
                 <input
+                  type="text"
                   autoComplete="name"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(event) =>
+                    setFullName(event.target.value)
+                  }
                   placeholder="Ex. Jean Dupont"
                   required
                 />
-                {fullName.trim().length >= 2 && <CheckCircle2 className="valid-icon" size={18} />}
+
+                {fullName.trim().length >= 2 && (
+                  <CheckCircle2
+                    className="valid-icon"
+                    size={18}
+                  />
+                )}
               </div>
             </label>
           )}
 
           <label className="field">
             <span>Adresse e-mail</span>
+
             <div className="input-wrap">
               <Mail size={19} />
+
               <input
                 type="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
                 placeholder="nom@exemple.com"
                 required
               />
-              {email.includes('@') && email.includes('.') && <CheckCircle2 className="valid-icon" size={18} />}
+
+              {email.includes('@') &&
+                email.includes('.') && (
+                  <CheckCircle2
+                    className="valid-icon"
+                    size={18}
+                  />
+                )}
             </div>
           </label>
 
           <label className="field">
             <span>Mot de passe</span>
+
             <div className="input-wrap">
               <LockKeyhole size={19} />
+
               <input
                 type={showPassword ? 'text' : 'password'}
-                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                autoComplete={
+                  isSignup
+                    ? 'new-password'
+                    : 'current-password'
+                }
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
                 placeholder="6 caractères minimum"
                 minLength={6}
                 required
               />
+
               <button
                 type="button"
                 className="input-action"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                onClick={() =>
+                  setShowPassword((current) => !current)
+                }
+                aria-label={
+                  showPassword
+                    ? 'Masquer le mot de passe'
+                    : 'Afficher le mot de passe'
+                }
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? (
+                  <EyeOff size={18} />
+                ) : (
+                  <Eye size={18} />
+                )}
               </button>
             </div>
           </label>
 
-          {error && <div className="form-message form-error" role="alert">{error}</div>}
-          {message && <div className="form-message form-success" role="status">{message}</div>}
+          {error && (
+            <div
+              className="form-message form-error"
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
 
-          <button className="primary-button auth-submit" type="submit" disabled={loading}>
-            {loading ? <LoaderCircle className="spin" size={19} /> : null}
-            {loading ? 'Patiente…' : isSignup ? 'Créer mon compte' : 'Me connecter'}
+          {message && (
+            <div
+              className="form-message form-success"
+              role="status"
+            >
+              {message}
+            </div>
+          )}
+
+          <button
+            className="primary-button auth-submit"
+            type="submit"
+            disabled={loading}
+          >
+            {loading && (
+              <LoaderCircle
+                className="spin"
+                size={19}
+              />
+            )}
+
+            {loading
+              ? 'Patiente…'
+              : isSignup
+                ? 'Créer mon compte'
+                : 'Me connecter'}
+
             {!loading && <ArrowRight size={19} />}
           </button>
         </form>
 
         <div className="auth-switch">
-          {isSignup ? 'Tu as déjà un compte ?' : 'Nouveau ici ?'}
+          {isSignup
+            ? 'Tu as déjà un compte ?'
+            : 'Nouveau ici ?'}
+
           <button
             type="button"
-            onClick={() => {
-              setError('');
-              setMessage('');
-              setMode(isSignup ? 'login' : 'signup');
-            }}
+            onClick={switchMode}
           >
-            {isSignup ? 'Se connecter' : 'Créer un compte'}
+            {isSignup
+              ? 'Se connecter'
+              : 'Créer un compte'}
           </button>
         </div>
 
         <p className="auth-legal">
-          En continuant, tu acceptes d’utiliser ED B-CENTER de manière responsable.
+          En continuant, tu acceptes d’utiliser ED B-CENTER
+          de manière responsable.
         </p>
       </section>
     </main>
   );
 }
 
+/* =========================================================
+   CARROUSEL DES SERVICES
+========================================================= */
+
 function ServiceCarousel() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
-  const startX = { current: 0 };
+
+  const startX = useRef(0);
 
   useEffect(() => {
-    if (paused) return undefined;
+    if (paused) {
+      return undefined;
+    }
+
     const timer = window.setInterval(() => {
-      setActive((current) => (current + 1) % services.length);
+      setActive(
+        (current) => (current + 1) % services.length
+      );
     }, 2500);
+
     return () => window.clearInterval(timer);
   }, [paused]);
 
   function changeSlide(direction) {
-    setActive((current) => (current + direction + services.length) % services.length);
+    setActive(
+      (current) =>
+        (current + direction + services.length) %
+        services.length
+    );
+
     setPaused(true);
   }
 
   return (
-    <section className="services-section" id="services">
+    <section
+      className="services-section"
+      id="services"
+    >
       <div className="section-heading">
         <div>
-          <div className="eyebrow">DÉCOUVRE NOS ACTIVITÉS</div>
+          <div className="eyebrow">
+            DÉCOUVRE NOS ACTIVITÉS
+          </div>
+
           <h2>Nos services</h2>
-          <p>Des solutions pour apprendre, créer et entreprendre.</p>
+
+          <p>
+            Des solutions pour apprendre, créer et entreprendre.
+          </p>
         </div>
+
         <div className="carousel-controls">
-          <button onClick={() => changeSlide(-1)} aria-label="Service précédent"><ArrowLeft size={18} /></button>
-          <button onClick={() => changeSlide(1)} aria-label="Service suivant"><ArrowRight size={18} /></button>
+          <button
+            type="button"
+            onClick={() => changeSlide(-1)}
+            aria-label="Service précédent"
+          >
+            <ArrowLeft size={18} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => changeSlide(1)}
+            aria-label="Service suivant"
+          >
+            <ArrowRight size={18} />
+          </button>
         </div>
       </div>
 
       <div
         className="service-carousel"
-        onTouchStart={(e) => {
-          startX.current = e.touches[0].clientX;
+        onTouchStart={(event) => {
+          startX.current =
+            event.touches[0].clientX;
+
           setPaused(true);
         }}
-        onTouchEnd={(e) => {
-          const distance = e.changedTouches[0].clientX - startX.current;
-          if (Math.abs(distance) > 45) changeSlide(distance < 0 ? 1 : -1);
+        onTouchEnd={(event) => {
+          const distance =
+            event.changedTouches[0].clientX -
+            startX.current;
+
+          if (Math.abs(distance) > 45) {
+            changeSlide(distance < 0 ? 1 : -1);
+          }
         }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
         {services.map((service, index) => {
           const Icon = service.icon;
-          const offset = (index - active + services.length) % services.length;
-          const relativeOffset = offset > services.length / 2 ? offset - services.length : offset;
+
+          const offset =
+            (index - active + services.length) %
+            services.length;
+
+          const relativeOffset =
+            offset > services.length / 2
+              ? offset - services.length
+              : offset;
+
           return (
             <article
               key={service.name}
-              className={`service-card ${index === active ? 'is-active' : ''} ${Math.abs(relativeOffset) === 1 ? 'is-near' : ''}`}
-              style={{ '--card-offset': relativeOffset }}
+              className={[
+                'service-card',
+                index === active ? 'is-active' : '',
+                Math.abs(relativeOffset) === 1
+                  ? 'is-near'
+                  : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              style={{
+                '--card-offset': relativeOffset,
+              }}
               onClick={() => {
                 setActive(index);
                 setPaused(true);
               }}
             >
-              <div className="service-icon"><Icon size={28} /></div>
+              <div className="service-icon">
+                <Icon size={28} />
+              </div>
+
               <h3>{service.name}</h3>
+
               <p>{service.description}</p>
-              <div className="service-detail">{service.detail}</div>
-              <button className="service-link" onClick={(e) => {
-                e.stopPropagation();
-                window.location.href = `mailto:edbusinesscenter@gmail.com?subject=${encodeURIComponent(service.name)}`;
-              }}>
+
+              <div className="service-detail">
+                {service.detail}
+              </div>
+
+              <a
+                className="service-link"
+                href={`mailto:edbusinesscenter@gmail.com?subject=${encodeURIComponent(service.name)}`}
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+              >
                 En savoir plus <ArrowRight size={17} />
-              </button>
+              </a>
             </article>
           );
         })}
       </div>
 
-      <div className="carousel-dots" aria-label="Choisir un service">
+      <div
+        className="carousel-dots"
+        aria-label="Choisir un service"
+      >
         {services.map((service, index) => (
           <button
+            type="button"
             key={service.name}
-            className={active === index ? 'active' : ''}
+            className={
+              active === index ? 'active' : ''
+            }
             onClick={() => {
               setActive(index);
               setPaused(true);
@@ -393,8 +723,13 @@ function ServiceCarousel() {
           />
         ))}
       </div>
+
       {paused && (
-        <button className="resume-carousel" onClick={() => setPaused(false)}>
+        <button
+          type="button"
+          className="resume-carousel"
+          onClick={() => setPaused(false)}
+        >
           Reprendre le défilement automatique
         </button>
       )}
@@ -402,107 +737,322 @@ function ServiceCarousel() {
   );
 }
 
+/* =========================================================
+   ACCUEIL MEMBRE
+========================================================= */
+
 function HomeScreen({ session, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const userName =
     session?.user?.user_metadata?.full_name ||
     session?.user?.email?.split('@')[0] ||
     'Membre';
 
+  async function handleLogoutClick() {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+
+    try {
+      await onLogout();
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
   return (
     <main className="home-screen">
       <header className="home-header">
         <Brand />
-        <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Ouvrir le menu">
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+
+        <button
+          type="button"
+          className="menu-toggle"
+          onClick={() =>
+            setMenuOpen((current) => !current)
+          }
+          aria-label={
+            menuOpen
+              ? 'Fermer le menu'
+              : 'Ouvrir le menu'
+          }
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? (
+            <X size={22} />
+          ) : (
+            <Menu size={22} />
+          )}
         </button>
+
         {menuOpen && (
           <nav className="home-menu">
-            <a href="#services" onClick={() => setMenuOpen(false)}>Nos services</a>
-            <a href="mailto:edbusinesscenter@gmail.com">Nous contacter</a>
-            <a href="https://bassomodominique9-debug.github.io/Suivi/" target="_blank" rel="noreferrer">
-              Suivi et évaluation apprenants
+            <a
+              href="#services"
+              onClick={() => setMenuOpen(false)}
+            >
+              Nos services
             </a>
-            <button onClick={onLogout}><LogOut size={17} /> Déconnexion</button>
+
+            <a
+              href="mailto:edbusinesscenter@gmail.com"
+              onClick={() => setMenuOpen(false)}
+            >
+              Nous contacter
+            </a>
+
+            <a
+              href="https://bassomodominique9-debug.github.io/Suivi/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Suivi et évaluation des apprenants
+            </a>
+
+            <button
+              type="button"
+              onClick={handleLogoutClick}
+              disabled={loggingOut}
+            >
+              {loggingOut ? (
+                <LoaderCircle
+                  size={17}
+                  className="spin"
+                />
+              ) : (
+                <LogOut size={17} />
+              )}
+
+              {loggingOut
+                ? 'Déconnexion…'
+                : 'Déconnexion'}
+            </button>
           </nav>
         )}
       </header>
 
       <section className="home-hero">
         <div className="hero-copy">
-          <div className="eyebrow">TON ESPACE ED B-CENTER</div>
-          <h1>Bonjour,<br /><span>{userName}</span> 👋</h1>
-          <p>Apprends de nouvelles compétences et transforme tes idées en projets concrets.</p>
-          <a className="primary-button hero-cta" href="#services">
-            Explorer les services <ArrowRight size={18} />
+          <div className="eyebrow">
+            TON ESPACE ED B-CENTER
+          </div>
+
+          <h1>
+            Bonjour,
+            <br />
+            <span>{userName}</span> 👋
+          </h1>
+
+          <p>
+            Apprends de nouvelles compétences et transforme
+            tes idées en projets concrets.
+          </p>
+
+          <a
+            className="primary-button hero-cta"
+            href="#services"
+          >
+            Explorer les services
+            <ArrowRight size={18} />
           </a>
         </div>
+
         <div className="home-hero-art">
-          <div className="hero-art-circle"><BookOpen size={78} /></div>
-          <div className="hero-art-badge"><Sparkles size={20} /> Ton potentiel, en action</div>
+          <div className="hero-art-circle">
+            <BookOpen size={78} />
+          </div>
+
+          <div className="hero-art-badge">
+            <Sparkles size={20} />
+            Ton potentiel, en action
+          </div>
         </div>
+      </section>
+
+      <section className="member-benefits">
+        <article className="card">
+          <div className="service-icon">
+            <GraduationCap size={25} />
+          </div>
+
+          <h3>Apprendre</h3>
+
+          <p>
+            Découvre des compétences utiles et des formations
+            pratiques.
+          </p>
+        </article>
+
+        <article className="card">
+          <div className="service-icon">
+            <Users size={25} />
+          </div>
+
+          <h3>Progresser</h3>
+
+          <p>
+            Prépare-toi à développer tes projets et ton
+            expérience.
+          </p>
+        </article>
+
+        <article className="card">
+          <div className="service-icon">
+            <ShieldCheck size={25} />
+          </div>
+
+          <h3>Être accompagné</h3>
+
+          <p>
+            Retrouve les services et les contacts utiles
+            pour avancer.
+          </p>
+        </article>
       </section>
 
       <ServiceCarousel />
 
       <section className="help-banner">
-        <div className="help-icon"><Headphones size={26} /></div>
+        <div className="help-icon">
+          <Headphones size={26} />
+        </div>
+
         <div>
           <h3>Besoin d’aide ?</h3>
-          <p>Notre équipe est là pour t’accompagner.</p>
+
+          <p>
+            Notre équipe est là pour t’accompagner.
+          </p>
         </div>
-        <a href="mailto:edbusinesscenter@gmail.com?subject=ED%20HELP" aria-label="Contacter ED HELP">
-          <ArrowRight size={21} />
+
+        <a
+          href="mailto:edbusinesscenter@gmail.com?subject=ED%20HELP"
+          aria-label="Contacter ED HELP"
+        >
+          <MessageCircle size={21} />
         </a>
       </section>
 
       <footer className="home-footer">
         <Brand />
-        <p>© {new Date().getFullYear()} ED B-CENTER · Apprendre, pratiquer, entreprendre.</p>
+
+        <p>
+          © {new Date().getFullYear()} ED B-CENTER ·
+          Apprendre, pratiquer, entreprendre.
+        </p>
+
         <div className="footer-links">
-          <a href="https://wa.me/237690418794" target="_blank" rel="noreferrer">WhatsApp</a>
-          <a href="mailto:edbusinesscenter@gmail.com">E-mail</a>
+          <a
+            href="https://wa.me/237690418794"
+            target="_blank"
+            rel="noreferrer"
+          >
+            WhatsApp
+          </a>
+
+          <a href="mailto:edbusinesscenter@gmail.com">
+            E-mail
+          </a>
         </div>
       </footer>
     </main>
   );
 }
 
+/* =========================================================
+   APPLICATION PRINCIPALE
+========================================================= */
+
 export default function App() {
   const [screen, setScreen] = useState('splash');
   const [authMode, setAuthMode] = useState('login');
+
   const [session, setSession] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [sessionError, setSessionError] = useState('');
 
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (!mounted) return;
-      if (error) console.error('Session check:', error.message);
-      setSession(data?.session ?? null);
-      setScreen(data?.session ? 'home' : 'splash');
-      setCheckingSession(false);
-    });
+    async function checkSession() {
+      try {
+        const { data, error } =
+          await supabase.auth.getSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      if (!mounted) return;
-      setSession(newSession);
-      if (newSession) setScreen('home');
-    });
+        if (!mounted) return;
+
+        if (error) {
+          throw error;
+        }
+
+        const currentSession =
+          data?.session ?? null;
+
+        setSession(currentSession);
+
+        setScreen(
+          currentSession ? 'home' : 'splash'
+        );
+      } catch (err) {
+        if (!mounted) return;
+
+        console.error(
+          'Erreur de vérification de session :',
+          err?.message
+        );
+
+        setSessionError(
+          'Impossible de vérifier ta session. Vérifie ta connexion Internet puis réessaie.'
+        );
+
+        setSession(null);
+        setScreen('splash');
+      } finally {
+        if (mounted) {
+          setCheckingSession(false);
+        }
+      }
+    }
+
+    checkSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        if (!mounted) return;
+
+        setSession(newSession);
+
+        if (newSession) {
+          setScreen('home');
+          setSessionError('');
+        } else {
+          setScreen('splash');
+        }
+      }
+    );
 
     return () => {
       mounted = false;
-      listener?.subscription?.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
   async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
+    const { error } =
+      await supabase.auth.signOut();
+
     if (error) {
-      window.alert('Impossible de se déconnecter pour le moment.');
-      return;
+      window.alert(
+        'Impossible de se déconnecter pour le moment. Réessaie.'
+      );
+
+      throw error;
     }
+
     setSession(null);
     setAuthMode('login');
     setScreen('splash');
@@ -510,33 +1060,52 @@ export default function App() {
 
   if (checkingSession) {
     return (
-      <main className="loading-screen">
-        <div className="loading-mark"><BookOpen size={35} /></div>
-        <LoaderCircle className="spin" size={25} />
-        <p>Préparation de ton espace…</p>
-      </main>
+      <LoadingScreen />
     );
   }
 
-  if (session) return <HomeScreen session={session} onLogout={handleLogout} />;
+  if (session) {
+    return (
+      <HomeScreen
+        session={session}
+        onLogout={handleLogout}
+      />
+    );
+  }
 
   if (screen === 'auth') {
     return (
-      <AuthScreen
-        mode={authMode}
-        setMode={setAuthMode}
-        onBack={() => setScreen('splash')}
-        onAuthenticated={(newSession) => {
-          setSession(newSession);
-          setScreen('home');
-        }}
-      />
+      <>
+        {sessionError && (
+          <div
+            className="form-message form-error"
+            role="alert"
+          >
+            {sessionError}
+          </div>
+        )}
+
+        <AuthScreen
+          mode={authMode}
+          setMode={setAuthMode}
+          onBack={() => {
+            setSessionError('');
+            setScreen('splash');
+          }}
+          onAuthenticated={(newSession) => {
+            setSession(newSession);
+            setSessionError('');
+            setScreen('home');
+          }}
+        />
+      </>
     );
   }
 
   return (
     <Splash
       onStart={() => {
+        setSessionError('');
         setAuthMode('login');
         setScreen('auth');
       }}
