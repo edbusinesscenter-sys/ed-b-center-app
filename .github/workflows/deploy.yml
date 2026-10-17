@@ -1,9 +1,6 @@
-name: Deploy ED B-CENTER to GitHub Pages
+name: Lancement manuel ED B-CENTER
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -12,7 +9,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
@@ -20,34 +17,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Recuperer le code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Installer Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Installer les dependances
         run: npm install
 
-      - name: Build application
+      - name: Construire le site
         run: npm run build
 
-      - name: Upload Pages artifact
+      - name: Preparer les fichiers du site
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
-    runs-on: ubuntu-latest
-    needs: build
-
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Publier le site
         id: deployment
         uses: actions/deploy-pages@v4
