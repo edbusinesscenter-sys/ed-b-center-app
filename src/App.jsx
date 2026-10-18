@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// ===== CONFIG SUPABASE - REMPLACE PAR TES VRAIES CLÉS =====
+// ===== CONFIG SUPABASE - FINAL =====
 const supabase = createClient(
-  "https://TON_PROJECT.supabase.co",
-  "TA_CLE_ANON"
+  "https://jvwmkoshkkzupgrjcttx.supabase.co",
+  "sb_publishable_ojrPvKcGUnlIGvxwVx2f3Q_DDtp3mk8"
 );
 
 // ===== TES 53 IMAGES =====
@@ -151,4 +151,4 @@ function AdminDashboard({actualites}){
       </div>
     </div>
   );
-                                       }
+}
