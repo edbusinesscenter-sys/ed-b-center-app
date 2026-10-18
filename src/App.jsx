@@ -1,547 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
-import { supabase } from "./supabaseClient";
-import "./styles.css";
-
-/* =========================================================
-   ED BUSINESS CENTER — CONFIGURATION GÉNÉRALE
-   Images : public/images/
-   Compatible avec Vite et GitHub Pages.
-========================================================= */
-
-const image = (filename) =>
-  `${import.meta.env.BASE_URL}images/${filename}`;
-
-const BRAND = {
-  name: "ED BUSINESS CENTER",
-  shortName: "ED B-CENTER",
-  slogan: "Apprendre, pratiquer, entreprendre !",
-  email: "edbusinesscenter@gmail.com",
-  phone: "237690418794",
-  whatsapp: "https://wa.me/237690418794",
-  facebook:
-    "https://www.facebook.com/profile.php?id=61595517983213",
-  instagram:
-    "https://www.instagram.com/edbcenter?psln=MXJlcjVhYXY5aXRjNg==",
-};
-
-const SOCIALS = [
-  {
-    name: "WhatsApp",
-    image: "logo-whatsapp.png",
-    url: BRAND.whatsapp,
-  },
-  {
-    name: "Facebook",
-    image: "logo-facebook.png",
-    url: BRAND.facebook,
-  },
-  {
-    name: "Instagram",
-    image: "logo-instagram.jpeg",
-    url: BRAND.instagram,
-  },
-  {
-    name: "Gmail",
-    image: "logo-gmail.png",
-    url: `mailto:${BRAND.email}`,
-  },
-];
-
-/* =========================================================
-   CARROUSEL DE MOTIVATION
-   Ces quatre images sont réservées à cette section.
-========================================================= */
-
-const MOTIVATION_IMAGES = [
-  {
-    image: "motivation-1-entrepreneur.png",
-    title: "Construis ton avenir",
-    description:
-      "Chaque projet commence par une décision. Développe tes compétences, passe à l'action et construis progressivement une activité qui te ressemble.",
-    label: "INSPIRATION & ENTREPRENEURIAT",
-  },
-  {
-    image: "motivation-2-reflexion.jpeg",
-    title: "Prends le temps de réfléchir",
-    description:
-      "Une bonne décision se prépare. Analyse tes possibilités, définis tes priorités et avance avec une vision claire de tes objectifs.",
-    label: "RÉFLEXION & STRATÉGIE",
-  },
-  {
-    image: "motivation-3-entrepreneur.jpeg",
-    title: "Transforme tes idées en actions",
-    description:
-      "Une idée prend de la valeur lorsqu'elle devient une réalisation concrète. Apprends, expérimente et développe ton savoir-faire.",
-    label: "ACTION & PROGRESSION",
-  },
-  {
-    image: "motivation-4-meditation.jpeg",
-    title: "La réussite se construit étape par étape",
-    description:
-      "Garde le cap, apprends de tes expériences et progresse à ton rythme. La constance et la pratique peuvent faire la différence.",
-    label: "DISCIPLINE & ÉVOLUTION",
-  },
-];
-
-/* =========================================================
-   SIX SERVICES ED BUSINESS CENTER
-========================================================= */
-
-const SERVICES = [
-  {
-    title: "ED B-ACADEMY",
-    subtitle: "Formation pratique",
-    image: "service-ed-b-academy.png",
-    description:
-      "Des formations orientées vers la pratique, avec des exercices, des projets concrets et des livrables pour développer des compétences applicables.",
-    details: [
-      "Infographie et intelligence artificielle",
-      "Sourcing en Chine",
-      "Excel, Power BI et Big Data",
-      "Exercices et projets pratiques",
-    ],
-    action: "Découvrir les formations",
-    target: "formations",
-  },
-  {
-    title: "ED B-CONSULTING",
-    subtitle: "Conseil & accompagnement",
-    image: "service-ed-b-consulting.png",
-    description:
-      "Un accompagnement adapté aux besoins des porteurs de projets, entrepreneurs et personnes qui souhaitent mieux structurer leurs activités.",
-    details: [
-      "Clarification des objectifs",
-      "Accompagnement de projets",
-      "Conseils pratiques",
-      "Orientation vers des solutions adaptées",
-    ],
-    action: "Découvrir l'accompagnement",
-    target: "accompagnement",
-  },
-  {
-    title: "ED DIGITAL AGENCY",
-    subtitle: "Communication numérique",
-    image: "service-ed-digital-agency.png",
-    description:
-      "Des solutions de communication visuelle et numérique pour présenter une activité, améliorer sa visibilité et mieux communiquer avec ses clients.",
-    details: [
-      "Création de visuels publicitaires",
-      "Contenus pour les réseaux sociaux",
-      "Conception graphique",
-      "Supports de communication",
-    ],
-    action: "Découvrir les services digitaux",
-    target: "digital",
-  },
-  {
-    title: "ED B-SOURCING",
-    subtitle: "Recherche & approvisionnement",
-    image: "service-ed-b-sourcing.png",
-    description:
-      "Un service de recherche de produits et de fournisseurs, de comparaison des offres et d'accompagnement des commandes, notamment depuis la Chine.",
-    details: [
-      "Recherche de produits",
-      "Comparaison des offres",
-      "Préparation des commandes",
-      "Suivi de l'approvisionnement",
-    ],
-    action: "Demander une recherche",
-    target: "sourcing",
-  },
-  {
-    title: "ED B-SOLUTION",
-    subtitle: "Solutions adaptées",
-    image: "service-ed-b-solution.png",
-    description:
-      "Une approche orientée vers la résolution de besoins concrets grâce à des solutions adaptées aux projets, aux activités commerciales et aux besoins numériques.",
-    details: [
-      "Analyse du besoin",
-      "Recherche de solutions",
-      "Organisation des informations",
-      "Orientation vers des prestataires adaptés",
-    ],
-    action: "Présenter mon besoin",
-    target: "contact",
-  },
-  {
-    title: "ED B-PHOTOGRAPHIE",
-    subtitle: "Image & photographie",
-    image: "service-packs-photographie.png",
-    description:
-      "Des prestations photographiques pour valoriser les personnes, les produits et les événements à travers des images adaptées à chaque besoin.",
-    details: [
-      "Portraits et photographie professionnelle",
-      "Photographie de produits",
-      "Photographie événementielle",
-      "Images destinées à la communication",
-    ],
-    action: "Demander une prestation",
-    target: "photographie",
-  },
-];
-
-/* =========================================================
-   CATALOGUE DES FORMATIONS
-========================================================= */
-
-const COURSES = [
-  {
-    title: "Infographie & Intelligence artificielle",
-    image: "formation-infographie-ia.png",
-    price: 80000,
-    oldPrice: null,
-    duration: "2 mois",
-    description:
-      "Apprends à concevoir des visuels publicitaires et à utiliser des outils d'intelligence artificielle pour améliorer ta production de contenus.",
-    deliverables: [
-      "Créations graphiques pratiques",
-      "Mini-portfolio",
-      "Visuel publicitaire",
-      "Plan de prospection",
-    ],
-    category: "Création",
-  },
-  {
-    title: "Sourcing Chine",
-    image: "formation-sourcing-chine.png",
-    price: 50000,
-    oldPrice: 80000,
-    duration: "2 mois",
-    description:
-      "Découvre les étapes de recherche de produits, de comparaison des fournisseurs et de préparation d'une commande avec une attention particulière aux risques.",
-    deliverables: [
-      "Comparaison de produits ou fournisseurs",
-      "Estimation des coûts",
-      "Fiche de précommande",
-      "Plan commercial",
-    ],
-    category: "Commerce",
-  },
-  {
-    title: "Excel",
-    image: "formation-excel.png",
-    price: 80000,
-    oldPrice: null,
-    duration: "2 mois",
-    description:
-      "Développe tes compétences sur les feuilles de calcul, les formules et l'organisation des données pour mieux gérer des informations professionnelles.",
-    deliverables: [
-      "Exercices pratiques",
-      "Tableaux structurés",
-      "Formules adaptées aux besoins",
-      "Mini-projet",
-    ],
-    category: "Data",
-  },
-  {
-    title: "Power BI",
-    image: "formation-power-bi.png",
-    price: 85000,
-    oldPrice: 110000,
-    duration: "2 mois",
-    description:
-      "Apprends à transformer des données en indicateurs et tableaux de bord visuels utiles à l'analyse et au suivi d'une activité.",
-    deliverables: [
-      "Exercices de visualisation",
-      "Indicateurs de performance",
-      "Tableau de bord",
-      "Projet de reporting",
-    ],
-    category: "Data",
-  },
-  {
-    title: "Big Data",
-    image: "formation-big-data.png",
-    price: 125000,
-    oldPrice: null,
-    duration: "2 mois",
-    description:
-      "Découvre les principes d'analyse et de visualisation des données à travers une approche progressive axée sur les usages professionnels.",
-    deliverables: [
-      "Exercices d'analyse",
-      "Organisation des données",
-      "Visualisations",
-      "Mini-projet d'analyse",
-    ],
-    category: "Data",
-  },
-];
-
-/* =========================================================
-   UTILITAIRES
-========================================================= */
-
-function formatPrice(value) {
-  return `${Number(value).toLocaleString("fr-FR")} FCFA`;
-}
-
-function getInitials(name = "Utilisateur") {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("");
-}
-
-function isMissingTableError(error) {
-  return (
-    error?.code === "42P01" ||
-    error?.code === "PGRST205" ||
-    error?.code === "PGRST204"
-  );
-}
-
-/* =========================================================
-   BADGES DE RÔLE
-========================================================= */
-
-function VerifiedBadge({ role = "admin" }) {
-  const label =
-    role === "formatrice"
-      ? "Formatrice vérifiée"
-      : "Administrateur vérifié";
-
-  return (
-    <span
-      className={`verified-badge verified-${role}`}
-      title={label}
-      aria-label={label}
-    >
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M12 2.8 15 4l3.2.1 1.1 3 2.1 2.4-.9 3.1.4 3.2-2.7 1.8-1.6 2.8-3.2-.2L12 21l-2.8-1.3-3.2.2-1.6-2.8-2.7-1.8.4-3.2-.9-3.1L3.3 6.6l1.1-3L7.6 3 12 2.8Z"
-          fill="currentColor"
-        />
-        <path
-          d="m7.8 12.1 2.6 2.5 5.8-5.7"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span>{role === "formatrice" ? "Formatrice" : "Administrateur"}</span>
-    </span>
-  );
-}
-
-function UserAvatar({ profile, size = "normal" }) {
-  if (profile?.avatar_url) {
-    return (
-      <img
-        className={`user-avatar avatar-${size}`}
-        src={profile.avatar_url}
-        alt={`Photo de ${profile.full_name || "l'utilisateur"}`}
-      />
-    );
-  }
-
-  return (
-    <span className={`user-avatar avatar-${size} avatar-placeholder`}>
-      {getInitials(profile?.full_name || profile?.email || "ED")}
-    </span>
-  );
-}
-
-/* =========================================================
-   EN-TÊTE
-========================================================= */
-
-function Header({
-  user,
-  profile,
-  role,
-  activePage,
-  setActivePage,
-  search,
-  setSearch,
-  onLogin,
-  onLogout,
-  onRegister,
-}) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const navItems = [
-    { id: "accueil", label: "Accueil" },
-    { id: "services", label: "Nos services" },
-    { id: "formations", label: "Formations" },
-    { id: "accompagnement", label: "Accompagnement" },
-    { id: "contact", label: "Contact" },
-  ];
-
-  return (
-    <header className="site-header">
-      <div className="header-main container">
-        <button
-          className="brand"
-          onClick={() => setActivePage("accueil")}
-          aria-label="Retour à l'accueil"
-        >
-          <img src={image("logo-ed-b-center.png")} alt={BRAND.name} />
-          <span className="brand-text">
-            <strong>ED BUSINESS CENTER</strong>
-            <small>Apprendre · Pratiquer · Entreprendre</small>
-          </span>
-        </button>
-
-        <div className="header-search">
-          <span aria-hidden="true">⌕</span>
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Rechercher un service, une formation..."
-            aria-label="Rechercher"
-          />
-          {search && (
-            <button
-              className="clear-search"
-              onClick={() => setSearch("")}
-              aria-label="Effacer la recherche"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
-        <div className="header-actions">
-          {user ? (
-            <>
-              <button
-                className="profile-shortcut"
-                onClick={() => setActivePage("compte")}
-              >
-                <UserAvatar profile={profile} size="small" />
-                <span className="profile-shortcut-text">
-                  <strong>{profile?.full_name || "Mon compte"}</strong>
-                  <small>
-                    {role === "admin"
-                      ? "Administrateur"
-                      : role === "formatrice"
-                      ? "Formatrice"
-                      : "Espace membre"}
-                  </small>
-                </span>
-              </button>
-              <button className="button button-outline button-small" onClick={onLogout}>
-                Déconnexion
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="button button-outline button-small" onClick={onLogin}>
-                Connexion
-              </button>
-              <button className="button button-primary button-small" onClick={onRegister}>
-                Inscription
-              </button>
-            </>
-          )}
-        </div>
-
-        <button
-          className="mobile-menu-button"
-          onClick={() => setMobileMenuOpen((value) => !value)}
-          aria-label="Ouvrir le menu"
-          aria-expanded={mobileMenuOpen}
-        >
-          {mobileMenuOpen ? "✕" : "☰"}
-        </button>
-      </div>
-
-      <nav className={`main-nav ${mobileMenuOpen ? "nav-open" : ""}`}>
-        <div className="container nav-inner">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-link ${activePage === item.id ? "nav-active" : ""}`}
-              onClick={() => {
-                setActivePage(item.id);
-                setMobileMenuOpen(false);
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-
-          {user && (
-            <button
-              className={`nav-link ${activePage === "messages" ? "nav-active" : ""}`}
-              onClick={() => {
-                setActivePage("messages");
-                setMobileMenuOpen(false);
-              }}
-            >
-              Messages
-            </button>
-          )}
-
-          {(role === "admin" || role === "formatrice") && (
-            <button
-              className={`nav-link staff-link ${
-                activePage === "espace-equipe" ? "nav-active" : ""
-              }`}
-              onClick={() => {
-                setActivePage("espace-equipe");
-                setMobileMenuOpen(false);
-              }}
-            >
-              Espace équipe
-            </button>
-          )}
-        </div>
-      </nav>
-    </header>
-  );
-}
-
-/* =========================================================
-   CARROUSEL DE MOTIVATION
-========================================================= */
-
-function MotivationCarousel() {
-  const [current, setCurrent] = useState(0);
-  const slide = MOTIVATION_IMAGES[current];
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setCurrent((index) => (index + 1) % MOTIVATION_IMAGES.length);
-    }, 6500);
-
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const previous = () => {
-    setCurrent(
-      (index) =>
-        (index - 1 + MOTIVATION_IMAGES.length) % MOTIVATION_IMAGES.length
-    );
-  };
-
-  const next = () => {
-    setCurrent((index) => (index + 1) % MOTIVATION_IMAGES.length);
-  };
-
-  return (
-    <section className="motivation-section">
-      <div className="container">
-        <div className="motivation-carousel">
-          <img
-            key={slide.image}
-            className="motivation-image"
-            src={image(slide.image)}
-            alt={`${slide.title} — ${slide.label}`}
-          />
-
-          <div className="motivation-overlay" />
-
-          <div className="motivation-content">
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import "./styles.css";
@@ -861,7 +317,7 @@ function isMissingTableError(error) {
     error.code === "PGRST205" ||
     error.code === "PGRST204"
   );
-}
+     }
 
 /* =====================================================
    BADGE DES RÔLES VÉRIFIÉS
@@ -921,8 +377,8 @@ function UserAvatar({ user, size = "medium" }) {
       )}
     </div>
   );
-            }
-            /* =====================================================
+}
+/* =====================================================
    EN-TÊTE DU SITE
 ===================================================== */
 
@@ -1155,7 +611,6 @@ function MotivationCarousel() {
     </section>
   );
 }
-
 /* =====================================================
    SECTION DE PRÉSENTATION
 ===================================================== */
@@ -1242,8 +697,8 @@ function IntroSection({ onNavigate, onRegister }) {
       </div>
     </section>
   );
-         }
-            /* =====================================================
+}
+/* =====================================================
    CARROUSEL DES SERVICES
 ===================================================== */
 
@@ -1371,7 +826,6 @@ function ServicesSection({ onNavigate, onSelectService }) {
     </section>
   );
 }
-
 /* =====================================================
    SECTION DES FORMATIONS
 ===================================================== */
@@ -1553,8 +1007,7 @@ function CoursesSection({ onRegister, onNavigate }) {
       </div>
     </section>
   );
-            }
-            /* =====================================================
+       }
    SECTION CONTACT
 ===================================================== */
 
@@ -1971,8 +1424,7 @@ function RegisterModal({
 
   function updateField(event) {
     const { name, value } = event.target;
-
-    setForm((previous) => ({
+         setForm((previous) => ({
       ...previous,
       [name]: value,
     }));
@@ -2229,8 +1681,9 @@ function RegisterModal({
       </section>
     </div>
   );
-            }
-      /* =====================================================
+}
+
+/* =====================================================
    ESPACE PERSONNEL
 ===================================================== */
 
@@ -2275,7 +1728,10 @@ function AccountSection({
           </p>
         </div>
 
-        <UserAvatar user={{ ...profile, ...user, full_name: displayName }} size="large" />
+        <UserAvatar
+          user={{ ...profile, ...user, full_name: displayName }}
+          size="large"
+        />
       </div>
 
       <div className="account-layout">
@@ -2297,10 +1753,15 @@ function AccountSection({
             </span>
           </div>
 
-          <nav className="account-navigation" aria-label="Menu personnel">
+          <nav
+            className="account-navigation"
+            aria-label="Menu personnel"
+          >
             <button
               type="button"
-              className={activeTab === "overview" ? "account-nav-active" : ""}
+              className={
+                activeTab === "overview" ? "account-nav-active" : ""
+              }
               onClick={() => setActiveTab("overview")}
             >
               <span aria-hidden="true">⌂</span>
@@ -2309,7 +1770,9 @@ function AccountSection({
 
             <button
               type="button"
-              className={activeTab === "profile" ? "account-nav-active" : ""}
+              className={
+                activeTab === "profile" ? "account-nav-active" : ""
+              }
               onClick={() => setActiveTab("profile")}
             >
               <span aria-hidden="true">◉</span>
@@ -2318,7 +1781,9 @@ function AccountSection({
 
             <button
               type="button"
-              className={activeTab === "courses" ? "account-nav-active" : ""}
+              className={
+                activeTab === "courses" ? "account-nav-active" : ""
+              }
               onClick={() => setActiveTab("courses")}
             >
               <span aria-hidden="true">▤</span>
@@ -2327,7 +1792,9 @@ function AccountSection({
 
             <button
               type="button"
-              className={activeTab === "messages" ? "account-nav-active" : ""}
+              className={
+                activeTab === "messages" ? "account-nav-active" : ""
+              }
               onClick={() => setActiveTab("messages")}
             >
               <span aria-hidden="true">✉</span>
@@ -2337,7 +1804,9 @@ function AccountSection({
             {role === "admin" && (
               <button
                 type="button"
-                className={activeTab === "admin" ? "account-nav-active" : ""}
+                className={
+                  activeTab === "admin" ? "account-nav-active" : ""
+                }
                 onClick={() => setActiveTab("admin")}
               >
                 <span aria-hidden="true">⚙</span>
@@ -2447,8 +1916,7 @@ function AccountSection({
               )}
             </div>
           )}
-
-          {activeTab === "profile" && (
+                     {activeTab === "profile" && (
             <div className="account-tab-content">
               <div className="account-section-title">
                 <div>
@@ -2620,16 +2088,20 @@ function EditProfileModal({ user, profile, onClose, onSave }) {
   const [fullName, setFullName] = useState(
     profile?.full_name || user?.user_metadata?.full_name || ""
   );
+
   const [phone, setPhone] = useState(
     profile?.phone || user?.user_metadata?.phone || ""
   );
+
   const [photoFile, setPhotoFile] = useState(null);
+
   const [preview, setPreview] = useState(
     profile?.avatar_url ||
       user?.user_metadata?.avatar_url ||
       profile?.profile_photo ||
       ""
   );
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -2659,6 +2131,7 @@ function EditProfileModal({ user, profile, onClose, onSave }) {
         phone: phone.trim(),
         photoFile,
       });
+
       onClose();
     } catch (err) {
       setError(err.message || "Impossible d'enregistrer le profil.");
@@ -2725,17 +2198,15 @@ function EditProfileModal({ user, profile, onClose, onSave }) {
                 }}
               />
             </label>
-
-            <small>JPG, PNG ou WebP — 5 Mo maximum.</small>
           </div>
 
           <label className="form-label">
             Nom complet
             <input
               type="text"
+              name="full_name"
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
-              placeholder="Votre nom complet"
               required
             />
           </label>
@@ -2744,480 +2215,34 @@ function EditProfileModal({ user, profile, onClose, onSave }) {
             Téléphone
             <input
               type="tel"
+              name="phone"
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              placeholder="Votre numéro de téléphone"
             />
           </label>
 
           {error && <p className="form-error">{error}</p>}
 
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={loading}
-          >
-            {loading ? "Enregistrement..." : "Enregistrer les modifications"}
-          </button>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Annuler
+            </button>
+
+            <button
+              type="submit"
+              className="button button-primary"
+              disabled={loading}
+            >
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
   );
-}
-     function App() {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [role, setRole] = useState("client");
-
-  const [activePage, setActivePage] = useState("accueil");
-  const [authModal, setAuthModal] = useState(null);
-  const [editProfileOpen, setEditProfileOpen] = useState(false);
-
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
-
-  const [notification, setNotification] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  function notify(message) {
-    setNotification(message);
-
-    window.setTimeout(() => {
-      setNotification("");
-    }, 4500);
-  }
-
-  async function loadUserData(currentUser) {
-    if (!currentUser) {
-      setProfile(null);
-      setRole("client");
-      return;
-    }
-
-    let currentProfile = {
-      id: currentUser.id,
-      full_name: currentUser.user_metadata?.full_name || "",
-      phone: currentUser.user_metadata?.phone || "",
-      avatar_url: currentUser.user_metadata?.avatar_url || "",
-    };
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", currentUser.id)
-        .maybeSingle();
-
-      if (!error && data) {
-        currentProfile = { ...currentProfile, ...data };
-      }
-    } catch (error) {
-      console.warn("Chargement du profil :", error.message);
-    }
-
-    setProfile(currentProfile);
-
-    // Le rôle vient de la base de données.
-    // Un utilisateur ne peut pas devenir administrateur
-    // simplement en modifiant ses informations de profil.
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", currentUser.id)
-        .maybeSingle();
-
-      if (!error && data?.role) {
-        setRole(data.role);
-      } else {
-        setRole("client");
-      }
-    } catch {
-      setRole("client");
-    }
-  }
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function initialize() {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-
-        if (error) throw error;
-
-        if (!mounted) return;
-
-        const currentUser = data.session?.user || null;
-        setUser(currentUser);
-
-        if (currentUser) {
-          await loadUserData(currentUser);
-        }
-      } catch (error) {
-        console.error("Initialisation de l'application :", error.message);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    initialize();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user || null;
-
-      setUser(currentUser);
-
-      if (currentUser) {
-        // Décale les requêtes pour éviter de bloquer
-        // le traitement interne des événements d'authentification.
-        window.setTimeout(() => {
-          if (mounted) loadUserData(currentUser);
-        }, 0);
-      } else {
-        setProfile(null);
-        setRole("client");
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  async function handleLoginSuccess(loggedInUser) {
-    setUser(loggedInUser);
-    await loadUserData(loggedInUser);
-    setAuthModal(null);
-    notify("Connexion réussie. Bienvenue chez ED BUSINESS CENTER !");
-  }
-
-  async function handleRegisterSuccess(registeredUser, formData = {}) {
-    setUser(registeredUser);
-
-    // Le compte est créé même si la table profiles n'est pas
-    // encore configurée. Les informations restent dans les
-    // métadonnées du compte Supabase.
-    try {
-      await supabase.auth.updateUser({
-        data: {
-          full_name: formData.full_name || "",
-          phone: formData.phone || "",
-          sex: formData.sex || "",
-        },
-      });
-    } catch (error) {
-      console.warn("Mise à jour des informations :", error.message);
-    }
-
-    try {
-      await supabase.from("profiles").upsert(
-        {
-          id: registeredUser.id,
-          full_name: formData.full_name || "",
-          phone: formData.phone || "",
-        },
-        { onConflict: "id" }
-      );
-    } catch (error) {
-      console.warn("Enregistrement du profil :", error.message);
-    }
-
-    await loadUserData(registeredUser);
-    setAuthModal(null);
-    notify("Bienvenue chez ED BUSINESS CENTER !");
-  }
-
-  async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      notify("La déconnexion a échoué. Veuillez réessayer.");
-      return;
-    }
-
-    setUser(null);
-    setProfile(null);
-    setRole("client");
-    setActivePage("accueil");
-    setAuthModal(null);
-
-    notify("Vous êtes déconnecté.");
-  }
-
-  async function handleSaveProfile({
-    full_name,
-    phone,
-    photoFile,
-  }) {
-    if (!user) {
-      throw new Error("Vous devez être connecté pour modifier votre profil.");
-    }
-
-    let avatarUrl =
-      profile?.avatar_url ||
-      profile?.profile_photo ||
-      user.user_metadata?.avatar_url ||
-      "";
-
-    // Envoi de la photo dans Supabase Storage.
-    if (photoFile) {
-      const extension =
-        photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
-
-      const filePath = `${user.id}/${Date.now()}.${extension}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("profile-photos")
-        .upload(filePath, photoFile, {
-          upsert: true,
-          contentType: photoFile.type,
-        });
-
-      if (uploadError) {
-        throw new Error(
-          "Impossible d'envoyer la photo. Vérifiez que le stockage Supabase « profile-photos » existe et que ses autorisations sont configurées."
-        );
-      }
-
-      const { data } = supabase.storage
-        .from("profile-photos")
-        .getPublicUrl(filePath);
-
-      avatarUrl = data.publicUrl;
-    }
-
-    // Les métadonnées permettent de conserver les informations
-    // même si la table profiles n'est pas encore disponible.
-    const { error: authError } = await supabase.auth.updateUser({
-      data: {
-        full_name,
-        phone,
-        avatar_url: avatarUrl,
-      },
-    });
-
-    if (authError) {
-      throw new Error("Impossible de mettre à jour le compte.");
-    }
-
-    // La table profiles doit avoir une colonne id liée à l'utilisateur.
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: user.id,
-          full_name,
-          phone,
-          avatar_url: avatarUrl,
-        },
-        { onConflict: "id" }
-      );
-
-    if (profileError) {
-      console.warn(
-        "La table profiles n'a pas pu être mise à jour :",
-        profileError.message
-      );
-    }
-
-    const { data: userData } = await supabase.auth.getUser();
-    const updatedUser = userData?.user || user;
-
-    setUser(updatedUser);
-
-    setProfile({
-      ...profile,
-      id: user.id,
-      full_name,
-      phone,
-      avatar_url: avatarUrl,
-    });
-
-    notify("Votre profil a été mis à jour.");
-  }
-
-  function navigateTo(page) {
-    setActivePage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function handleCourseSelect(course) {
-    setSelectedCourse(course);
-
-    if (!user) {
-      setAuthModal("login");
-      notify("Connectez-vous pour continuer votre inscription.");
-      return;
-    }
-
-    notify("Formation sélectionnée. Contactez-nous pour finaliser l'inscription.");
-    navigateTo("contact");
-  }
-
-  function handleServiceSelect(service) {
-    setSelectedService(service);
-    navigateTo("contact");
-  }
-
-  if (loading) {
-    return (
-      <div className="app-loading">
-        <div className="loading-spinner" />
-        <p>Chargement de ED BUSINESS CENTER...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="app-shell">
-      <Header
-        user={user}
-        profile={profile}
-        role={role}
-        activePage={activePage}
-        onNavigate={navigateTo}
-        onLogin={() => setAuthModal("login")}
-        onRegister={() => setAuthModal("register")}
-        onLogout={handleLogout}
-      />
-
-      <main>
-        {activePage === "accueil" && (
-          <>
-            <MotivationCarousel />
-            <IntroSection onNavigate={navigateTo} />
-            <ServicesSection
-              onSelectService={handleServiceSelect}
-              onNavigate={navigateTo}
-            />
-            <CoursesSection
-              onSelectCourse={handleCourseSelect}
-              onNavigate={navigateTo}
-            />
-            <ContactSection
-              onNavigate={navigateTo}
-              selectedCourse={selectedCourse}
-              selectedService={selectedService}
-            />
-          </>
-        )}
-
-        {activePage === "services" && (
-          <ServicesSection
-            onSelectService={handleServiceSelect}
-            onNavigate={navigateTo}
-          />
-        )}
-
-        {activePage === "formations" && (
-          <CoursesSection
-            onSelectCourse={handleCourseSelect}
-            onNavigate={navigateTo}
-          />
-        )}
-
-        {activePage === "contact" && (
-          <ContactSection
-            onNavigate={navigateTo}
-            selectedCourse={selectedCourse}
-            selectedService={selectedService}
-          />
-        )}
-
-        {activePage === "compte" && (
-          user ? (
-            <AccountSection
-              user={user}
-              profile={profile}
-              role={role}
-              onNavigate={navigateTo}
-              onLogout={handleLogout}
-              onEditProfile={() => setEditProfileOpen(true)}
-            />
-          ) : (
-            <section className="section account-access">
-              <h2>Votre espace personnel</h2>
-              <p>Connectez-vous pour accéder à votre compte.</p>
-              <button
-                className="primary-button"
-                onClick={() => setAuthModal("login")}
-              >
-                Se connecter
-              </button>
-            </section>
-          )
-        )}
-      </main>
-
-      <footer className="site-footer">
-        <div className="footer-brand">
-          <h3>ED BUSINESS CENTER</h3>
-          <p>Apprendre, pratiquer, entreprendre.</p>
-        </div>
-
-        <div className="footer-links">
-          <button onClick={() => navigateTo("accueil")}>Accueil</button>
-          <button onClick={() => navigateTo("services")}>Services</button>
-          <button onClick={() => navigateTo("formations")}>Formations</button>
-          <button onClick={() => navigateTo("contact")}>Contact</button>
-        </div>
-
-        <div className="footer-socials">
-          {SOCIALS.map((social) => (
-            <a
-              key={social.name}
-              href={social.url}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={social.name}
-              title={social.name}
-            >
-              {social.icon}
-            </a>
-          ))}
-        </div>
-
-        <p className="footer-copyright">
-          © {new Date().getFullYear()} ED BUSINESS CENTER. Tous droits réservés.
-        </p>
-      </footer>
-
-      {authModal === "login" && (
-        <LoginModal
-          onClose={() => setAuthModal(null)}
-          onLoginSuccess={handleLoginSuccess}
-          onSwitchToRegister={() => setAuthModal("register")}
-        />
-      )}
-
-      {authModal === "register" && (
-        <RegisterModal
-          onClose={() => setAuthModal(null)}
-          onRegisterSuccess={handleRegisterSuccess}
-          onSwitchToLogin={() => setAuthModal("login")}
-        />
-      )}
-
-      {editProfileOpen && user && (
-        <EditProfileModal
-          user={user}
-          profile={profile}
-          onClose={() => setEditProfileOpen(false)}
-          onSave={handleSaveProfile}
-        />
-      )}
-
-      {notification && (
-        <div className="app-notification" role="status">
-          {notification}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default App;
+               }
