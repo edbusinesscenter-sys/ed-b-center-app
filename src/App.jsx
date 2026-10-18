@@ -92,21 +92,27 @@ export default function App(){
 
       <section className="section dark">
         <h2>Le Réseau Sourcing Chine</h2>
-        <div className="grid-reseau">{RESEAU.map((img,i)=><img key={i} src={IMG(img)} className="reseau-img" alt=""/></div>)}
+        <div className="grid-reseau">
+          {RESEAU.map((img,i)=> <img key={i} src={IMG(img)} className="reseau-img" alt="reseau" /> )}
+        </div>
       </section>
 
       <section className="section">
         <h2 className="section-title">Studio Photo</h2>
-        <div className="grid-photo">{PHOTOS.map((img,i)=><div key={i} className="photo-card"><img src={IMG(img)} alt=""/></div>)}</div>
+        <div className="grid-photo">
+          {PHOTOS.map((img,i)=><div key={i} className="photo-card"><img src={IMG(img)} alt="photo"/></div>)}
+        </div>
       </section>
 
       <section className="section">
         <h2 className="section-title">Nos Services</h2>
-        <div className="grid-service">{SERVICES.map((img,i)=><img key={i} src={IMG(img)} className="service-img" alt=""/></div>)}
+        <div className="grid-service">
+          {SERVICES.map((img,i)=> <img key={i} src={IMG(img)} className="service-img" alt="service" /> )}
+        </div>
       </section>
 
       <footer className="footer">
-        <img src={IMG("logo-ed-b-center.png")} className="footer-logo" alt=""/>
+        <img src={IMG("logo-ed-b-center.png")} className="footer-logo" alt="logo"/>
         <div className="socials"><img src={IMG("logo-whatsapp.png")} alt=""/><img src={IMG("logo-facebook.png")} alt=""/><img src={IMG("logo-instagram.jpeg")} alt=""/><img src={IMG("logo-gmail.png")} alt=""/></div>
         <p>© ED B-CENTER Douala</p>
       </footer>
@@ -123,4 +129,4 @@ export default function App(){
       )}
     </div>
   )
-          }
+}
