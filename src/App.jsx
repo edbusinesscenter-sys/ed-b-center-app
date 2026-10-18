@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Eye, EyeOff, GraduationCap, LogOut, Menu, X, ShieldCheck, LoaderCircle, Mail, LockKeyhole, UserRound, CheckCircle2, Sparkles } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import AdminDashboard from './AdminDashboard';
-
+// ===== FONCTION POUR MODIFIER LES 53 IMAGES - UNE SEULE FOIS =====
+async function changeImage(postId, file){
+  // 1. Upload nouvelle image
+  const { data, error } = await supabase.storage.from('ed-images').upload(`post-${postId}-${Date.now()}.png`, file);
+  if(error){ alert(error.message); return; }
+  const url = supabase.storage.from('ed-images').getPublicUrl(data.path).data.publicUrl;
+  // 2. Met à jour la DB
+  await supabase.from('actualites').update({ image_name: url }).eq('id', postId);
+  alert('Image modifiée ! Recharge la page');
+}
 // --- BRAND AVEC TA MODIF ---
 function Brand({ light = false }) {
   return (
