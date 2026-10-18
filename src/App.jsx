@@ -1007,7 +1007,8 @@ function CoursesSection({ onRegister, onNavigate }) {
       </div>
     </section>
   );
-       }
+}
+    /* =====================================================
    SECTION CONTACT
 ===================================================== */
 
