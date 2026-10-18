@@ -2245,4 +2245,581 @@ function EditProfileModal({ user, profile, onClose, onSave }) {
       </div>
     </div>
   );
-               }
+ }
+/* =====================================================
+   APPLICATION PRINCIPALE
+===================================================== */
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [role, setRole] = useState("client");
+
+  const [activePage, setActivePage] = useState("home");
+  const [authModal, setAuthModal] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+
+  const [notification, setNotification] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  /* Notifications */
+  function notify(message) {
+    setNotification(message);
+
+    window.setTimeout(() => {
+      setNotification("");
+    }, 4000);
+  }
+
+  /* Chargement du profil utilisateur */
+  async function loadUserData(currentUser) {
+    if (!currentUser) {
+      setProfile(null);
+      setRole("client");
+      return;
+    }
+
+    let currentProfile = {
+      id: currentUser.id,
+      full_name: currentUser.user_metadata?.full_name || "",
+      phone: currentUser.user_metadata?.phone || "",
+      sex: currentUser.user_metadata?.sex || "",
+      avatar_url: currentUser.user_metadata?.avatar_url || "",
+      points: 0,
+    };
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        if (!isMissingTableError(error)) {
+          console.error("Erreur de chargement du profil :", error.message);
+        }
+      } else if (data) {
+        currentProfile = {
+          ...currentProfile,
+          ...data,
+        };
+      }
+    } catch (error) {
+      console.error("Chargement du profil :", error.message);
+    }
+
+    setProfile(currentProfile);
+
+    /* Récupération du rôle */
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      if (!error && data?.role) {
+        setRole(data.role);
+      } else {
+        setRole("client");
+      }
+    } catch {
+      setRole("client");
+    }
+  }
+
+  /* Initialisation de l'application */
+  useEffect(() => {
+    let mounted = true;
+
+    async function initializeApp() {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!mounted) return;
+
+        const currentUser = data.session?.user || null;
+
+        setUser(currentUser);
+
+        if (currentUser) {
+          await loadUserData(currentUser);
+        }
+      } catch (error) {
+        console.error(
+          "Erreur d'initialisation :",
+          error.message
+        );
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    initializeApp();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user || null;
+
+      setUser(currentUser);
+
+      if (currentUser) {
+        window.setTimeout(() => {
+          if (mounted) {
+            loadUserData(currentUser);
+          }
+        }, 0);
+      } else {
+        setProfile(null);
+        setRole("client");
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  /* Navigation */
+  function navigateTo(page) {
+    setActivePage(page);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  /* Ouverture de la connexion */
+  function openLogin() {
+    setAuthModal("login");
+  }
+
+  /* Ouverture de l'inscription */
+  function openRegister(course = null) {
+    setSelectedCourse(course);
+    setAuthModal("register");
+  }
+
+  /* Connexion réussie */
+  async function handleLoginSuccess(loggedInUser) {
+    setUser(loggedInUser);
+
+    await loadUserData(loggedInUser);
+
+    setAuthModal(null);
+
+    notify("Connexion réussie. Bienvenue chez ED B-CENTER !");
+  }
+
+  /* Inscription réussie */
+  async function handleRegisterSuccess(newUser, newProfile) {
+    setUser(newUser);
+
+    try {
+      const profileData = {
+        id: newUser.id,
+        full_name: newProfile.full_name,
+        phone: newProfile.phone,
+        sex: newProfile.sex,
+      };
+
+      const { error } = await supabase
+        .from("profiles")
+        .upsert(profileData, {
+          onConflict: "id",
+        });
+
+      if (error && !isMissingTableError(error)) {
+        console.error(
+          "Enregistrement du profil :",
+          error.message
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la création du profil :",
+        error.message
+      );
+    }
+
+    await loadUserData(newUser);
+
+    notify("Ton compte a été créé.");
+  }
+
+  /* Déconnexion */
+  async function handleLogout() {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        throw error;
+      }
+
+      setUser(null);
+      setProfile(null);
+      setRole("client");
+      setAuthModal(null);
+      setEditProfileOpen(false);
+
+      navigateTo("home");
+
+      notify("Tu es maintenant déconnecté.");
+    } catch (error) {
+      notify(
+        error.message || "La déconnexion a échoué."
+      );
+    }
+  }
+
+  /* Enregistrement des modifications du profil */
+  async function handleSaveProfile({
+    full_name,
+    phone,
+    photoFile,
+  }) {
+    if (!user) {
+      throw new Error("Tu dois être connecté.");
+    }
+
+    let avatarUrl =
+      profile?.avatar_url ||
+      profile?.profile_photo ||
+      user.user_metadata?.avatar_url ||
+      "";
+
+    /*
+      Le téléversement de la photo nécessite un bucket
+      Storage configuré dans Supabase.
+    */
+    if (photoFile) {
+      const extension =
+        photoFile.name.split(".").pop() || "jpg";
+
+      const filePath =
+        `${user.id}/${Date.now()}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, photoFile, {
+          upsert: true,
+          contentType: photoFile.type,
+        });
+
+      if (uploadError) {
+        throw new Error(
+          "Impossible d'envoyer la photo. Vérifie la configuration du stockage Supabase."
+        );
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      avatarUrl = publicUrlData.publicUrl;
+    }
+
+    const updatedProfile = {
+      id: user.id,
+      full_name,
+      phone,
+      avatar_url: avatarUrl,
+    };
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert(updatedProfile, {
+        onConflict: "id",
+      });
+
+    if (profileError) {
+      throw new Error(
+        "Impossible d'enregistrer les informations du profil : " +
+          profileError.message
+      );
+    }
+
+    const { error: metadataError } =
+      await supabase.auth.updateUser({
+        data: {
+          full_name,
+          phone,
+          avatar_url: avatarUrl,
+        },
+      });
+
+    if (metadataError) {
+      console.error(
+        "Mise à jour des informations du compte :",
+        metadataError.message
+      );
+    }
+
+    await loadUserData({
+      ...user,
+      user_metadata: {
+        ...user.user_metadata,
+        full_name,
+        phone,
+        avatar_url: avatarUrl,
+      },
+    });
+
+    notify("Ton profil a été mis à jour.");
+  }
+
+  /* Sélection d'un service */
+  function handleSelectService(service) {
+    setSelectedService(service);
+    navigateTo("contact");
+  }
+
+  /* Affichage du chargement */
+  if (loading) {
+    return (
+      <div className="app-loading">
+        <img
+          src={image("logo-ed-b-center.png")}
+          alt="Logo ED BUSINESS CENTER"
+        />
+
+        <p>Chargement de ED BUSINESS CENTER...</p>
+      </div>
+    );
+  }
+
+  /* Interface principale */
+  return (
+    <div className="app">
+      <Header
+        user={user}
+        onLogin={openLogin}
+        onRegister={() => openRegister()}
+        onLogout={handleLogout}
+        onNavigate={navigateTo}
+        activePage={activePage}
+      />
+
+      <main>
+        {activePage === "home" && (
+          <>
+            <MotivationCarousel />
+
+            <IntroSection
+              onNavigate={navigateTo}
+              onRegister={() => openRegister()}
+            />
+
+            <ServicesSection
+              onNavigate={navigateTo}
+              onSelectService={handleSelectService}
+            />
+
+            <CoursesSection
+              onRegister={openRegister}
+              onNavigate={navigateTo}
+            />
+
+            <ContactSection />
+          </>
+        )}
+
+        {activePage === "services" && (
+          <ServicesSection
+            onNavigate={navigateTo}
+            onSelectService={handleSelectService}
+          />
+        )}
+
+        {activePage === "courses" && (
+          <CoursesSection
+            onRegister={openRegister}
+            onNavigate={navigateTo}
+          />
+        )}
+
+        {activePage === "contact" && (
+          <>
+            {selectedService && (
+              <div className="selected-service-notice section-container">
+                <h2>{selectedService.name}</h2>
+
+                <p>{selectedService.description}</p>
+
+                <button
+                  type="button"
+                  className="button button-outline"
+                  onClick={() => setSelectedService(null)}
+                >
+                  Fermer
+                </button>
+              </div>
+            )}
+
+            <ContactSection />
+          </>
+        )}
+
+        {activePage === "account" && (
+          user ? (
+            <AccountSection
+              user={user}
+              profile={profile}
+              role={role}
+              onNavigate={navigateTo}
+              onLogout={handleLogout}
+              onEditProfile={() => setEditProfileOpen(true)}
+            />
+          ) : (
+            <section className="account-access-denied section-container">
+              <h2>Connecte-toi à ton espace</h2>
+
+              <p>
+                Tu dois être connecté pour accéder à ton espace personnel.
+              </p>
+
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={openLogin}
+              >
+                Se connecter
+              </button>
+
+              <button
+                type="button"
+                className="button button-outline"
+                onClick={() => openRegister()}
+              >
+                Créer un compte
+              </button>
+            </section>
+          )
+        )}
+      </main>
+
+      {/* Pied de page */}
+      <footer className="site-footer">
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <img
+              src={image("logo-ed-b-center.png")}
+              alt="Logo ED BUSINESS CENTER"
+            />
+
+            <h3>{BRAND.name}</h3>
+
+            <p>{BRAND.slogan}</p>
+          </div>
+
+          <div className="footer-links">
+            <button
+              type="button"
+              onClick={() => navigateTo("home")}
+            >
+              Accueil
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo("services")}
+            >
+              Services
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo("courses")}
+            >
+              Formations
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo("contact")}
+            >
+              Contact
+            </button>
+          </div>
+
+          <div className="footer-socials">
+            {SOCIALS.map((social) => (
+              <a
+                key={social.name}
+                href={social.url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={social.description}
+                title={social.name}
+              >
+                <img
+                  src={image(social.image)}
+                  alt={social.name}
+                  loading="lazy"
+                />
+              </a>
+            ))}
+          </div>
+
+          <p className="footer-copyright">
+            © {new Date().getFullYear()} ED BUSINESS CENTER.
+            Tous droits réservés.
+          </p>
+        </div>
+      </footer>
+
+      {/* Fenêtre de connexion */}
+      {authModal === "login" && (
+        <LoginModal
+          onClose={() => setAuthModal(null)}
+          onLoginSuccess={handleLoginSuccess}
+          onSwitchToRegister={() => setAuthModal("register")}
+        />
+      )}
+
+      {/* Fenêtre d'inscription */}
+      {authModal === "register" && (
+        <RegisterModal
+          onClose={() => {
+            setAuthModal(null);
+            setSelectedCourse(null);
+          }}
+          onRegisterSuccess={handleRegisterSuccess}
+          onSwitchToLogin={() => setAuthModal("login")}
+          selectedCourse={selectedCourse}
+        />
+      )}
+
+      {/* Modification du profil */}
+      {editProfileOpen && user && (
+        <EditProfileModal
+          user={user}
+          profile={profile}
+          onClose={() => setEditProfileOpen(false)}
+          onSave={handleSaveProfile}
+        />
+      )}
+
+      {/* Notification */}
+      {notification && (
+        <div className="app-notification" role="status">
+          {notification}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
