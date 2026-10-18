@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// ===== CONFIG SUPABASE AVEC TES VRAIES CLÉS =====
+// ===== CONFIG SUPABASE - REMPLACE PAR TES VRAIES CLÉS =====
 const supabase = createClient(
-  "https://jvwmkoshkkzupgrjcttx.supabase.co",
-  "sb_publishable_ojrPvKcGUnlIGvxwVx2f3Q_DDtp3mk8"
+  "https://TON_PROJECT.supabase.co",
+  "TA_CLE_ANON"
 );
 
-// ===== TES 53 IMAGES SUR GITHUB =====
+// ===== TES 53 IMAGES =====
 const IMG_BASE = "https://raw.githubusercontent.com/edbusinesscenter-sys/ed-b-center-app/main/public/images/";
 const IMG = (name) => {
   if(!name) return `${IMG_BASE}logo-ed-b-center.png`;
@@ -15,7 +15,6 @@ const IMG = (name) => {
   return `${IMG_BASE}${name}`;
 };
 
-// Fonction admin pour modifier n'importe quelle image
 async function changeImage(postId, file, setLoading){
   if(!file) return;
   setLoading(true);
@@ -61,36 +60,32 @@ export default function App(){
   ];
 
   return (
-    <div style={{background:'#FFFAFB', minHeight:'100vh', fontFamily:'Inter, sans-serif'}}>
-      {/* HEADER DEGRADÉ TURQUOISE -> BLEU #373DDB */}
+    <div style={{background:'#FFFAFB', minHeight:'100vh', fontFamily:'Inter'}}>
       <header style={{
         background:'linear-gradient(90deg, #2DD4BF 0%, #373DDB 100%)',
         padding:'12px 16px',
         display:'flex',
         justifyContent:'space-between',
         alignItems:'center',
-        color:'white',
-        position:'sticky',
-        top:0,
-        zIndex:10
+        color:'white'
       }}>
         <div style={{display:'flex', alignItems:'center', gap:10}}>
-          <img src={IMG('logo-ed-b-center.png')} style={{width:36, height:36, borderRadius:8, background:'white', objectFit:'cover'}}/>
+          <img src={IMG('logo-ed-b-center.png')} style={{width:36, height:36, borderRadius:8, background:'white'}}/>
           <b>ED B-CENTER</b>
         </div>
-        <div style={{display:'flex', gap:16, fontSize:20}}>
-          <span onClick={()=>setView('notifications')} style={{cursor:'pointer'}}>🔔</span>
-          <span onClick={()=>setView(isAdmin?'admin':'profile')} style={{cursor:'pointer'}}>👤</span>
+        <div style={{display:'flex', gap:12}}>
+          <button onClick={()=>setView('notifications')}>🔔</button>
+          <button onClick={()=>setView(isAdmin?'admin':'profile')}>👤</button>
         </div>
       </header>
 
       {view==='home' && (
         <>
           <div style={{padding:16}}>
-            <h2 style={{color:'#373DDB', marginBottom:8}}>Motivation</h2>
-            <div style={{display:'flex', gap:12, overflowX:'auto', paddingBottom:8}}>
+            <h2 style={{color:'#373DDB'}}>Motivation</h2>
+            <div style={{display:'flex', gap:12, overflowX:'auto'}}>
               {heroImages.map((img,i)=>(
-                <img key={i} src={IMG(img)} style={{minWidth:280, width:280, height:160, objectFit:'cover', borderRadius:16, background:'#eee'}}/>
+                <img key={i} src={IMG(img)} style={{width:280, height:160, objectFit:'cover', borderRadius:16}}/>
               ))}
             </div>
           </div>
@@ -100,7 +95,7 @@ export default function App(){
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
               {actualites.filter(a=>a.category==='formation').map(post=>(
                 <div key={post.id} style={{background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
-                  <img src={IMG(post.image_name)} style={{width:'100%', height:120, objectFit:'cover'}} onError={(e)=>e.target.src=IMG('logo-ed-b-center.png')}/>
+                  <img src={IMG(post.image_name)} style={{width:'100%', height:120, objectFit:'cover'}}/>
                   <div style={{padding:8}}><b style={{fontSize:12}}>{post.title}</b></div>
                 </div>
               ))}
@@ -111,7 +106,7 @@ export default function App(){
             <h2 style={{color:'#373DDB'}}>Services & LE RESEAU</h2>
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
               {actualites.filter(a=>a.category==='service').map(post=>(
-                <div key={post.id} style={{background:'white', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+                <div key={post.id} style={{background:'white', borderRadius:16, overflow:'hidden'}}>
                   <img src={IMG(post.image_name)} style={{width:'100%', height:120, objectFit:'cover'}}/>
                   <div style={{padding:8, fontSize:12}}>{post.title}</div>
                 </div>
@@ -121,9 +116,8 @@ export default function App(){
         </>
       )}
 
-      {view==='admin' && <AdminDashboard actualites={actualites} />}
-      {view==='profile' && <div style={{padding:16}}><h3>Profil modifiable</h3><p>Tu pourras modifier nom et photo ici.</p><button onClick={()=>setView('home')}>Retour</button></div>}
-      {view==='notifications' && <div style={{padding:16}}><h3>Notifications</h3><button onClick={()=>setView('home')}>Retour</button></div>}
+      {view==='admin' && isAdmin && <AdminDashboard actualites={actualites} />}
+      {view==='profile' && <div style={{padding:16}}>Profil modifiable</div>}
     </div>
   );
 }
@@ -131,19 +125,24 @@ export default function App(){
 function AdminDashboard({actualites}){
   const [loading, setLoading] = useState(false);
   return (
-    <div style={{padding:16}}>
+    <div style={{padding:16, background:'#FFFAFB'}}>
       <h1 style={{color:'#373DDB'}}>Admin - Modifier les 53 Images</h1>
-      <div style={{display:'grid', gap:16, marginTop:16}}>
+      <div style={{display:'grid', gap:16}}>
         {actualites.map(post=>(
-          <div key={post.id} style={{background:'white', padding:12, borderRadius:12, display:'flex', gap:12, alignItems:'center', boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
-            <img src={IMG(post.image_name)} style={{width:80, height:80, objectFit:'cover', borderRadius:8, background:'#eee'}}/>
+          <div key={post.id} style={{background:'white', padding:12, borderRadius:12, display:'flex', gap:12, alignItems:'center'}}>
+            <img src={IMG(post.image_name)} style={{width:80, height:80, objectFit:'cover', borderRadius:8}}/>
             <div style={{flex:1}}>
               <b>{post.title}</b><br/>
-              <small style={{color:'#888', fontSize:10}}>{post.image_name}</small>
+              <small style={{color:'#666'}}>{post.image_name}</small>
               <div style={{marginTop:8}}>
-                <input type="file" id={`file-${post.id}`} style={{display:'none'}} onChange={(e)=>changeImage(post.id, e.target.files[0], setLoading)} />
-                <button onClick={()=>document.getElementById(`file-${post.id}`).click()} disabled={loading} style={{background:'linear-gradient(90deg,#2DD4BF,#373DDB)', color:'white', border:'none', padding:'6px 12px', borderRadius:8, fontSize:12, cursor:'pointer'}}>
-                  {loading ? 'Chargement...' : '📸 Modifier cette image'}
+                <input type="file" id={`file-${post.id}`} style={{display:'none'}} 
+                  onChange={(e)=>changeImage(post.id, e.target.files[0], setLoading)} />
+                <button 
+                  onClick={()=>document.getElementById(`file-${post.id}`).click()}
+                  style={{background:'linear-gradient(90deg,#2DD4BF,#373DDB)', color:'white', border:'none', padding:'6px 12px', borderRadius:8, fontSize:12}}
+                  disabled={loading}
+                >
+                  {loading ? '...' : '📸 Modifier'}
                 </button>
               </div>
             </div>
@@ -152,4 +151,4 @@ function AdminDashboard({actualites}){
       </div>
     </div>
   );
-}}
+                                       }
