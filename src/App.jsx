@@ -1,1234 +1,151 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-  BookOpen,
-  Eye,
-  EyeOff,
-  GraduationCap,
-  Palette,
-  Globe,
-  BriefcaseBusiness,
-  Lightbulb,
-  LoaderCircle,
-  Mail,
-  LockKeyhole,
-  UserRound,
-  CheckCircle2,
-  LogOut,
-  Sparkles,
-  Menu,
-  X,
-  ShieldCheck,
-} from 'lucide-react';
+import { useState, useEffect } from 'react'
 
-import { supabase } from './supabaseClient';
-import AdminDashboard from './AdminDashboard';
+const BASE = import.meta.env.BASE_URL
+const IMG = (name) => `${BASE}${name}`
 
-/* =========================================================
-   SERVICES ED B-CENTER
-========================================================= */
+// 53 IMAGES - TOUT EST UTILISÉ
+const MOTIVATION = [
+  "motivation-1-entrepreneur.png",
+  "motivation-2-reflexion.jpeg",
+  "motivation-3-entrepreneur.jpeg",
+  "motivation-4-meditation.jpeg",
+]
 
-const services = [
-  {
-    name: 'ED B-ACADEMY',
-    description:
-      'Des formations pratiques pour apprendre, pratiquer et entreprendre.',
-    detail:
-      'Infographie, intelligence artificielle, sourcing et outils de gestion.',
-    icon: GraduationCap,
-  },
-  {
-    name: 'ED DIGITAL AGENCY',
-    description:
-      'Développez une image professionnelle et attirez vos clients.',
-    detail:
-      'Création graphique, identité visuelle et communication digitale.',
-    icon: Palette,
-  },
-  {
-    name: 'ED B-SOURCING',
-    description:
-      'Recherchez des produits et préparez vos approvisionnements.',
-    detail:
-      'Recherche, comparaison, sourcing Chine et précommandes.',
-    icon: Globe,
-  },
-  {
-    name: 'ED B-CONSULTING',
-    description:
-      'Structurez vos idées et avancez avec une méthode claire.',
-    detail:
-      'Conseils pratiques pour les entrepreneurs et porteurs de projets.',
-    icon: BriefcaseBusiness,
-  },
-  {
-    name: 'ED B-SOLUTION',
-    description:
-      'Des solutions numériques adaptées à vos besoins.',
-    detail:
-      'Outils digitaux et accompagnement vers des méthodes plus efficaces.',
-    icon: Lightbulb,
-  },
-];
+const FORMATIONS = [
+  { img: "formation-infographie-ia.png", title: "Infographie & IA", old: 110000, price: 85000, cat: "Design", badge: "Bestseller", icon: "icone-ia-photographie.jpeg" },
+  { img: "formation-excel-avance-power-bi.png", title: "Excel Avancé + Power BI", old: 110000, price: 85000, cat: "Data", badge: "Nouveau", icon: "icone-power-bi.jpeg" },
+  { img: "formation-power-bi.png", title: "Power BI Pro", old: 90000, price: 65000, cat: "Data", badge: "", icon: "icone-power-bi.jpeg" },
+  { img: "formation-excel.png", title: "Excel Complet", old: 60000, price: 40000, cat: "Data", badge: "", icon: "icone-excel.jpeg" },
+  { img: "formation-analyse-visualisation-big-data.png", title: "Analyse & Visualisation Big Data", old: 120000, price: 95000, cat: "Data", badge: "Top", icon: "icone-big-data.jpeg" },
+  { img: "formation-big-data.png", title: "Big Data Fondamentaux", old: 100000, price: 75000, cat: "Data", badge: "", icon: "icone-big-data.jpeg" },
+  { img: "formation-sourcing-chine.png", title: "Sourcing Chine", old: 80000, price: 50000, cat: "Business", badge: "Top Vente", icon: "" },
+  { img: "visuel-infographie-ia.jpeg", title: "IA Créative", old: 85000, price: 60000, cat: "IA", badge: "", icon: "" },
+  { img: "visuel-technologie-apprentissage.jpeg", title: "Technologie & Apprentissage", old: 70000, price: 45000, cat: "Tech", badge: "", icon: "" },
+]
 
-/* =========================================================
-   ÉLÉMENTS GRAPHIQUES
-========================================================= */
+const RESEAU = [
+  "le-reseau-sourcing-chine.png","le-reseau-recherche-produits.png","le-reseau-verification-fournisseurs.png",
+  "le-reseau-comparaison-fournisseurs.png","le-reseau-avantages.png","le-reseau-petits-stocks.png",
+  "le-reseau-produits-sur-commande.png","le-reseau-inscription-fonctionnement.png",
+  "le-reseau-recherche-telephones.png","le-reseau-recherche-pieces-auto.png"
+]
 
-function Wave({ className = '' }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 1440 180"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M0,70 C260,180 440,10 720,70 S1160,160 1440,35 L1440,180 L0,180 Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
+const PHOTOS = [
+  "photographie-professionnelle-portrait.png","photographie-mariage-decoration.png",
+  "photographie-mariage-detail.png","photographie-evenementielle-fleurs.png",
+  "photographie-artistique-silhouette.png"
+]
 
-function Brand({ light = false }) {
-  return (
-    <div className={`brand ${light ? 'brand-light' : ''}`}>
-      <div className="brand-mark">
-        <BookOpen size={25} strokeWidth={2.2} />
-      </div>
+const SERVICES = [
+  "service-ed-b-academy.png","service-ed-b-consulting.png","service-ed-b-sourcing.png",
+  "service-ed-b-solution.png","service-ed-digital-agency.png","service-solutions-numeriques.png",
+  "service-solutions-numeriques-1.png","service-visuels-publicitaires.png",
+  "service-contenus-reseaux-sociaux.png","service-photographie-professionnelle.png",
+  "service-photographie-evenementielle.png","service-photographie-produits.png",
+  "service-packs-photographie.png","service-accompagnement-formation.png","maquette-conception-graphique.png"
+]
 
-      <div>
-        <strong>ED B-CENTER</strong>
-        <span>APPRENDRE · PRATIQUER · ENTREPRENDRE</span>
-      </div>
-    </div>
-  );
-}
+export default function App(){
+  const [currentMotiv, setCurrentMotiv] = useState(0)
+  const [selected, setSelected] = useState(null)
 
-function LoadingScreen({
-  message = 'Préparation de ton espace…',
-}) {
-  return (
-    <main className="loading-screen" aria-live="polite">
-      <div className="loading-mark">
-        <BookOpen size={35} />
-      </div>
-
-      <LoaderCircle className="spin" size={25} />
-
-      <p>{message}</p>
-    </main>
-  );
-}
-
-/* =========================================================
-   ÉCRAN DE BIENVENUE
-========================================================= */
-
-function Splash({ onStart }) {
-  return (
-    <main className="splash-screen">
-      <Wave className="splash-wave splash-wave-top" />
-
-      <div className="splash-brand">
-        <Brand light />
-      </div>
-
-      <div className="splash-center">
-        <div className="splash-book">
-          <BookOpen size={82} strokeWidth={1.5} />
-
-          <span className="book-line book-line-one" />
-          <span className="book-line book-line-two" />
-        </div>
-
-        <div className="splash-sparkle">
-          <Sparkles size={24} />
-        </div>
-      </div>
-
-      <Wave className="splash-wave splash-wave-bottom" />
-
-      <section className="splash-card">
-        <div className="eyebrow">TON AVENIR COMMENCE ICI</div>
-
-        <h1>
-          Apprends aujourd’hui.
-          <br />
-          <span>Construis demain.</span>
-        </h1>
-
-        <p>
-          Des compétences pratiques, des outils numériques et un
-          accompagnement pour passer à l’action.
-        </p>
-
-        <button
-          type="button"
-          className="primary-button"
-          onClick={onStart}
-        >
-          Commencer <ArrowRight size={19} />
-        </button>
-
-        <div className="splash-dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
-      </section>
-    </main>
-  );
-}
-
-/* =========================================================
-   AUTHENTIFICATION
-========================================================= */
-
-function AuthScreen({
-  mode,
-  setMode,
-  onBack,
-  onAuthenticated,
-}) {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
-  const isSignup = mode === 'signup';
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    setError('');
-    setMessage('');
-
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (!normalizedEmail) {
-      setError('Entre ton adresse e-mail.');
-      return;
-    }
-
-    if (isSignup && fullName.trim().length < 2) {
-      setError('Entre ton nom complet pour continuer.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError(
-        'Le mot de passe doit contenir au moins 6 caractères.'
-      );
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      if (isSignup) {
-        const { data, error: authError } =
-          await supabase.auth.signUp({
-            email: normalizedEmail,
-            password,
-            options: {
-              data: {
-                full_name: fullName.trim(),
-              },
-            },
-          });
-
-        if (authError) {
-          throw authError;
-        }
-
-        if (data.session) {
-          onAuthenticated(data.session);
-        } else {
-          setMessage(
-            'Compte créé. Consulte ta boîte mail pour confirmer ton adresse avant de te connecter.'
-          );
-
-          setPassword('');
-          setMode('login');
-        }
-      } else {
-        const { data, error: authError } =
-          await supabase.auth.signInWithPassword({
-            email: normalizedEmail,
-            password,
-          });
-
-        if (authError) {
-          throw authError;
-        }
-
-        if (!data.session) {
-          throw new Error(
-            'Connexion incomplète. Réessaie dans quelques instants.'
-          );
-        }
-
-        onAuthenticated(data.session);
-      }
-    } catch (err) {
-      const errorMessage = String(err?.message || '');
-
-      if (
-        errorMessage
-          .toLowerCase()
-          .includes('invalid login credentials')
-      ) {
-        setError(
-          'Adresse e-mail ou mot de passe incorrect.'
-        );
-      } else if (
-        errorMessage
-          .toLowerCase()
-          .includes('user already registered')
-      ) {
-        setError(
-          'Cette adresse possède déjà un compte. Essaie de te connecter.'
-        );
-      } else if (
-        errorMessage
-          .toLowerCase()
-          .includes('email not confirmed')
-      ) {
-        setError(
-          'Confirme ton adresse e-mail avant de te connecter.'
-        );
-      } else {
-        setError(
-          errorMessage || 'Une erreur est survenue. Réessaie.'
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function switchMode() {
-    setError('');
-    setMessage('');
-    setPassword('');
-    setMode(isSignup ? 'login' : 'signup');
-  }
+  useEffect(()=>{
+    const id = setInterval(()=> setCurrentMotiv(m=> (m+1)%MOTIVATION.length), 3500)
+    return ()=> clearInterval(id)
+  },[])
 
   return (
-    <main className="auth-screen">
-      <header className="auth-header">
-        <button
-          type="button"
-          className="round-back"
-          onClick={onBack}
-          aria-label="Retour à l’accueil"
-        >
-          <ArrowLeft size={21} />
-        </button>
-
-        <Brand light />
-
-        <div className="auth-header-copy">
-          <div className="eyebrow">
-            BIENVENUE CHEZ ED B-CENTER
-          </div>
-
-          <h1>
-            {isSignup
-              ? 'Créer un compte'
-              : 'Heureux de te revoir !'}
-          </h1>
-
-          <p>
-            {isSignup
-              ? 'Prépare-toi à apprendre et à progresser.'
-              : 'Connecte-toi pour continuer ton parcours.'}
-          </p>
-        </div>
-
-        <Wave className="auth-wave" />
+    <div className="premium-app">
+      <header className="header">
+        <img src={IMG("logo-ed-b-center.png")} className="logo-img" alt="ED B-CENTER"/>
+        <div className="brand">ED B-CENTER</div>
+        <div className="slogan">Apprendre • Pratiquer • Entreprendre</div>
       </header>
 
-      <section className="auth-card">
-        <div className="auth-illustration">
-          <div className="illustration-orbit orbit-one" />
-          <div className="illustration-orbit orbit-two" />
-
-          <div className="illustration-book">
-            <BookOpen size={54} />
-          </div>
-
-          <div className="illustration-cap">
-            <GraduationCap size={33} />
-          </div>
-
-          <div className="illustration-sparkle">
-            <Sparkles size={22} />
-          </div>
-
-          <div className="illustration-label">
-            APPRENDRE • CRÉER • ÉVOLUER
-          </div>
-        </div>
-
-        <div className="auth-form-heading">
-          <h2>
-            {isSignup
-              ? 'Rejoins la communauté'
-              : 'Connexion'}
-          </h2>
-
-          <p>
-            {isSignup
-              ? 'Quelques informations pour commencer.'
-              : 'Entre tes identifiants pour accéder à ton espace.'}
-          </p>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="auth-form"
-        >
-          {isSignup && (
-            <label className="field">
-              <span>Nom complet</span>
-
-              <div className="input-wrap">
-                <UserRound size={19} />
-
-                <input
-                  type="text"
-                  autoComplete="name"
-                  value={fullName}
-                  onChange={(event) =>
-                    setFullName(event.target.value)
-                  }
-                  placeholder="Ex. Jean Dupont"
-                  required
-                />
-
-                {fullName.trim().length >= 2 && (
-                  <CheckCircle2
-                    className="valid-icon"
-                    size={18}
-                  />
-                )}
+      {/* 1. CAROUSEL MOTIVATION EN HAUT */}
+      <section className="motiv-carousel">
+        <div className="motiv-track" style={{transform:`translateX(-${currentMotiv*100}%)`}}>
+          {MOTIVATION.map((img,i)=>(
+            <div key={i} className="motiv-slide">
+              <img src={IMG(img)} alt="motivation"/>
+              <div className="motiv-overlay">
+                <h2>{i===0?"Passe à l'action":i===1?"Réfléchis Stratégique":i===2?"Entreprends Maintenant":"Reste Focus"}</h2>
+                <p>Formation premium à Douala - De 50.000 FCFA</p>
               </div>
-            </label>
-          )}
-
-          <label className="field">
-            <span>Adresse e-mail</span>
-
-            <div className="input-wrap">
-              <Mail size={19} />
-
-              <input
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
-                placeholder="nom@exemple.com"
-                required
-              />
             </div>
-          </label>
-
-          <label className="field">
-            <span>Mot de passe</span>
-
-            <div className="input-wrap">
-              <LockKeyhole size={19} />
-
-              <input
-                type={showPassword ? 'text' : 'password'}
-                autoComplete={
-                  isSignup
-                    ? 'new-password'
-                    : 'current-password'
-                }
-                value={password}
-                onChange={(event) =>
-                  setPassword(event.target.value)
-                }
-                placeholder="6 caractères minimum"
-                minLength={6}
-                required
-              />
-
-              <button
-                type="button"
-                className="input-action"
-                onClick={() =>
-                  setShowPassword((current) => !current)
-                }
-                aria-label={
-                  showPassword
-                    ? 'Masquer le mot de passe'
-                    : 'Afficher le mot de passe'
-                }
-              >
-                {showPassword ? (
-                  <EyeOff size={18} />
-                ) : (
-                  <Eye size={18} />
-                )}
-              </button>
-            </div>
-          </label>
-
-          {error && (
-            <div
-              className="form-message form-error"
-              role="alert"
-            >
-              {error}
-            </div>
-          )}
-
-          {message && (
-            <div
-              className="form-message form-success"
-              role="status"
-            >
-              {message}
-            </div>
-          )}
-
-          <button
-            className="primary-button auth-submit"
-            type="submit"
-            disabled={loading}
-          >
-            {loading && (
-              <LoaderCircle
-                className="spin"
-                size={19}
-              />
-            )}
-
-            {loading
-              ? 'Patiente…'
-              : isSignup
-                ? 'Créer mon compte'
-                : 'Me connecter'}
-
-            {!loading && <ArrowRight size={19} />}
-          </button>
-        </form>
-
-        <div className="auth-switch">
-          {isSignup
-            ? 'Tu as déjà un compte ?'
-            : 'Nouveau ici ?'}
-
-          <button
-            type="button"
-            onClick={switchMode}
-          >
-            {isSignup
-              ? 'Se connecter'
-              : 'Créer un compte'}
-          </button>
+          ))}
         </div>
-
-        <p className="auth-legal">
-          En continuant, tu acceptes d’utiliser ED B-CENTER
-          de manière responsable.
-        </p>
-      </section>
-    </main>
-  );
-}
-
-/* =========================================================
-   CARROUSEL DES SERVICES
-========================================================= */
-
-function ServiceCarousel() {
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const startX = useRef(0);
-
-  useEffect(() => {
-    if (paused) {
-      return undefined;
-    }
-
-    const timer = window.setInterval(() => {
-      setActive(
-        (current) => (current + 1) % services.length
-      );
-    }, 2500);
-
-    return () => window.clearInterval(timer);
-  }, [paused]);
-
-  function changeSlide(direction) {
-    setActive(
-      (current) =>
-        (current + direction + services.length) %
-        services.length
-    );
-
-    setPaused(true);
-  }
-
-  return (
-    <section
-      className="services-section"
-      id="services"
-    >
-      <div className="section-heading">
-        <div>
-          <div className="eyebrow">
-            DÉCOUVRE NOS ACTIVITÉS
-          </div>
-
-          <h2>Nos services</h2>
-
-          <p>
-            Des solutions pour apprendre, créer et entreprendre.
-          </p>
-        </div>
-
-        <div className="carousel-controls">
-          <button
-            type="button"
-            onClick={() => changeSlide(-1)}
-            aria-label="Service précédent"
-          >
-            <ArrowLeft size={18} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => changeSlide(1)}
-            aria-label="Service suivant"
-          >
-            <ArrowRight size={18} />
-          </button>
-        </div>
-      </div>
-
-      <div
-        className="service-carousel"
-        onTouchStart={(event) => {
-          startX.current =
-            event.touches[0].clientX;
-
-          setPaused(true);
-        }}
-        onTouchEnd={(event) => {
-          const distance =
-            event.changedTouches[0].clientX -
-            startX.current;
-
-          if (Math.abs(distance) > 45) {
-            changeSlide(distance < 0 ? 1 : -1);
-          }
-        }}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
-        {services.map((service, index) => {
-          const Icon = service.icon;
-
-          const offset =
-            (index - active + services.length) %
-            services.length;
-
-          const relativeOffset =
-            offset > services.length / 2
-              ? offset - services.length
-              : offset;
-
-          return (
-            <article
-              key={service.name}
-              className={[
-                'service-card',
-                index === active ? 'is-active' : '',
-                Math.abs(relativeOffset) === 1
-                  ? 'is-near'
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              style={{
-                '--card-offset': relativeOffset,
-              }}
-              onClick={() => {
-                setActive(index);
-                setPaused(true);
-              }}
-            >
-              <div className="service-icon">
-                <Icon size={28} />
-              </div>
-
-              <h3>{service.name}</h3>
-
-              <p>{service.description}</p>
-
-              <div className="service-detail">
-                {service.detail}
-              </div>
-
-              <a
-                className="service-link"
-                href={`mailto:edbusinesscenter@gmail.com?subject=${encodeURIComponent(service.name)}`}
-                onClick={(event) =>
-                  event.stopPropagation()
-                }
-              >
-                En savoir plus <ArrowRight size={17} />
-              </a>
-            </article>
-          );
-        })}
-      </div>
-
-      <div
-        className="carousel-dots"
-        aria-label="Choisir un service"
-      >
-        {services.map((service, index) => (
-          <button
-            type="button"
-            key={service.name}
-            className={
-              active === index ? 'active' : ''
-            }
-            onClick={() => {
-              setActive(index);
-              setPaused(true);
-            }}
-            aria-label={`Afficher ${service.name}`}
-          />
-        ))}
-      </div>
-
-      {paused && (
-        <button
-          type="button"
-          className="resume-carousel"
-          onClick={() => setPaused(false)}
-        >
-          Reprendre le défilement automatique
-        </button>
-      )}
-    </section>
-  );
-}
-
-/* =========================================================
-   ACCUEIL MEMBRE ET ESPACES ED B-CENTER
-========================================================= */
-
-function HomeScreen({ session, onLogout }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [userRole, setUserRole] = useState('client');
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileError, setProfileError] = useState('');
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [showTrainer, setShowTrainer] = useState(false);
-
-  const isAdmin = userRole === 'admin';
-  const isTrainer = userRole === 'formatrice';
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadProfile() {
-      setProfileLoading(true);
-      setProfileError('');
-
-      try {
-        const userId = session?.user?.id;
-
-        if (!userId) {
-          throw new Error('Session utilisateur introuvable.');
-        }
-
-        const [
-          { data: profileData, error: profileErr },
-          { data: roleData, error: roleErr },
-        ] = await Promise.all([
-          supabase
-            .from('profiles')
-            .select('id, full_name, email, created_at')
-            .eq('id', userId)
-            .maybeSingle(),
-
-          supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userId)
-            .maybeSingle(),
-        ]);
-
-        if (profileErr) throw profileErr;
-        if (roleErr) throw roleErr;
-
-        const databaseRole = roleData?.role;
-        const allowedRoles = ['admin', 'formatrice', 'client'];
-
-        if (!allowedRoles.includes(databaseRole)) {
-          throw new Error(
-            'Rôle absent ou non reconnu pour ce compte.'
-          );
-        }
-
-        if (active) {
-          setProfile(profileData);
-          setUserRole(databaseRole);
-
-          console.log('Compte connecté :', session.user.email);
-          console.log('Rôle Supabase :', databaseRole);
-          console.log('Identifiant utilisateur :', userId);
-        }
-      } catch (err) {
-        console.error('Erreur de chargement du profil :', err);
-
-        if (active) {
-          setProfileError(
-            err?.message ||
-              'Impossible de charger le profil depuis Supabase.'
-          );
-          setUserRole('client');
-        }
-      } finally {
-        if (active) {
-          setProfileLoading(false);
-        }
-      }
-    }
-
-    loadProfile();
-
-    return () => {
-      active = false;
-    };
-  }, [session?.user?.id]);
-
-  async function handleLogoutClick() {
-    if (loggingOut) return;
-
-    setLoggingOut(true);
-
-    try {
-      await onLogout();
-    } catch (err) {
-      console.error('Erreur de déconnexion :', err);
-    } finally {
-      setLoggingOut(false);
-    }
-  }
-
-  const userName =
-    profile?.full_name ||
-    session?.user?.user_metadata?.full_name ||
-    session?.user?.email?.split('@')[0] ||
-    'Membre';
-
-  if (profileLoading) {
-    return <LoadingScreen message="Chargement de ton profil et de tes autorisations…" />;
-  }
-
-  if (showAdmin && isAdmin) {
-    return (
-      <AdminDashboard
-        onBack={() => setShowAdmin(false)}
-      />
-    );
-  }
-
-  if (showTrainer && isTrainer) {
-    return (
-      <main className="home-screen">
-        <header className="home-header">
-          <Brand />
-
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => setShowTrainer(false)}
-          >
-            <ArrowLeft size={18} />
-            Retour à mon espace
-          </button>
-        </header>
-
-        <section className="home-welcome">
-          <div className="eyebrow">ESPACE PÉDAGOGIQUE</div>
-
-          <h1>
-            🎓 Bienvenue, <span>{userName} !</span>
-          </h1>
-
-          <p>
-            Bienvenue dans ton espace formatrice ED B-CENTER.
-            Tu pourras y retrouver les formations attribuées
-            et suivre tes apprenants.
-          </p>
-        </section>
-
-        <section className="services-section">
-          <div className="section-heading">
-            <div>
-              <div className="eyebrow">TON ACTIVITÉ PÉDAGOGIQUE</div>
-              <h2>Mon espace formatrice</h2>
-              <p>Un espace dédié à tes activités pédagogiques.</p>
-            </div>
-          </div>
-
-          <div className="service-carousel">
-            <article className="service-card is-active">
-              <div className="service-icon">
-                <GraduationCap size={28} />
-              </div>
-              <h3>Mes formations</h3>
-              <p>
-                Espace prévu pour les formations qui te seront attribuées.
-              </p>
-            </article>
-
-            <article className="service-card is-active">
-              <div className="service-icon">
-                <BookOpen size={28} />
-              </div>
-              <h3>Mes apprenants</h3>
-              <p>
-                Espace prévu pour le suivi des apprenants de tes formations.
-              </p>
-            </article>
-          </div>
-
-          <p role="status">
-            Les données des formations et des apprenants seront ajoutées
-            lors d'une prochaine étape.
-          </p>
-        </section>
-      </main>
-    );
-  }
-
-  return (
-    <main className="home-screen">
-      <header className="home-header">
-        <Brand />
-
-        <button
-          type="button"
-          className="menu-toggle"
-          onClick={() => setMenuOpen((current) => !current)}
-          aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-
-        {menuOpen && (
-          <nav className="home-menu">
-            <a
-              href="#services"
-              onClick={() => setMenuOpen(false)}
-            >
-              Nos services
-            </a>
-
-            <a
-              href="mailto:edbusinesscenter@gmail.com"
-              onClick={() => setMenuOpen(false)}
-            >
-              Nous contacter
-            </a>
-
-            {(isAdmin || isTrainer) && (
-  <a
-    href="https://bassomodominique9-debug.github.io/Suivi/"
-    target="_blank"
-    rel="noreferrer"
-    onClick={() => setMenuOpen(false)}
-  >
-    Suivi et évaluation des apprenants
-  </a>
-)}
-
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAdmin(true);
-                  setMenuOpen(false);
-                }}
-              >
-                <ShieldCheck size={17} />
-                Administration
-              </button>
-            )}
-
-            {isTrainer && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowTrainer(true);
-                  setMenuOpen(false);
-                }}
-              >
-                <GraduationCap size={17} />
-                Espace formatrice
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleLogoutClick}
-              disabled={loggingOut}
-            >
-              <LogOut size={17} />
-              {loggingOut ? 'Déconnexion…' : 'Se déconnecter'}
-            </button>
-          </nav>
-        )}
-      </header>
-
-      <section className="home-welcome">
-        <div className="eyebrow">TON ESPACE PERSONNEL</div>
-
-        <h1>
-          👋 Hello, ravi de te revoir,
-          <br />
-          <span>{userName} !</span>
-        </h1>
-
-        <p>
-          Continue à apprendre, à pratiquer et à entreprendre
-          avec ED B-CENTER.
-        </p>
-
-        {/* AFFICHAGE TEMPORAIRE POUR LE DIAGNOSTIC */}
-        <div
-          style={{
-            margin: '16px 0',
-            padding: '12px',
-            border: '1px solid #ddd',
-            borderRadius: '10px',
-            fontSize: '13px',
-            overflowWrap: 'anywhere',
-          }}
-        >
-          <strong>Diagnostic du compte</strong>
-          <br />
-          E-mail : {session?.user?.email || 'Non disponible'}
-          <br />
-          Rôle détecté : {userRole}
-        </div>
-
-        {profileError && (
-          <p role="alert">
-            Erreur de chargement : {profileError}
-          </p>
-        )}
-
-        {!profileError && (
-          <p>
-            {isAdmin
-              ? '👑 Tu es connecté en tant qu’administrateur.'
-              : isTrainer
-                ? '🎓 Tu es connecté en tant que formatrice.'
-                : '👤 Tu es connecté en tant que membre.'}
-          </p>
-        )}
-
-        {isAdmin && (
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => setShowAdmin(true)}
-          >
-            <ShieldCheck size={19} />
-            Ouvrir le tableau de bord administrateur
-            <ArrowRight size={19} />
-          </button>
-        )}
-
-        {isTrainer && (
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => setShowTrainer(true)}
-          >
-            <GraduationCap size={19} />
-            Ouvrir mon espace formatrice
-            <ArrowRight size={19} />
-          </button>
-        )}
+        <div className="dots">{MOTIVATION.map((_,i)=><span key={i} className={i===currentMotiv?'active':''}></span>)}</div>
       </section>
 
-      <ServiceCarousel />
+      {/* 2. BANNIERE FACEBOOK */}
+      <section className="banner-section">
+        <img src={IMG("banniere-facebook-ed-b-center.png")} alt="banniere"/>
+      </section>
 
-      <footer className="home-footer">
-        <Brand />
-        <div className="home-footer-links">
-          <a href="mailto:edbusinesscenter@gmail.com">E-mail</a>
+      {/* 3. FORMATIONS - 9 CARTES PREMIUM */}
+      <section className="section">
+        <h2 className="section-title">Formations Premium</h2>
+        <div className="grid">
+          {FORMATIONS.map((f,i)=>(
+            <div key={i} className="card" onClick={()=>setSelected(f)}>
+              <div className="card-img"><img src={IMG(f.img)} alt={f.title}/>{f.badge&&<span className="badge">{f.badge}</span>}</div>
+              <div className="card-body">
+                <span className="cat">{f.cat}</span>
+                <h3>{f.title}</h3>
+                <div className="price"><span className="old">{f.old.toLocaleString()} FCFA</span><span className="new">{f.price.toLocaleString()} FCFA</span></div>
+              </div>
+            </div>
+          ))}
         </div>
+      </section>
+
+      {/* 4. LE RESEAU - SOURCING */}
+      <section className="section dark">
+        <h2>Le Réseau Sourcing Chine</h2>
+        <p>Tout pour importer depuis la Chine en sécurité</p>
+        <div className="grid-reseau">
+          {RESEAU.map((img,i)=><img key={i} src={IMG(img)} alt="reseau" className="reseau-img"/>)}
+        </div>
+      </section>
+
+      {/* 5. PHOTOGRAPHIE */}
+      <section className="section">
+        <h2 className="section-title">Studio Photographie</h2>
+        <div className="grid-photo">
+          {PHOTOS.map((img,i)=><div key={i} className="photo-card"><img src={IMG(img)} alt="photo"/></div>)}
+        </div>
+      </section>
+
+      {/* 6. SERVICES */}
+      <section className="section">
+        <h2 className="section-title">Nos Services ED-B</h2>
+        <div className="grid-service">
+          {SERVICES.map((img,i)=><img key={i} src={IMG(img)} alt="service" className="service-img"/>)}
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <img src={IMG("logo-ed-b-center.png")} className="footer-logo"/>
+        <div className="socials">
+          <img src={IMG("logo-whatsapp.png")}/><img src={IMG("logo-facebook.png")}/>
+          <img src={IMG("logo-instagram.jpeg")}/><img src={IMG("logo-gmail.png")}/>
+        </div>
+        <p>© ED B-CENTER Douala - Tous droits réservés</p>
       </footer>
-    </main>
-  );
-}
 
-/* =========================================================
-   APPLICATION PRINCIPALE
-========================================================= */
-
-export default function App() {
-  const [screen, setScreen] = useState('splash');
-  const [authMode, setAuthMode] = useState('login');
-  const [session, setSession] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [sessionError, setSessionError] = useState('');
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function checkSession() {
-      try {
-        const { data, error } =
-          await supabase.auth.getSession();
-
-        if (!mounted) return;
-        if (error) throw error;
-
-        const currentSession = data?.session ?? null;
-
-        setSession(currentSession);
-        setScreen(
-          currentSession ? 'home' : 'splash'
-        );
-      } catch (err) {
-        if (!mounted) return;
-
-        console.error(
-          'Erreur de vérification de session :',
-          err?.message
-        );
-
-        setSessionError(
-          'Impossible de vérifier ta session. Vérifie ta connexion Internet puis réessaie.'
-        );
-
-        setSession(null);
-        setScreen('splash');
-      } finally {
-        if (mounted) {
-          setCheckingSession(false);
-        }
-      }
-    }
-
-    checkSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        if (!mounted) return;
-
-        setSession(newSession);
-
-        if (newSession) {
-          setScreen('home');
-          setSessionError('');
-        } else {
-          setScreen('splash');
-        }
-      }
-    );
-
-    return () => {
-      mounted = false;
-      subscription?.unsubscribe();
-    };
-  }, []);
-
-  async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      window.alert(
-        'Impossible de se déconnecter pour le moment. Réessaie.'
-      );
-
-      throw error;
-    }
-
-    setSession(null);
-    setAuthMode('login');
-    setScreen('splash');
-  }
-
-  if (checkingSession) {
-    return <LoadingScreen />;
-  }
-
-  if (session) {
-    return (
-      <HomeScreen
-        session={session}
-        onLogout={handleLogout}
-      />
-    );
-  }
-
-  if (screen === 'auth') {
-    return (
-      <>
-        {sessionError && (
-          <div
-            className="form-message form-error"
-            role="alert"
-          >
-            {sessionError}
+      {selected&&(
+        <div className="modal" onClick={()=>setSelected(null)}>
+          <div className="modal-content" onClick={e=>e.stopPropagation()}>
+            <img src={IMG(selected.img)} alt=""/>
+            <h2>{selected.title}</h2>
+            <div className="price"><span className="old">{selected.old.toLocaleString()}</span><span className="new">{selected.price.toLocaleString()} FCFA</span></div>
+            <a className="btn" href={`https://wa.me/2376XXXXXXX?text=Je veux ${selected.title} à ${selected.price}FCFA`}>S'inscrire WhatsApp</a>
+            <button className="close" onClick={()=>setSelected(null)}>Fermer</button>
           </div>
-        )}
-
-        <AuthScreen
-          mode={authMode}
-          setMode={setAuthMode}
-          onBack={() => {
-            setSessionError('');
-            setScreen('splash');
-          }}
-          onAuthenticated={(newSession) => {
-            setSession(newSession);
-            setSessionError('');
-            setScreen('home');
-          }}
-        />
-      </>
-    );
-  }
-
-  return (
-    <Splash
-      onStart={() => {
-        setSessionError('');
-        setAuthMode('login');
-        setScreen('auth');
-      }}
-    />
-  );
+        </div>
+      )}
+    </div>
+  )
 }
-
