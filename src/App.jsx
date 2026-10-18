@@ -3,9 +3,12 @@ import { useState, useEffect } from 'react'
 const BASE = import.meta.env.BASE_URL
 const IMG = (name) => `${BASE}${name}`
 function VerifiedBadge({ size=18 }){
+  function VerifiedBadge({ size=18 }){
   return (
     <span className="verified-badge" style={{width:size, height:size}}>
-      <svg viewBox="0 0 24 24" fill="white"><path d="M9.5 16.5L5 12l1.4-1.4 3.1 3.1 7.1-7.1L18 8l-8.5 8.5z"/></svg>
+      <svg viewBox="0 0 24 24" fill="white">
+        <path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/>
+      </svg>
     </span>
   )
 }
