@@ -1,143 +1,147 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, BookOpen, Eye, EyeOff, GraduationCap, LogOut, Menu, X, ShieldCheck, LoaderCircle, Mail, LockKeyhole, UserRound, CheckCircle2, Sparkles } from 'lucide-react';
+import { supabase } from './supabaseClient';
+import AdminDashboard from './AdminDashboard';
 
-const BASE = import.meta.env.BASE_URL
-const IMG = (name) => `${BASE}${name}`
-
-function VerifiedBadge({ size=18 }){
+// --- BRAND AVEC TA MODIF ---
+function Brand({ light = false }) {
   return (
-    <span className="verified-badge" style={{width:size, height:size}}>
-      <svg viewBox="0 0 24 24" fill="white">
-        <path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/>
-      </svg>
-    </span>
+    <div className={`brand ${light ? 'brand-light' : ''}`}>
+      <div className="brand-mark"><BookOpen size={22} /></div>
+      <div>
+        <strong>ED B-CENTER</strong>
+        <span>APPRENDRE · PRATIQUER · ENTREPRENDRE</span>
+      </div>
+    </div>
+  );
+}
+
+// Badge bleu vérifié
+const VerifiedBadge = () => (
+  <span className="verified-badge" title="Vérifié">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M9.2 14.6l-3.1-3.1 1.4-1.4 1.7 1.7 4.6-4.6 1.4 1.4z"/></svg>
+  </span>
+);
+
+// --- SPLASH + AUTH (ton ancien code gardé) ---
+function Splash({ onStart }) { /* garde ton code Splash d'origine ici */ 
+  return (
+    <main className="splash-screen">
+      <Brand light />
+      <h1>Apprends aujourd'hui.<br/><span>Construis demain.</span></h1>
+      <button className="primary-button" onClick={onStart}>Commencer <ArrowRight size={18}/></button>
+    </main>
   )
 }
 
-const MOTIVATION = [
-  "motivation-1-entrepreneur.png",
-  "motivation-2-reflexion.jpeg",
-  "motivation-3-entrepreneur.jpeg",
-  "motivation-4-meditation.jpeg",
-]
-
-const FORMATIONS = [
-  { img: "formation-infographie-ia.png", title: "Infographie & IA", old: 110000, price: 85000, cat: "Design", badge: "Bestseller" },
-  { img: "formation-excel-avance-power-bi.png", title: "Excel Avancé + Power BI", old: 110000, price: 85000, cat: "Data", badge: "Nouveau" },
-  { img: "formation-power-bi.png", title: "Power BI Pro", old: 90000, price: 65000, cat: "Data", badge: "" },
-  { img: "formation-excel.png", title: "Excel Complet", old: 60000, price: 40000, cat: "Data", badge: "" },
-  { img: "formation-analyse-visualisation-big-data.png", title: "Analyse Big Data", old: 120000, price: 95000, cat: "Data", badge: "Top" },
-  { img: "formation-big-data.png", title: "Big Data", old: 100000, price: 75000, cat: "Data", badge: "" },
-  { img: "formation-sourcing-chine.png", title: "Sourcing Chine", old: 80000, price: 50000, cat: "Business", badge: "Top Vente" },
-  { img: "visuel-infographie-ia.jpeg", title: "IA Créative", old: 85000, price: 60000, cat: "IA", badge: "" },
-  { img: "visuel-technologie-apprentissage.jpeg", title: "Tech & Apprentissage", old: 70000, price: 45000, cat: "Tech", badge: "" },
-]
-
-const RESEAU = [
-  "le-reseau-sourcing-chine.png","le-reseau-recherche-produits.png","le-reseau-verification-fournisseurs.png",
-  "le-reseau-comparaison-fournisseurs.png","le-reseau-avantages.png","le-reseau-petits-stocks.png",
-  "le-reseau-produits-sur-commande.png","le-reseau-inscription-fonctionnement.png",
-  "le-reseau-recherche-telephones.png","le-reseau-recherche-pieces-auto.png"
-]
-const PHOTOS = [
-  "photographie-professionnelle-portrait.png","photographie-mariage-decoration.png",
-  "photographie-mariage-detail.png","photographie-evenementielle-fleurs.png",
-  "photographie-artistique-silhouette.png"
-]
-const SERVICES = [
-  "service-ed-b-academy.png","service-ed-b-consulting.png","service-ed-b-sourcing.png",
-  "service-ed-b-solution.png","service-ed-digital-agency.png","service-solutions-numeriques.png",
-  "service-solutions-numeriques-1.png","service-visuels-publicitaires.png",
-  "service-contenus-reseaux-sociaux.png","service-photographie-professionnelle.png",
-  "service-photographie-evenementielle.png","service-photographie-produits.png",
-  "service-packs-photographie.png","service-accompagnement-formation.png","maquette-conception-graphique.png"
-]
-
-export default function App(){
-  const [current, setCurrent] = useState(0)
-  const [selected, setSelected] = useState(null)
-  useEffect(()=>{
-    const id = setInterval(()=> setCurrent(m=> (m+1)%MOTIVATION.length), 3500)
-    return ()=> clearInterval(id)
-  },[])
+function AuthScreen({ mode, setMode, onBack, onAuthenticated }) {
+  const [fullName, setFullName] = useState(''); const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); const [loading, setLoading] = useState(false); const [error, setError] = useState('');
+  const isSignup = mode === 'signup';
+  async function handleSubmit(e){ e.preventDefault(); setLoading(true); setError('');
+    try{
+      if(isSignup){
+        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options:{ data:{ full_name: fullName } } });
+        if(error) throw error; if(data.session) onAuthenticated(data.session);
+      }else{
+        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if(error) throw error; onAuthenticated(data.session);
+      }
+    }catch(err){ setError(err.message) } finally{ setLoading(false) }
+  }
   return (
-    <div className="premium-app">
+    <main className="auth-screen">
+      <button onClick={onBack} className="round-back"><ArrowLeft/></button>
+      <Brand light/>
+      <section className="auth-card">
+        <h2>{isSignup ? 'Créer un compte' : 'Connexion'}</h2>
+        <form onSubmit={handleSubmit} className="auth-form">
+          {isSignup && <input value={fullName} onChange={e=>setFullName(e.target.value)} placeholder="Nom complet" required/>}
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" required/>
+          <input type={showPassword?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Mot de passe" required/>
+          {error && <div className="form-error">{error}</div>}
+          <button type="submit" className="primary-button" disabled={loading}>{loading?'...': isSignup ? 'Créer' : 'Se connecter'}</button>
+        </form>
+        <button onClick={()=>setMode(isSignup?'login':'signup')}>{isSignup?'Déjà un compte ? Se connecter':'Pas de compte ? Créer'}</button>
+      </section>
+    </main>
+  )
+}
+
+// --- HOME SCREEN AVEC NOUVEAU DESIGN PREMIUM + DONNEES SUPABASE ---
+function HomeScreen({ session, onLogout }) {
+  const [menuOpen, setMenuOpen] = useState(false); const [profile, setProfile] = useState(null); const [userRole, setUserRole] = useState('client');
+  const [courses, setCourses] = useState([]); const [showAdmin, setShowAdmin] = useState(false);
+  const [slide, setSlide] = useState(0);
+
+  const motivImages = ["image carousel motivation.jpeg","image de motivation carousel.png","images carousel.motivation.jpeg"];
+
+  useEffect(()=>{
+    async function load(){
+      const userId = session?.user?.id;
+      const { data: p } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+      const { data: r } = await supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle();
+      const { data: c } = await supabase.from('courses').select('*').eq('status','active').order('created_at',{ascending:false});
+      setProfile(p); setUserRole(r?.role || 'client'); setCourses(c || []);
+    }
+    load();
+  }, [session]);
+
+  if(showAdmin && userRole === 'admin') return <AdminDashboard onBack={()=>setShowAdmin(false)} />;
+
+  const userName = profile?.full_name || session?.user?.email?.split('@')[0];
+
+  return (
+    <main className="premium-app">
       <header className="header">
-        <img src={IMG("logo-ed-b-center.png")} className="logo-img" alt="logo"/>
-        <div className="brand">ED B-CENTER <VerifiedBadge size={18} /></div>
-        <div className="slogan">Apprendre • Pratiquer • Entreprendre</div>
+        <Brand />
+        <span className="slogan">APPRENDRE • PRATIQUER • ENTREPRENDRE</span>
+        <button className="menu-toggle" onClick={()=>setMenuOpen(!menuOpen)}>{menuOpen?<X/>:<Menu/>}</button>
+        {menuOpen && <nav className="home-menu">
+          {userRole==='admin' && <button onClick={()=>setShowAdmin(true)}><ShieldCheck size={16}/> Administration</button>}
+          <button onClick={onLogout}><LogOut size={16}/> Déconnexion</button>
+        </nav>}
       </header>
 
-      <section className="motiv-carousel">
-        <div className="motiv-track" style={{transform:`translateX(-${current*100}%)`}}>
-          {MOTIVATION.map((img,i)=>(
-            <div key={i} className="motiv-slide">
-              <img src={IMG(img)} alt="motiv"/>
-              <div className="motiv-overlay">
-                <h2>{["Passe à l'action","Réfléchis Stratégique","Entreprends Maintenant","Reste Focus"]
-[i]}</h2>
-                <p>Formation premium dès 50.000 FCFA</p>
-              </div>
-            </div>
-          ))}
+      {/* CAROUSEL MOTIVATION */}
+      <div className="motiv-carousel">
+        <div className="motiv-track" style={{transform:`translateX(-${slide*100}%)`}}>
+          {motivImages.map((img,i)=><div key={i} className="motiv-slide"><img src={img} alt=""/><div className="motiv-overlay"><h2>ED B-CENTER</h2><p>Bienvenue {userName}</p></div></div>)}
         </div>
-        <div className="dots">{MOTIVATION.map((_,i)=><span key={i} className={i===current?'active':''}></span>)}</div>
-      </section>
+        <div className="dots">{motivImages.map((_,i)=><span key={i} className={i===slide?'active':''} onClick={()=>setSlide(i)}></span>)}</div>
+      </div>
 
-      <section className="banner-section"><img src={IMG("banniere-facebook-ed-b-center.png")} alt="banniere"/></section>
-
+      {/* FORMATIONS VENANT DE SUPABASE */}
       <section className="section">
-        <h2 className="section-title">Formations Premium</h2>
+        <h2 className="section-title">Nos Formations {VerifiedBadge && ''}</h2>
         <div className="grid">
-          {FORMATIONS.map((f,i)=>(
-            <div key={i} className="card" onClick={()=>setSelected(f)}>
-              <div className="card-img"><img src={IMG(f.img)} alt={f.title}/>{f.badge&&<span className="badge">{f.badge}</span>}</div>
+          {courses.map(course=>(
+            <div key={course.id} className="card">
+              <div className="card-img"><img src={`${course.title.toLowerCase().includes('power')?'04-power-bi.png': course.title.toLowerCase().includes('excel')?'03-excel.png':'01-infographie-ia.png'}`} alt=""/><span className="badge">{course.category}</span></div>
               <div className="card-body">
-                <span className="cat">{f.cat}</span>
-                <h3>{f.title} <VerifiedBadge size={14} /></h3>
-                <div className="price"><span className="old">{f.old.toLocaleString()} FCFA</span><span className="new">{f.price.toLocaleString()} FCFA</span></div>
+                <h3>{course.title} <VerifiedBadge/></h3>
+                <p className="cat">{course.duration_hours}h</p>
+                <div className="price"><span className="new">{Number(course.price_fcfa).toLocaleString()} FCFA</span></div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="section dark">
-        <h2>Le Réseau Sourcing Chine</h2>
-        <div className="grid-reseau">
-          {RESEAU.map((img,i)=> <img key={i} src={IMG(img)} className="reseau-img" alt="reseau" /> )}
-        </div>
-      </section>
-
-      <section className="section">
-        <h2 className="section-title">Studio Photo</h2>
-        <div className="grid-photo">
-          {PHOTOS.map((img,i)=><div key={i} className="photo-card"><img src={IMG(img)} alt="photo"/></div>)}
-        </div>
-      </section>
-
-      <section className="section">
-        <h2 className="section-title">Nos Services</h2>
-        <div className="grid-service">
-          {SERVICES.map((img,i)=> <img key={i} src={IMG(img)} className="service-img" alt="service" /> )}
-        </div>
-      </section>
-
-      <footer className="footer">
-        <img src={IMG("logo-ed-b-center.png")} className="footer-logo" alt="logo"/>
-        <div className="socials"><img src={IMG("logo-whatsapp.png")} alt=""/><img src={IMG("logo-facebook.png")} alt=""/><img src={IMG("logo-instagram.jpeg")} alt=""/><img src={IMG("logo-gmail.png")} alt=""/></div>
-        <p>© ED B-CENTER Douala</p>
-      </footer>
-
-      {selected&&(
-        <div className="modal" onClick={()=>setSelected(null)}>
-          <div className="modal-content" onClick={e=>e.stopPropagation()}>
-            <img src={IMG(selected.img)} alt=""/><h2>{selected.title} <VerifiedBadge size={20} /></h2>
-            <div className="price"><span className="old">{selected.old.toLocaleString()}</span><span className="new">{selected.price.toLocaleString()} FCFA</span></div>
-            <a className="btn" href={`https://wa.me/237690418794?text=Je veux ${selected.title}`}>S'inscrire WhatsApp</a>
-            <button className="close" onClick={()=>setSelected(null)}>Fermer</button>
-          </div>
-        </div>
-      )}
-    </div>
+      <footer className="footer"><Brand/><p>edbusinesscenter@gmail.com</p></footer>
+    </main>
   )
 }
+
+export default function App(){
+  const [screen, setScreen] = useState('splash'); const [authMode, setAuthMode] = useState('login'); const [session, setSession] = useState(null); const [checking, setChecking] = useState(true);
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data})=>{ setSession(data.session); setScreen(data.session?'home':'splash'); setChecking(false); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_,s)=>{ setSession(s); setScreen(s?'home':'splash'); });
+    return ()=> sub.subscription.unsubscribe();
+  },[]);
+  if(checking) return <div className="loading-screen">Chargement...</div>;
+  if(screen==='splash') return <Splash onStart={()=>setScreen('auth')} />;
+  if(screen==='auth') return <AuthScreen mode={authMode} setMode={setAuthMode} onBack={()=>setScreen('splash')} onAuthenticated={(s)=>{setSession(s); setScreen('home');}} />;
+  return <HomeScreen session={session} onLogout={async()=>{ await supabase.auth.signOut(); }} />;
+          }
