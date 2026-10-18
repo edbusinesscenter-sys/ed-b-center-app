@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 
 const BASE = import.meta.env.BASE_URL
 const IMG = (name) => `${BASE}${name}`
+
 function VerifiedBadge({ size=18 }){
-  function VerifiedBadge({ size=18 }){
   return (
     <span className="verified-badge" style={{width:size, height:size}}>
       <svg viewBox="0 0 24 24" fill="white">
@@ -12,6 +12,7 @@ function VerifiedBadge({ size=18 }){
     </span>
   )
 }
+
 const MOTIVATION = [
   "motivation-1-entrepreneur.png",
   "motivation-2-reflexion.jpeg",
@@ -62,7 +63,7 @@ export default function App(){
     <div className="premium-app">
       <header className="header">
         <img src={IMG("logo-ed-b-center.png")} className="logo-img" alt="logo"/>
-        <div className="brand">ED B-CENTER</div>
+        <div className="brand">ED B-CENTER <VerifiedBadge size={18} /></div>
         <div className="slogan">Apprendre • Pratiquer • Entreprendre</div>
       </header>
 
@@ -72,70 +73,4 @@ export default function App(){
             <div key={i} className="motiv-slide">
               <img src={IMG(img)} alt="motiv"/>
               <div className="motiv-overlay">
-                <h2>{["Passe à l'action","Réfléchis Stratégique","Entreprends Maintenant","Reste Focus"][i]}</h2>
-                <p>Formation premium dès 50.000 FCFA</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="dots">{MOTIVATION.map((_,i)=><span key={i} className={i===current?'active':''}></span>)}</div>
-      </section>
-
-      <section className="banner-section"><img src={IMG("banniere-facebook-ed-b-center.png")} alt="banniere"/></section>
-
-      <section className="section">
-        <h2 className="section-title">Formations Premium</h2>
-        <div className="grid">
-          {FORMATIONS.map((f,i)=>(
-            <div key={i} className="card" onClick={()=>setSelected(f)}>
-              <div className="card-img"><img src={IMG(f.img)} alt={f.title}/>{f.badge&&<span className="badge">{f.badge}</span>}</div>
-              <div className="card-body">
-                <span className="cat">{f.cat}</span>
-                <h3>{f.title}</h3>
-                <div className="price"><span className="old">{f.old.toLocaleString()} FCFA</span><span className="new">{f.price.toLocaleString()} FCFA</span></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section dark">
-        <h2>Le Réseau Sourcing Chine</h2>
-        <div className="grid-reseau">
-          {RESEAU.map((img,i)=> <img key={i} src={IMG(img)} className="reseau-img" alt="reseau" /> )}
-        </div>
-      </section>
-
-      <section className="section">
-        <h2 className="section-title">Studio Photo</h2>
-        <div className="grid-photo">
-          {PHOTOS.map((img,i)=><div key={i} className="photo-card"><img src={IMG(img)} alt="photo"/></div>)}
-        </div>
-      </section>
-
-      <section className="section">
-        <h2 className="section-title">Nos Services</h2>
-        <div className="grid-service">
-          {SERVICES.map((img,i)=> <img key={i} src={IMG(img)} className="service-img" alt="service" /> )}
-        </div>
-      </section>
-
-      <footer className="footer">
-        <img src={IMG("logo-ed-b-center.png")} className="footer-logo" alt="logo"/>
-        <div className="socials"><img src={IMG("logo-whatsapp.png")} alt=""/><img src={IMG("logo-facebook.png")} alt=""/><img src={IMG("logo-instagram.jpeg")} alt=""/><img src={IMG("logo-gmail.png")} alt=""/></div>
-        <p>© ED B-CENTER Douala</p>
-      </footer>
-
-      {selected&&(
-        <div className="modal" onClick={()=>setSelected(null)}>
-          <div className="modal-content" onClick={e=>e.stopPropagation()}>
-            <img src={IMG(selected.img)} alt=""/><h2>{selected.title}</h2>
-            <div className="price"><span className="old">{selected.old.toLocaleString()}</span><span className="new">{selected.price.toLocaleString()} FCFA</span></div>
-            <a className="btn" href={`https://wa.me/237690418794?text=Je veux ${selected.title}`}>S'inscrire WhatsApp</a>
-            <button className="close" onClick={()=>setSelected(null)}>Fermer</button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+                <h2>{["Passe à l'action","Réfléchis Stratégique","Entreprends Maintenant","Reste Focus"]
