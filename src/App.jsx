@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react'
 
 const BASE = import.meta.env.BASE_URL
 const IMG = (name) => `${BASE}${name}`
-
+function VerifiedBadge({ size=18 }){
+  return (
+    <span className="verified-badge" style={{width:size, height:size}}>
+      <svg viewBox="0 0 24 24" fill="white"><path d="M9.5 16.5L5 12l1.4-1.4 3.1 3.1 7.1-7.1L18 8l-8.5 8.5z"/></svg>
+    </span>
+  )
+}
 const MOTIVATION = [
   "motivation-1-entrepreneur.png",
   "motivation-2-reflexion.jpeg",
