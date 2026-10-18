@@ -955,13 +955,16 @@ function HomeScreen({ session, onLogout }) {
               Nous contacter
             </a>
 
-            <a
-              href="https://bassomodominique9-debug.github.io/Suivi/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Suivi et évaluation des apprenants
-            </a>
+            {(isAdmin || isTrainer) && (
+  <a
+    href="https://bassomodominique9-debug.github.io/Suivi/"
+    target="_blank"
+    rel="noreferrer"
+    onClick={() => setMenuOpen(false)}
+  >
+    Suivi et évaluation des apprenants
+  </a>
+)}
 
             {isAdmin && (
               <button
