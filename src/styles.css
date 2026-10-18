@@ -1,18 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
 :root{--primary:#373DDB;--bg:#F7F7FF;--lav:#E6E6FF;--text:#1A1A2E;--muted:#8A8A9E;--radius:18px;--shadow:0 12px 32px rgba(55,61,219,.12)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Poppins,sans-serif;color:var(--text)}
-.premium-app{max-width:1200px;margin:0 auto}
+#root{max-width:1200px;margin:0 auto}
+
+/* TA MODIF DEMANDÉE - Gardée exactement */
+.brand{font-weight:800;display:flex;align-items:center;gap:2px}
+.brand-mark{width:38px;height:38px;display:grid;place-items:center;background:#373DDB;color:white;border-radius:10px}
+.brand strong{font-size:14px;line-height:1}
+.brand span{font-size:8px;color:var(--muted);display:block;letter-spacing:.5px}
+.verified-badge{width:16px;height:16px;display:inline-flex;background:#1D9BF0;border-radius:50%;margin-left:6px;vertical-align:middle}
+
+.premium-app{width:100%}
 .header{display:flex;align-items:center;gap:12px;padding:16px 24px;background:white;position:sticky;top:0;z-index:20;border-bottom:1px solid #e5e7eb}
-.logo-img{width:44px;height:44px;border-radius:12px}.brand{font-weight:800;display:flex;align-items:center;gap:2px}.slogan{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
+.logo-img{width:44px;height:44px;border-radius:12px}
+.slogan{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
+
+/* CAROUSEL MOTIVATION */
 .motiv-carousel{position:relative;overflow:hidden;height:420px;margin:16px 24px;border-radius:28px;background:#000}
-.motiv-track{display:flex;transition:.6s;height:100%}
-.motiv-slide{min-width:100%;position:relative;height:100%}.motiv-slide img{width:100%;height:100%;object-fit:cover;opacity:.85}
+.motiv-track{display:flex;transition:.6s ease;height:100%}
+.motiv-slide{min-width:100%;position:relative;height:100%}
+.motiv-slide img{width:100%;height:100%;object-fit:cover;opacity:.85}
 .motiv-overlay{position:absolute;bottom:0;left:0;right:0;padding:28px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:white}
 .motiv-overlay h2{margin:0;font-size:32px;font-weight:800}
 .dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
-.dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.4)}.dots span.active{background:white;width:22px}
-.banner-section img{width:calc(100% - 48px);margin:0 24px;border-radius:20px}
-.section{padding:28px 24px}.section.dark{background:#1A1A2E;color:white;border-radius:28px;margin:16px 24px}.section-title{font-size:24px;font-weight:800;margin-bottom:14px}
+.dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer}
+.dots span.active{background:white;width:22px}
+
+.banner-section img{width:calc(100% - 48px);margin:0 24px;border-radius:20px;display:block}
+
+/* SECTIONS */
+.section{padding:28px 24px}
+.section.dark{background:#1A1A2E;color:white;border-radius:28px;margin:16px 24px}
+.section-title{font-size:24px;font-weight:800;margin-bottom:16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
-.card{background:white;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer}
-.card-img{position:relative;height:150px;background:var(--lav)}.card-img img{width:100%;height:100%;object-fit:cover}
-.badge{position:absolute;top:10px;left:10
+.card{background:white;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .2s}
+.card:hover{transform:translateY(-3px)}
+.card-img{position:relative;height:150px;background:var(--lav)}
+.card-img img{width:100%;height:100%;object-fit:cover}
+.badge{position:absolute;top:10px;left:10px;background:var(--primary);color:white;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:700}
+.card-body{padding:12px}
+.card-body h3{margin:4px 0;font-size:14px;display:flex;align-items:center;gap:4px}
+.price .new{color:var(--primary);font-weight:800;font-size:13px}
+
+/* ADMIN + AUTH - Gardé de ton ancien projet */
+.admin-dashboard{padding:24px;background:#F7F7FF;min-height:100vh}
+.loading-screen{display:grid;place-items:center;min-height:100vh}
+.auth-screen{padding:24px;display:grid;place-items:center;min-height:100vh;background:linear-gradient(135deg,#373DDB,#636CFF)}
+.auth-card{background:white;padding:28px;border-radius:20px;width:100%;max-width:400px}
+.primary-button{background:var(--primary);color:white;border:0;padding:12px 22px;border-radius:12px;font-weight:600;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
