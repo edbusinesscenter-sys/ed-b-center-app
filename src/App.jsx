@@ -2651,9 +2651,63 @@ function App() {
     );
   }
 
-  /* Interface principale */
+  /* Protection : connexion obligatoire */
+if (!user) {
   return (
-    <div className="app">
+    <div className="app auth-required">
+      <div className="auth-required-content">
+        <img
+          src={image("logo-ed-b-center.png")}
+          alt="Logo ED BUSINESS CENTER"
+        />
+
+        <h1>Bienvenue chez ED BUSINESS CENTER</h1>
+
+        <p>
+          Crée ton compte ou connecte-toi pour accéder
+          à notre plateforme.
+        </p>
+
+        <button
+          type="button"
+          className="button button-primary"
+          onClick={openLogin}
+        >
+          Se connecter
+        </button>
+
+        <button
+          type="button"
+          className="button button-outline"
+          onClick={() => openRegister()}
+        >
+          Créer un compte
+        </button>
+      </div>
+
+      {authModal === "login" && (
+        <LoginModal
+          onClose={() => setAuthModal(null)}
+          onLoginSuccess={handleLoginSuccess}
+          onSwitchToRegister={() => setAuthModal("register")}
+        />
+      )}
+
+      {authModal === "register" && (
+        <RegisterModal
+          onClose={() => setAuthModal(null)}
+          onRegisterSuccess={handleRegisterSuccess}
+          onSwitchToLogin={() => setAuthModal("login")}
+          selectedCourse={selectedCourse}
+        />
+      )}
+    </div>
+  );
+}
+
+/* Interface principale */
+return (
+  <div className="app">
       <Header
         user={user}
         profile={profile}
