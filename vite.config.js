@@ -1,7 +1,8 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: '/ed-b-center-app/',
+  // Chemins relatifs : facilite le déploiement GitHub Pages quel que soit le nom du dépôt.
+  base: "./",
 });
