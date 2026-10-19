@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import CommunitySection from "./CommunitySection";
 import NotificationsSection from "./NotificationsSection";
+import AtelierSection from "./AtelierSection";
+import NewsSection from "./NewsSection";
+import CoordinatorPanel from "./CoordinatorPanel";
 import "./styles.css";
 
 /* =====================================================
