@@ -6,6 +6,10 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
   const [comments, setComments] = useState({});
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [newBody, setNewBody] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [creating, setCreating] = useState(false);
 
   async function loadPosts() {
     setLoading(true);
@@ -13,6 +17,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
       .from("publications")
       .select("id, title, body, image_url, created_at, author_id")
       .eq("is_published", true)
+      .eq("category", "community")
       .order("created_at", { ascending: false });
     if (error) {
       console.error("Chargement des actualités :", error.message);
@@ -34,6 +39,40 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
   }
 
   useEffect(() => { loadPosts(); }, []);
+
+
+  async function createPost(event) {
+    event.preventDefault();
+    if (!user) { onNotify?.("Connecte-toi pour publier."); return; }
+    if (!newBody.trim()) { onNotify?.("Écris le contenu de ta publication."); return; }
+    setCreating(true);
+    const { error } = await supabase.from("publications").insert({
+      title: newTitle.trim() || null,
+      body: newBody.trim(),
+      image_url: newImageUrl.trim() || null,
+      author_id: user.id,
+      category: "community",
+      is_published: true,
+    });
+    setCreating(false);
+    if (error) {
+      console.error("Création publication :", error.message);
+      onNotify?.("Impossible de publier. Vérifie la migration et les autorisations Supabase.");
+      return;
+    }
+    setNewTitle(""); setNewBody(""); setNewImageUrl("");
+    onNotify?.("Publication ajoutée à la communauté.");
+    await loadPosts();
+  }
+
+  async function deletePost(post) {
+    if (!user || post.author_id !== user.id) return;
+    if (!window.confirm("Supprimer ta publication ? Cette action est définitive.")) return;
+    const { error } = await supabase.from("publications").delete().eq("id", post.id).eq("author_id", user.id);
+    if (error) { onNotify?.("Impossible de supprimer cette publication."); return; }
+    onNotify?.("Publication supprimée.");
+    await loadPosts();
+  }
 
   async function interact(postId, type) {
     if (!user) { onNotify?.("Connecte-toi pour interagir avec une publication."); return; }
@@ -62,10 +101,17 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
   return (
     <section className="community-section section-container">
       <div className="community-heading">
-        <div><span className="eyebrow">LA COMMUNAUTÉ ED B-CENTER</span><h1>Actualités & publications</h1><p>Réagis aux publications, échange avec la communauté et cumule des points.</p></div>
+        <div><span className="eyebrow">LA COMMUNAUTÉ ED B-CENTER</span><h1>Communauté</h1><p>Découvre les publications, réagis et échange avec les autres membres.</p></div>
         <div className="community-points" title="Ton total de points"><span>★</span><strong>{Number(profile?.points || 0)}</strong><small>POINTS</small></div>
       </div>
+      <img className="community-interface-preview" src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/interface-communaute.png" alt="Aperçu de l'espace Communauté" loading="lazy" />
       <div className="points-explainer">★ Une publication = un point maximum par compte. Aimer et commenter la même publication ne donne pas de deuxième point.</div>
+      <div className="community-guides">
+        <article><img src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/publication-communaute-01-decouvrir-la-communaute.png" alt="Découvrir la communauté" loading="lazy"/><h2>Découvrir la communauté</h2><p>Consulte les publications partagées dans cet espace.</p></article>
+        <article><img src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/publication-communaute-02-interagir-et-commenter.png" alt="Interagir et commenter" loading="lazy"/><h2>Interagir et commenter</h2><p>Connecte-toi pour aimer une publication ou ajouter un commentaire.</p></article>
+        <article><img src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/publication-communaute-03-profils-et-abonnements.png" alt="Profils et abonnements" loading="lazy"/><h2>Découvrir les membres</h2><p>Explore les profils publics et les possibilités de suivi disponibles.</p></article>
+      </div>
+      {user && <form className="community-create-form" onSubmit={createPost}><h2>Partager avec la communauté</h2><label>Titre (facultatif)<input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} maxLength={180} placeholder="Le titre de ta publication" /></label><label>Ton message<textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} required maxLength={5000} rows={4} placeholder="Partage une idée, une expérience ou une question…" /></label><label>URL d'une image (facultatif)<input type="url" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="https://…" /></label><button className="button button-primary" type="submit" disabled={creating}>{creating ? "Publication…" : "Publier"}</button></form>}
       {loading ? <div className="community-empty">Chargement des publications…</div> : posts.length === 0 ? (
         <div className="community-empty"><span>▧</span><h2>Aucune publication pour le moment</h2><p>Les publications publiées par l’équipe apparaîtront ici.</p></div>
       ) : <div className="publication-list">{posts.map((post) => {
@@ -77,7 +123,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
           {post.title && <h2>{post.title}</h2>}<p className="publication-body">{post.body}</p>
           {post.image_url && <img className="publication-image" src={post.image_url} alt={post.title || "Publication ED B-CENTER"} loading="lazy" />}
           <div className="publication-stats"><span>♥ {interactions.filter((r) => r.interaction_type === "like").length} J’aime</span><span>▢ {postComments.length} commentaire(s)</span></div>
-          <div className="publication-actions"><button type="button" className={liked ? "publication-action liked" : "publication-action"} disabled={sending === post.id + "like"} onClick={() => interact(post.id, "like")}>{liked ? "♥ Aimé" : "♡ J’aime"}</button><span className="publication-action-divider"/><label className="publication-comment-label" htmlFor={`comment-${post.id}`}>Commenter</label></div>
+          <div className="publication-actions"><button type="button" className={liked ? "publication-action liked" : "publication-action"} disabled={sending === post.id + "like"} onClick={() => interact(post.id, "like")}>{liked ? "♥ Aimé" : "♡ J’aime"}</button><span className="publication-action-divider"/><label className="publication-comment-label" htmlFor={`comment-${post.id}`}>Commenter</label>{user?.id === post.author_id && <button type="button" className="publication-action publication-delete-action" onClick={() => deletePost(post)}>Supprimer</button>}</div>
           {postComments.map((c) => <div className="publication-comment" key={c.user_id + c.created_at}><strong>{c.user_id === user?.id ? "Vous" : "Membre"}</strong><p>{c.content}</p></div>)}
           <form className="publication-comment-form" onSubmit={(e) => { e.preventDefault(); interact(post.id, "comment"); }}><input id={`comment-${post.id}`} value={comments[post.id] || ""} onChange={(e) => setComments((prev) => ({ ...prev, [post.id]: e.target.value }))} placeholder="Écrire un commentaire…" maxLength={1000}/><button className="button button-primary" disabled={sending === post.id + "comment"}>Envoyer</button></form>
         </article>;

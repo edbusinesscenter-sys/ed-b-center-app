@@ -340,7 +340,9 @@ function VerifiedBadge({ role }) {
     role === "admin"
       ? "Administrateur"
       : role === "trainer"
-      ? "Formatrice"
+      ? "Formateur"
+      : role === "apprenant"
+      ? "Apprenant"
       : role;
 
   return (
@@ -407,6 +409,8 @@ function Header({
     { id: "services", label: "Nos services" },
     { id: "courses", label: "Formations" },
     { id: "news", label: "Actualités" },
+    { id: "community", label: "Communauté" },
+    { id: "atelier", label: "Ateliers" },
     { id: "contact", label: "Contact" },
   ];
 
@@ -1735,7 +1739,9 @@ function AccountSection({
     role === "admin"
       ? "Administrateur"
       : role === "trainer"
-      ? "Formatrice"
+      ? "Formateur"
+      : role === "apprenant"
+      ? "Apprenant"
       : "Membre";
 
   return (
@@ -1839,6 +1845,15 @@ function AccountSection({
                 Administration
               </button>
             )}
+
+            <button
+              type="button"
+              className={activeTab === "coordinator" ? "account-nav-active" : ""}
+              onClick={() => setActiveTab("coordinator")}
+            >
+              <span aria-hidden="true">🛡</span>
+              Sécurité plateforme
+            </button>
           </nav>
 
           <button
@@ -1952,6 +1967,7 @@ function AccountSection({
               </div>
 
               <div className="account-content-card profile-details-card">
+                <img className="account-feature-preview" src={image("interface-profil-public.png")} alt="Aperçu des profils sur ED BUSINESS CENTER" loading="lazy" />
                 <div className="profile-detail-row">
                   <span>Nom complet</span>
                   <strong>{displayName}</strong>
@@ -2051,6 +2067,7 @@ function AccountSection({
 
               <div className="account-content-card">
                 <div className="empty-state">
+                  <img className="account-feature-preview" src={image("interface-messagerie.png")} alt="Aperçu de la messagerie" loading="lazy" />
                   <span className="empty-state-icon" aria-hidden="true">
                     ✉
                   </span>
@@ -2072,6 +2089,12 @@ function AccountSection({
                   </a>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === "coordinator" && (
+            <div className="account-tab-content">
+              <CoordinatorPanel onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} onStatusChange={(closed, message) => { setPlatformClosed(closed); if (message) setPlatformClosureMessage(message); }} />
             </div>
           )}
 
@@ -2290,6 +2313,8 @@ function App() {
   const [notification, setNotification] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [platformClosed, setPlatformClosed] = useState(false);
+  const [platformClosureMessage, setPlatformClosureMessage] = useState("APPLICATION FERMÉE — maintenance en cours");
 
   /* Notifications */
   function notify(message) {
@@ -2299,6 +2324,25 @@ function App() {
       setNotification("");
     }, 4000);
   }
+
+  useEffect(() => {
+    const handleAppNotification = (event) => notify(event.detail || "Action effectuée.");
+    window.addEventListener("ed-bcenter-notify", handleAppNotification);
+    return () => window.removeEventListener("ed-bcenter-notify", handleAppNotification);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function checkPlatformStatus() {
+      const { data, error } = await supabase.rpc("get_platform_public_status");
+      if (error || !active || !data) return;
+      setPlatformClosed(Boolean(data.maintenance_mode));
+      if (data.maintenance_message) setPlatformClosureMessage(data.maintenance_message);
+    }
+    checkPlatformStatus();
+    const timer = window.setInterval(checkPlatformStatus, 30000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
 
   /* Chargement du profil utilisateur */
   async function loadUserData(currentUser) {
@@ -2400,6 +2444,11 @@ function App() {
         if (!mounted) return;
 
         const currentUser = data.session?.user || null;
+        const { data: platformStatus } = await supabase.rpc("get_platform_public_status");
+        if (platformStatus) {
+          setPlatformClosed(Boolean(platformStatus.maintenance_mode));
+          if (platformStatus.maintenance_message) setPlatformClosureMessage(platformStatus.maintenance_message);
+        }
 
         setUser(currentUser);
 
@@ -2654,6 +2703,28 @@ function App() {
     );
   }
 
+  /* Fermeture globale pilotée par le coordinateur via Supabase. */
+  if (platformClosed) {
+    return (
+      <div className="app platform-maintenance-page">
+        <div className="platform-maintenance-card">
+          <img src={image("logo-ed-b-center.png")} alt="Logo ED BUSINESS CENTER" />
+          <span className="eyebrow">INFORMATION IMPORTANTE</span>
+          <h1>{platformClosureMessage || "APPLICATION FERMÉE"}</h1>
+          <p>La plateforme est temporairement indisponible. Merci de revenir plus tard.</p>
+          {user ? (
+            <CoordinatorPanel onNotify={notify} onStatusChange={(closed, message) => { setPlatformClosed(closed); if (message) setPlatformClosureMessage(message); }} />
+          ) : (
+            <>
+              <button type="button" className="button button-primary" onClick={openLogin}>Connexion coordinateur</button>
+              {authModal === "login" && <LoginModal onClose={() => setAuthModal(null)} onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setAuthModal("register")} />}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   /* Protection : connexion obligatoire */
 if (!user) {
   return (
@@ -2746,7 +2817,13 @@ return (
           </>
         )}
 
-        {activePage === "news" && (
+        {activePage === "news" && <NewsSection user={user} role={role} onNotify={notify} />}
+
+        {activePage === "notifications" && user && (
+          <NotificationsSection user={user} onNotify={notify} />
+        )}
+
+        {activePage === "community" && (
           <CommunitySection
             user={user}
             profile={profile}
@@ -2755,8 +2832,8 @@ return (
           />
         )}
 
-        {activePage === "notifications" && user && (
-          <NotificationsSection user={user} onNotify={notify} />
+        {activePage === "atelier" && (
+          <AtelierSection user={user} profile={profile} role={role} onNotify={notify} />
         )}
 
         {activePage === "services" && (
@@ -2869,6 +2946,8 @@ return (
               Formations
             </button>
             <button type="button" onClick={() => navigateTo("news")}>Actualités</button>
+            <button type="button" onClick={() => navigateTo("community")}>Communauté</button>
+            <button type="button" onClick={() => navigateTo("atelier")}>Ateliers</button>
 
             <button
               type="button"
