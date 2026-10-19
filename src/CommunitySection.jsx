@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { imageUrl } from "./imageCatalog";
 
 function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
   const [posts, setPosts] = useState([]);
@@ -104,16 +105,16 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
         <div><span className="eyebrow">LA COMMUNAUTÉ ED B-CENTER</span><h1>Communauté</h1><p>Découvre les publications, réagis et échange avec les autres membres.</p></div>
         <div className="community-points" title="Ton total de points"><span>★</span><strong>{Number(profile?.points || 0)}</strong><small>POINTS</small></div>
       </div>
-      <img className="community-interface-preview" src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/interface-communaute.png" alt="Aperçu de l'espace Communauté" loading="lazy" />
+      <img className="community-interface-preview" src={imageUrl("banniere-communaute-ed-b-center.png")} alt="Aperçu de l'espace Communauté" loading="lazy" />
       <div className="points-explainer">★ Une publication = un point maximum par compte. Aimer et commenter la même publication ne donne pas de deuxième point.</div>
       <div className="community-guides">
-        <article><img src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/publication-communaute-01-decouvrir-la-communaute.png" alt="Découvrir la communauté" loading="lazy"/><h2>Découvrir la communauté</h2><p>Consulte les publications partagées dans cet espace.</p></article>
-        <article><img src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/publication-communaute-02-interagir-et-commenter.png" alt="Interagir et commenter" loading="lazy"/><h2>Interagir et commenter</h2><p>Connecte-toi pour aimer une publication ou ajouter un commentaire.</p></article>
-        <article><img src="https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images/publication-communaute-03-profils-et-abonnements.png" alt="Profils et abonnements" loading="lazy"/><h2>Découvrir les membres</h2><p>Explore les profils publics et les possibilités de suivi disponibles.</p></article>
+        <article><img src={imageUrl("publication-communaute-01-decouvrir-la-communaute.png")} alt="Découvrir la communauté" loading="lazy"/><h2>Découvrir la communauté</h2><p>Consulte les publications partagées dans cet espace.</p></article>
+        <article><img src={imageUrl("publication-communaute-02-interagir-et-commenter.png")} alt="Interagir et commenter" loading="lazy"/><h2>Interagir et commenter</h2><p>Connecte-toi pour aimer une publication ou ajouter un commentaire.</p></article>
+        <article><img src={imageUrl("publication-communaute-03-profils-et-abonnements.png")} alt="Profils et abonnements" loading="lazy"/><h2>Découvrir les membres</h2><p>Explore les profils publics et les possibilités de suivi disponibles.</p></article>
       </div>
       {user && <form className="community-create-form" onSubmit={createPost}><h2>Partager avec la communauté</h2><label>Titre (facultatif)<input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} maxLength={180} placeholder="Le titre de ta publication" /></label><label>Ton message<textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} required maxLength={5000} rows={4} placeholder="Partage une idée, une expérience ou une question…" /></label><label>URL d'une image (facultatif)<input type="url" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="https://…" /></label><button className="button button-primary" type="submit" disabled={creating}>{creating ? "Publication…" : "Publier"}</button></form>}
       {loading ? <div className="community-empty">Chargement des publications…</div> : posts.length === 0 ? (
-        <div className="community-empty"><span>▧</span><h2>Aucune publication pour le moment</h2><p>Les publications publiées par l’équipe apparaîtront ici.</p></div>
+        <div className="community-empty"><img src={imageUrl("illustration-conversation-vide.png")} alt="Aucune publication pour le moment" loading="lazy" /><h2>Aucune publication pour le moment</h2><p>Les publications publiées par l’équipe apparaîtront ici.</p></div>
       ) : <div className="publication-list">{posts.map((post) => {
         const interactions = post.interactions || [];
         const liked = interactions.some((r) => r.user_id === user?.id && r.interaction_type === "like");

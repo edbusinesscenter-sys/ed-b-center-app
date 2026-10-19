@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { imageUrl } from "./imageCatalog";
 
 export default function CoordinatorPanel({ onNotify, onStatusChange }) {
   const [authorized, setAuthorized] = useState(false);
@@ -73,7 +74,7 @@ export default function CoordinatorPanel({ onNotify, onStatusChange }) {
   }
 
   if (checking) return <div className="coordinator-panel"><p>Vérification de l'accès coordinateur…</p></div>;
-  if (!authorized) return <div className="coordinator-panel coordinator-denied"><h2>Accès coordinateur indisponible</h2><p>Cette interface est réservée au compte coordinateur principal configuré dans Supabase. Aucun pouvoir administratif n'est accordé par le simple affichage de cette page.</p></div>;
+  if (!authorized) return <div className="coordinator-panel coordinator-denied"><img className="coordinator-empty-image" src={imageUrl("illustration-gestion-roles.png")} alt="Configuration des accès coordinateur" loading="lazy" /><h2>Accès coordinateur indisponible</h2><p>Cette interface est réservée au compte coordinateur principal configuré dans Supabase. Aucun pouvoir administratif n'est accordé par le simple affichage de cette page.</p></div>;
 
   return <section className="coordinator-panel">
     <div className="coordinator-heading"><span className="eyebrow">ACCÈS PRIVILÉGIÉ</span><h2>Centre de contrôle du coordinateur</h2><p>Les actions sensibles sont vérifiées par des fonctions sécurisées dans Supabase.</p></div>

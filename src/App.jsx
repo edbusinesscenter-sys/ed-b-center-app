@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { imageUrl } from "./imageCatalog";
 import CommunitySection from "./CommunitySection";
 import NotificationsSection from "./NotificationsSection";
 import AtelierSection from "./AtelierSection";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
+import ImageLibrarySection from "./ImageLibrarySection";
 import "./styles.css";
 
 /* =====================================================
@@ -14,11 +16,7 @@ import "./styles.css";
 ===================================================== */
 
 /* Chemin des images */
-const SUPABASE_IMAGES_URL =
-  "https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images";
-
-const image = (filename) =>
-  `${SUPABASE_IMAGES_URL}/${encodeURIComponent(filename)}`;
+const image = (filename) => imageUrl(filename);
 
 /* Informations de l'entreprise */
 const BRAND = {
@@ -40,25 +38,25 @@ const BRAND = {
 const SOCIALS = [
   {
     name: "WhatsApp",
-    image: "logo-whatsapp.png",
+    image: "logo-ed-b-center.png",
     url: BRAND.whatsapp,
     description: "Contacter l'équipe ED BUSINESS CENTER sur WhatsApp",
   },
   {
     name: "Facebook",
-    image: "logo-facebook.png",
+    image: "logo-ed-b-center.png",
     url: BRAND.facebook,
     description: "Retrouver ED BUSINESS CENTER sur Facebook",
   },
   {
     name: "Instagram",
-    image: "logo-instagram.jpeg",
+    image: "logo-ed-b-center.png",
     url: BRAND.instagram,
     description: "Découvrir les activités d'ED BUSINESS CENTER sur Instagram",
   },
   {
     name: "Gmail",
-    image: "logo-gmail.png",
+    image: "logo-ed-b-center.png",
     url: `mailto:${BRAND.email}`,
     description: "Envoyer un e-mail à ED BUSINESS CENTER",
   },
@@ -70,38 +68,18 @@ const SOCIALS = [
 ===================================================== */
 
 const MOTIVATION_IMAGES = [
-  {
-    image: "motivation-1-entrepreneur.png",
-    title: "Construis ton avenir",
-    text:
-      "Chaque compétence acquise peut devenir le point de départ d'une nouvelle opportunité.",
-    alt:
-      "Entrepreneur motivé qui avance vers ses objectifs professionnels.",
-  },
-  {
-    image: "motivation-2-reflexion.jpeg",
-    title: "Transforme tes idées en projets",
-    text:
-      "Prends le temps de réfléchir, de planifier et de préparer tes prochaines actions.",
-    alt:
-      "Personne en pleine réflexion sur ses idées et ses projets.",
-  },
-  {
-    image: "motivation-3-entrepreneur.jpeg",
-    title: "Passe à l'action",
-    text:
-      "Apprends, entraîne-toi et développe des réalisations concrètes pour progresser.",
-    alt:
-      "Entrepreneur concentré sur le développement de son activité.",
-  },
-  {
-    image: "motivation-4-meditation.jpeg",
-    title: "Crois en ton potentiel",
-    text:
-      "La progression demande de la patience, de la discipline et une volonté d'apprendre.",
-    alt:
-      "Personne prenant un moment de calme pour se recentrer sur ses objectifs.",
-  },
+  { image: "motivation-01-discipline-et-perseverance.png", title: "Discipline et persévérance", text: "Les progrès durables se construisent par des actions régulières.", alt: "Illustration de discipline et de persévérance." },
+  { image: "motivation-02-formation-et-competences.png", title: "Forme-toi et développe tes compétences", text: "Chaque apprentissage peut ouvrir de nouvelles possibilités professionnelles.", alt: "Illustration de formation et de compétences." },
+  { image: "motivation-03-passer-a-laction.png", title: "Passe à l'action", text: "Apprends, entraîne-toi et développe des réalisations concrètes.", alt: "Illustration du passage à l'action." },
+  { image: "motivation-04-entrepreneuriat-et-reussite.png", title: "Entreprendre pour progresser", text: "Transforme les compétences acquises en projets concrets.", alt: "Illustration de l'entrepreneuriat et de la réussite." },
+  { image: "motivation-05-croire-en-son-potentiel.png", title: "Crois en ton potentiel", text: "La progression demande de la patience et de la volonté.", alt: "Illustration de confiance en son potentiel." },
+  { image: "motivation-06-apprendre-et-progresser.png", title: "Apprends et progresse", text: "Chaque exercice est une occasion de mieux maîtriser une compétence.", alt: "Illustration de l'apprentissage et de la progression." },
+  { image: "motivation-07-transformer-ses-idees-en-projets.png", title: "Transforme tes idées en projets", text: "Réfléchis, planifie et prépare tes prochaines actions.", alt: "Illustration de transformation des idées en projets." },
+  { image: "motivation-08-construire-son-avenir.png", title: "Construis ton avenir", text: "Prépare ton avenir avec des compétences utiles et des actions concrètes.", alt: "Illustration de construction de son avenir." },
+  { image: "motivation-09-investir-en-soi.png", title: "Investis en toi", text: "Le temps consacré à apprendre peut devenir un investissement professionnel.", alt: "Illustration de l'investissement en soi." },
+  { image: "motivation-10-oser-commencer.png", title: "Ose commencer", text: "Un premier pas concret vaut mieux qu'un projet toujours repoussé.", alt: "Illustration du courage de commencer." },
+  { image: "motivation-11-competences-et-opportunites.png", title: "Compétences et opportunités", text: "Développe des savoir-faire qui répondent à des besoins réels.", alt: "Illustration de compétences et d'opportunités." },
+  { image: "motivation-12-apprendre-pratiquer-entreprendre.png", title: "Apprendre, pratiquer, entreprendre", text: "La pratique aide à transformer les connaissances en réalisations.", alt: "Illustration du slogan ED BUSINESS CENTER." },
 ];
 
 /* =====================================================
@@ -139,9 +117,9 @@ const SERVICES = [
   },
   {
     id: "digital",
-    name: "ED DIGITAL AGENCY",
+    name: "ED DIGITAL SERVICE",
     category: "Communication digitale",
-    image: "service-ed-digital-agency.png",
+    image: "service-ed-digital-service.png",
     description:
       "Des solutions de communication visuelle et digitale pour valoriser les activités des particuliers et des entreprises.",
     details: [
@@ -167,9 +145,9 @@ const SERVICES = [
   },
   {
     id: "solution",
-    name: "ED B-SOLUTION",
+    name: "ED B-SOLUTIONS",
     category: "Solutions numériques",
-    image: "service-ed-b-solution.png",
+    image: "service-ed-b-solutions.png",
     description:
       "Des solutions numériques destinées à faciliter certaines activités et à améliorer l'organisation du travail.",
     details: [
@@ -180,17 +158,17 @@ const SERVICES = [
     ],
   },
   {
-    id: "photographie",
-    name: "ED B-PHOTOGRAPHIE",
-    category: "Photographie",
-    image: "service-packs-photographie.png",
+    id: "reseau",
+    name: "LE RÉSEAU",
+    category: "Recherche de produits et petites commandes",
+    image: "service-le-reseau.png",
     description:
-      "Des prestations photographiques pour mettre en valeur les personnes, les produits et les activités professionnelles.",
+      "Un intermédiaire unique pour rechercher des produits, organiser les précommandes et proposer de petits stocks sans exposer directement les fournisseurs.",
     details: [
-      "Séances photo",
-      "Photographie de produits",
-      "Images pour la communication",
-      "Valorisation des marques et activités",
+      "Recherche de produits et fournisseurs",
+      "Précommandes et petits stocks",
+      "Prix annoncé tout compris",
+      "Accompagnement des commandes",
     ],
   },
 ];
@@ -361,7 +339,7 @@ function VerifiedBadge({ role }) {
    AVATAR UTILISATEUR
 ===================================================== */
 
-function UserAvatar({ user, size = "medium" }) {
+function UserAvatar({ user, size = "medium", role }) {
   const name =
     user?.full_name ||
     user?.name ||
@@ -381,7 +359,9 @@ function UserAvatar({ user, size = "medium" }) {
       aria-label={`Photo de profil de ${name}`}
     >
       {photo ? (
-        <img src={photo} alt={`Portrait de ${name}`} />
+        <img src={photo} alt={`Portrait de ${name}`} loading="lazy" />
+      ) : ["trainer", "formatrice", "formateur"].includes(String(role || user?.role || user?.user_role || "").toLowerCase()) ? (
+        <img src={image("avatar-default-formatrice.png")} alt="Avatar par défaut de la formatrice" loading="lazy" />
       ) : (
         <span>{getInitials(name)}</span>
       )}
@@ -401,6 +381,7 @@ function Header({
   onLogout,
   onNavigate,
   activePage,
+  role,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -412,6 +393,7 @@ function Header({
     { id: "community", label: "Communauté" },
     { id: "atelier", label: "Ateliers" },
     { id: "contact", label: "Contact" },
+    ...(role === "admin" ? [{ id: "images", label: "Gestion des images" }] : []),
   ];
 
   function navigateTo(page) {
@@ -717,7 +699,7 @@ function IntroSection({ onNavigate, onRegister }) {
       <div className="intro-visual">
         <div className="intro-image-card">
           <img
-            src={image("banniere-facebook-ed-b-center.png")}
+            src={image("banniere-ed-b-center.png")}
             alt="Bannière officielle présentant ED BUSINESS CENTER et ses activités"
           />
         </div>
@@ -734,7 +716,18 @@ function IntroSection({ onNavigate, onRegister }) {
 function ServicesSection({ onNavigate, onSelectService }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const visibleCount = 3;
+  const [visibleCount, setVisibleCount] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches ? 1 : 3
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 760px)");
+    const updateVisibleCount = () => setVisibleCount(media.matches ? 1 : 3);
+    updateVisibleCount();
+    media.addEventListener?.("change", updateVisibleCount);
+    return () => media.removeEventListener?.("change", updateVisibleCount);
+  }, []);
+
   const maxIndex = Math.max(0, SERVICES.length - visibleCount);
 
   function showPrevious() {
@@ -1173,11 +1166,9 @@ function ContactSection() {
                 title={social.description}
                 aria-label={social.description}
               >
-                <img
-                  src={image(social.image)}
-                  alt={social.name}
-                  loading="lazy"
-                />
+                <span className={`social-fallback-mark social-${social.name.toLowerCase()}`} aria-hidden="true">
+                  {social.name === "WhatsApp" ? "WA" : social.name === "Facebook" ? "f" : social.name === "Instagram" ? "◎" : "@"}
+                </span>
               </a>
             ))}
           </div>
@@ -1762,6 +1753,7 @@ function AccountSection({
 
         <UserAvatar
           user={{ ...profile, ...user, full_name: displayName }}
+          role={role}
           size="large"
         />
       </div>
@@ -2612,10 +2604,10 @@ function App() {
         photoFile.name.split(".").pop() || "jpg";
 
       const filePath =
-        `${user.id}/${Date.now()}.${extension}`;
+        `user-avatars/${user.id}/${Date.now()}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
+        .from("ed-b-center-images")
         .upload(filePath, photoFile, {
           upsert: true,
           contentType: photoFile.type,
@@ -2623,12 +2615,12 @@ function App() {
 
       if (uploadError) {
         throw new Error(
-          "Impossible d'envoyer la photo. Vérifie la configuration du stockage Supabase."
+          "Impossible d'envoyer la photo. Vérifie les règles de stockage du bucket ed-b-center-images dans Supabase."
         );
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from("avatars")
+        .from("ed-b-center-images")
         .getPublicUrl(filePath);
 
       avatarUrl = publicUrlData.publicUrl;
@@ -2791,6 +2783,7 @@ return (
         onLogout={handleLogout}
         onNavigate={navigateTo}
         activePage={activePage}
+        role={role}
       />
 
       <main>
@@ -2818,6 +2811,8 @@ return (
         )}
 
         {activePage === "news" && <NewsSection user={user} role={role} onNotify={notify} />}
+
+        {activePage === "images" && (role === "admin" ? <ImageLibrarySection onNotify={notify} /> : <section className="section-container"><h1>Accès réservé</h1><p>La médiathèque est réservée aux administrateurs.</p></section>)}
 
         {activePage === "notifications" && user && (
           <NotificationsSection user={user} onNotify={notify} />
@@ -2967,11 +2962,9 @@ return (
                 aria-label={social.description}
                 title={social.name}
               >
-                <img
-                  src={image(social.image)}
-                  alt={social.name}
-                  loading="lazy"
-                />
+                <span className={`social-fallback-mark social-${social.name.toLowerCase()}`} aria-hidden="true">
+                  {social.name === "WhatsApp" ? "WA" : social.name === "Facebook" ? "f" : social.name === "Instagram" ? "◎" : "@"}
+                </span>
               </a>
             ))}
           </div>
