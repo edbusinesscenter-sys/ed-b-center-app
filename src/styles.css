@@ -3545,3 +3545,154 @@ button, .button, input, select { touch-action: manipulation; }
   .image-library-card-copy strong { font-size: .75rem; }
 }
 @media (max-width: 360px) { .image-library-grid { grid-template-columns: 1fr; } }
+
+
+/* =====================================================
+   CORRECTIONS CIBLÉES — INTERFACE MOBILE ET AUTHENTIFICATION
+   Ajoutées sans supprimer les règles existantes.
+===================================================== */
+
+/* Connexion et inscription : vraie fenêtre superposée, jamais sous la page */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 16px;
+  background: rgba(7, 25, 42, .76);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+.auth-modal {
+  position: relative;
+  z-index: 3001;
+  flex: 0 1 460px;
+  width: min(460px, 100%);
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  overflow-y: auto;
+  padding: clamp(20px, 5vw, 34px);
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0,0,0,.28);
+}
+.auth-modal form { display: grid; gap: 16px; }
+.auth-modal .form-field { display: grid; gap: 7px; min-width: 0; }
+.auth-modal input, .auth-modal select, .auth-modal textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid #d7e0e8;
+  border-radius: 10px;
+  background: #fff;
+}
+.auth-modal .button-full { width: 100%; }
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: #eef3f7;
+  color: #16334c;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.auth-modal-brand img { display: block; width: 64px; height: 64px; object-fit: contain; }
+.auth-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* Écran d'accueil non connecté : boutons propres et bien espacés */
+.auth-required { min-height: 100dvh; display: grid; place-items: center; padding: 22px; background: #f5f8fb; }
+.auth-required-content {
+  box-sizing: border-box;
+  width: min(100%, 520px);
+  padding: clamp(24px, 6vw, 42px);
+  border: 1px solid #e1e8ef;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 18px 55px rgba(13, 43, 68, .10);
+  text-align: center;
+}
+.auth-required-content > img { display: block; width: 92px; height: 92px; margin: 0 auto 20px; object-fit: contain; }
+.auth-required-content h1 { margin: 0 0 12px; color: #102b46; line-height: 1.2; }
+.auth-required-content p { margin: 0 0 22px; color: #536779; line-height: 1.65; }
+.auth-required-content > .button { display: flex; width: 100%; justify-content: center; margin-top: 12px; }
+
+/* Carrousel des six services : dimensions et images fiables */
+.services-carousel { min-width: 0; }
+.services-track-window { min-width: 0; overflow: hidden; }
+.services-track { min-width: 0; }
+.services-track .service-card { min-width: 0; height: 100%; overflow: hidden; border-radius: 18px; background: #fff; }
+.service-image-wrapper { position: relative; width: 100%; overflow: hidden; background: #edf3f7; }
+.service-image-wrapper img { display: block; width: 100%; height: 190px; object-fit: cover; object-position: center; }
+.service-card-content { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
+.service-card-content .text-button { margin-top: auto; }
+
+/* Recherche et filtre : empilés sur mobile, côte à côte sur grand écran */
+.course-search-area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 24px 0 28px;
+}
+.course-search, .course-category-filter { display: flex; align-items: center; min-width: 0; }
+.course-search { gap: 10px; padding: 0 14px; border: 1px solid #d8e2ea; border-radius: 12px; background: #fff; }
+.course-search > span { flex: 0 0 auto; color: #537087; font-size: 1.4rem; }
+.course-search input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 10px 0; border: 0; outline: 0; background: transparent; }
+.course-category-filter select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 50px; padding: 10px 12px; border: 1px solid #d8e2ea; border-radius: 12px; background: #fff; color: #17364f; }
+.courses-grid { align-items: stretch; }
+.course-card { min-width: 0; overflow: hidden; }
+.course-card-content { min-width: 0; }
+.course-price-area { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Réseaux sociaux en ligne et pied de page moins haut */
+.site-footer { padding-top: 32px; }
+.footer-socials { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+.footer-socials a { display: inline-flex; flex: 0 0 42px; align-items: center; justify-content: center; width: 42px; height: 42px; overflow: hidden; border-radius: 50%; background: #fff; }
+.footer-socials img { display: block; width: 100%; height: 100%; padding: 5px; object-fit: contain; }
+.footer-inner { align-items: start; }
+.footer-copyright { margin-top: 8px; }
+
+/* Espace profil / compte : éléments lisibles sans chevauchement */
+.account-header, .profile-header { align-items: center; flex-wrap: wrap; gap: 16px; }
+.account-header > *, .profile-header > * { min-width: 0; }
+.account-header h1, .account-header h2, .profile-header h1, .profile-header h2 { overflow-wrap: anywhere; }
+.account-header p, .profile-header p { overflow-wrap: anywhere; }
+.user-avatar { flex: 0 0 auto; overflow: hidden; }
+
+@media (max-width: 760px) {
+  .modal-backdrop { align-items: center; padding: 12px; }
+  .auth-modal { width: 100%; max-width: 100%; max-height: calc(100dvh - 24px); padding: 24px 18px; border-radius: 18px; }
+  .auth-required { padding: 16px; }
+  .auth-required-content { padding: 26px 20px; }
+  .auth-required-content > img { width: 76px; height: 76px; }
+  .auth-required-content h1 { font-size: clamp(1.5rem, 6vw, 2rem); }
+  .course-search-area { grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 18px 0 22px; }
+  .course-search, .course-category-filter { width: 100%; }
+  .course-search input { font-size: 16px; }
+  .services-carousel { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .services-carousel > .section-carousel-arrow { display: none; }
+  .services-track { display: grid; grid-template-columns: repeat(6, minmax(0, 100%)); width: 100%; gap: 12px; transform: translateX(calc(var(--services-index, 0) * -100%)); }
+  .services-track .service-card { width: 100%; min-width: 0; }
+  .service-image-wrapper img { height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+  .footer-socials { flex-direction: row !important; align-items: center; justify-content: flex-start; }
+  .footer-socials a { flex: 0 0 40px; width: 40px; height: 40px; }
+  .account-header, .profile-header { align-items: flex-start; }
+  .account-header h1, .account-header h2, .profile-header h1, .profile-header h2 { font-size: clamp(1.25rem, 5vw, 1.65rem); }
+}
