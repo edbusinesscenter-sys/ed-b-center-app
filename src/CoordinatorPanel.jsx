@@ -13,28 +13,44 @@ export default function CoordinatorPanel({ onNotify, onStatusChange }) {
 
   async function refresh() {
     setChecking(true);
-    const { data, error } = await supabase.rpc("coordinator_get_control_state");
-    if (error) {
-      console.error("Contrôle coordinateur :", error.message);
+    try {
+      const { data, error } = await supabase.rpc("coordinator_get_control_state");
+      if (error) {
+        console.error("Contrôle coordinateur :", error.message);
+        setAuthorized(false);
+        setSettings(null);
+        onNotify?.("Le panneau coordinateur ne peut pas charger ses paramètres : la fonction Supabase coordinator_get_control_state est absente ou refuse l'accès.");
+        return;
+      }
+      setAuthorized(Boolean(data?.authorized));
+      setSettings(data?.settings || null);
+      onStatusChange?.(Boolean(data?.settings?.maintenance_mode), data?.settings?.maintenance_message || "");
+    } catch (error) {
+      console.error("Contrôle coordinateur :", error);
       setAuthorized(false);
       setSettings(null);
+      onNotify?.("Impossible de vérifier les autorisations du coordinateur.");
+    } finally {
       setChecking(false);
-      return;
     }
-    setAuthorized(Boolean(data?.authorized));
-    setSettings(data?.settings || null);
-    onStatusChange?.(Boolean(data?.settings?.maintenance_mode), data?.settings?.maintenance_message || "");
-    setChecking(false);
   }
 
   async function loadUsers() {
     setLoadingUsers(true);
-    const { data, error } = await supabase.rpc("coordinator_list_users");
-    if (error) {
-      onNotify?.("Impossible de charger les comptes. Vérifie les fonctions SQL du coordinateur.");
-      console.error("Liste des comptes :", error.message);
-    } else setUsers(Array.isArray(data) ? data : []);
-    setLoadingUsers(false);
+    try {
+      const { data, error } = await supabase.rpc("coordinator_list_users");
+      if (error) {
+        onNotify?.("La liste des comptes est indisponible : la fonction Supabase coordinator_list_users est absente ou refuse l'accès.");
+        console.error("Liste des comptes :", error.message);
+      } else {
+        setUsers(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error("Liste des comptes :", error);
+      onNotify?.("Une erreur inattendue empêche le chargement des comptes.");
+    } finally {
+      setLoadingUsers(false);
+    }
   }
 
   useEffect(() => { refresh(); }, []);
@@ -42,17 +58,24 @@ export default function CoordinatorPanel({ onNotify, onStatusChange }) {
 
   async function runAction(action, payload = {}) {
     setBusy(action);
-    const { data, error } = await supabase.rpc(action, payload);
-    setBusy("");
-    if (error) {
-      console.error(`Action coordinateur ${action} :`, error.message);
-      onNotify?.("Action refusée ou impossible. Vérifie les autorisations Supabase.");
+    try {
+      const { data, error } = await supabase.rpc(action, payload);
+      if (error) {
+        console.error(`Action coordinateur ${action} :`, error.message);
+        onNotify?.(`Action non effectuée : la fonction ${action} est indisponible ou l'accès est refusé.`);
+        return false;
+      }
+      onNotify?.(data?.message || "Action effectuée.");
+      await refresh();
+      await loadUsers();
+      return true;
+    } catch (error) {
+      console.error(`Action coordinateur ${action} :`, error);
+      onNotify?.("Une erreur inattendue a empêché cette action.");
       return false;
+    } finally {
+      setBusy("");
     }
-    onNotify?.(data?.message || "Action effectuée.");
-    await refresh();
-    await loadUsers();
-    return true;
   }
 
   async function updateRole(target, nextRole) {

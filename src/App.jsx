@@ -343,8 +343,10 @@ function VerifiedBadge({ role }) {
   const label =
     role === "admin"
       ? "Administrateur"
-      : role === "trainer"
+      : ["trainer", "formatrice"].includes(role)
       ? "Formatrice"
+      : role === "coordinateur"
+      ? "Coordinateur"
       : role;
 
   return (
@@ -2685,6 +2687,33 @@ function App() {
         />
 
         <p>Chargement de ED BUSINESS CENTER...</p>
+      </div>
+    );
+  }
+
+  /* Aucun accès à l'application sans session authentifiée. */
+  if (!user) {
+    return (
+      <div className="app auth-required-screen">
+        <section className="maintenance-screen section-container" role="region" aria-labelledby="auth-required-title">
+          <div className="maintenance-card">
+            <img src={image("logo-ed-b-center.png")} alt="Logo ED BUSINESS CENTER" style={{ maxWidth: "150px", height: "auto", marginBottom: "1rem" }} />
+            <span className="eyebrow">ED BUSINESS CENTER</span>
+            <h1 id="auth-required-title">Connexion obligatoire</h1>
+            <p>Crée un compte ou connecte-toi pour accéder à l’application.</p>
+            <div className="coordinator-action-row" style={{ justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+              <button type="button" className="button button-primary" onClick={openLogin}>Se connecter</button>
+              <button type="button" className="button button-outline" onClick={() => openRegister()}>Créer un compte</button>
+            </div>
+          </div>
+        </section>
+        {authModal === "login" && (
+          <LoginModal onClose={() => setAuthModal(null)} onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setAuthModal("register")} />
+        )}
+        {authModal === "register" && (
+          <RegisterModal onClose={() => setAuthModal(null)} onRegisterSuccess={handleRegisterSuccess} onSwitchToLogin={() => setAuthModal("login")} selectedCourse={selectedCourse} />
+        )}
+        {notification && <div className="toast-notification" role="status">{notification}</div>}
       </div>
     );
   }

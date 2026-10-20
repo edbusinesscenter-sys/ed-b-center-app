@@ -11,33 +11,46 @@ export default function MessagesSection({ user, onNotify }) {
     if (!user?.id) return;
     setLoading(true);
     setError("");
-    const { data, error: queryError } = await supabase
-      .from("user_messages")
-      .select("id, sender_id, recipient_id, subject, body, related_reservation_id, created_at, read_at")
-      .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (queryError) {
-      console.error("Chargement de la messagerie :", queryError.message);
+    try {
+      const { data, error: queryError } = await supabase
+        .from("user_messages")
+        .select("id, sender_id, recipient_id, subject, body, related_reservation_id, created_at, read_at")
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (queryError) {
+        console.error("Chargement de la messagerie :", queryError.message);
+        setMessages([]);
+        setError("Impossible de charger la messagerie. Vérifie que la table user_messages et ses autorisations de lecture existent dans Supabase.");
+      } else {
+        setMessages(Array.isArray(data) ? data : []);
+      }
+    } catch (loadError) {
+      console.error("Erreur inattendue dans la messagerie :", loadError);
       setMessages([]);
-      setError("La messagerie interne n'est pas encore disponible. Applique la migration SQL de messagerie et réservations dans Supabase.");
-    } else {
-      setMessages(data || []);
+      setError("Une erreur inattendue empêche l’affichage des messages. Réessaie avec Actualiser.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [user?.id]);
 
   useEffect(() => { loadMessages(); }, [loadMessages]);
 
   async function markRead(message) {
-    if (message.recipient_id !== user.id || message.read_at) return;
+    if (!user?.id || message.recipient_id !== user.id || message.read_at) return;
     const readAt = new Date().toISOString();
-    const { error: updateError } = await supabase.from("user_messages").update({ read_at: readAt }).eq("id", message.id).eq("recipient_id", user.id);
-    if (updateError) {
-      onNotify?.("Impossible de marquer ce message comme lu.");
-      return;
+    try {
+      const { error: updateError } = await supabase.from("user_messages").update({ read_at: readAt }).eq("id", message.id).eq("recipient_id", user.id);
+      if (updateError) {
+        console.error("Marquer le message comme lu :", updateError.message);
+        onNotify?.("Impossible de marquer ce message comme lu.");
+        return;
+      }
+      setMessages((current) => current.map((item) => item.id === message.id ? { ...item, read_at: readAt } : item));
+    } catch (updateError) {
+      console.error("Erreur inattendue lors de la mise à jour du message :", updateError);
+      onNotify?.("Une erreur empêche de marquer ce message comme lu.");
     }
-    setMessages((current) => current.map((item) => item.id === message.id ? { ...item, read_at: readAt } : item));
   }
 
   return <section className="account-tab-content internal-messages-section">
@@ -47,10 +60,10 @@ export default function MessagesSection({ user, onNotify }) {
     </div>
     {error && <div className="form-error" role="alert">{error}</div>}
     {loading ? <div className="community-empty">Chargement des messages…</div> : !error && messages.length === 0 ? <div className="empty-state"><Inbox size={36} /><h3>Aucun message pour le moment</h3><p>Les confirmations de paiement et les messages importants apparaîtront ici.</p></div> : <div className="internal-message-list">{messages.map((message) => {
-      const received = message.recipient_id === user.id;
+      const received = message.recipient_id === user?.id;
       return <article key={message.id} className={`internal-message-card ${received && !message.read_at ? "is-unread" : ""}`}>
         <div className="internal-message-icon"><Mail size={19} aria-hidden="true" /></div>
-        <div className="internal-message-content"><div className="internal-message-heading"><strong>{message.subject}</strong><small>{new Date(message.created_at).toLocaleString("fr-FR")}</small></div><p>{message.body}</p>{message.related_reservation_id && <small className="internal-message-reference">Réservation : {message.related_reservation_id}</small>}{received && !message.read_at && <button type="button" className="notification-mark" onClick={() => markRead(message)}><CheckCheck size={14} /> Marquer comme lu</button>}</div>
+        <div className="internal-message-content"><div className="internal-message-heading"><strong>{message.subject || "Message"}</strong><small>{message.created_at ? new Date(message.created_at).toLocaleString("fr-FR") : ""}</small></div><p>{message.body}</p>{message.related_reservation_id && <small className="internal-message-reference">Réservation : {message.related_reservation_id}</small>}{received && !message.read_at && <button type="button" className="notification-mark" onClick={() => markRead(message)}><CheckCheck size={14} /> Marquer comme lu</button>}</div>
         <span className="internal-message-direction">{received ? "Reçu" : "Envoyé"}</span>
       </article>;
     })}</div>}
