@@ -6,6 +6,7 @@ import AtelierSection from "./AtelierSection";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import WorkshopReservationsAdmin from "./WorkshopReservationsAdmin";
+import MessagesSection from "./MessagesSection";
 import "./styles.css";
 
 /* =====================================================
@@ -1375,6 +1376,64 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
 }
 
 /* =====================================================
+   DEMANDE D'INSCRIPTION À UNE FORMATION VIA WHATSAPP
+===================================================== */
+function CourseRequestModal({ course, onClose }) {
+  const [form, setForm] = useState({ full_name: "", phone: "", city: "Douala", message: "" });
+  const [error, setError] = useState("");
+  function submit(event) {
+    event.preventDefault();
+    if (!form.full_name.trim() || !form.phone.trim()) {
+      setError("Renseigne ton nom complet et ton numéro de téléphone.");
+      return;
+    }
+    const requestPayload = {
+      course_title: course.title,
+      course_price: Number(course.price) || 0,
+      full_name: form.full_name.trim(),
+      phone: form.phone.trim(),
+      city: form.city.trim() || null,
+      message: form.message.trim() || null,
+      status: "new",
+    };
+    // Envoi en arrière-plan pour ne pas bloquer l'ouverture de WhatsApp par le navigateur.
+    supabase.from("training_interest_requests").insert(requestPayload).then(({ error: requestError }) => {
+      if (requestError) console.error("Enregistrement de la demande de formation :", requestError.message);
+    });
+    const text = [
+      "Bonjour ED BUSINESS CENTER, je souhaite m’inscrire à une formation.",
+      `Formation : ${course.title}`,
+      `Tarif affiché : ${formatPrice(course.price)}`,
+      `Nom complet : ${form.full_name.trim()}`,
+      `Téléphone : ${form.phone.trim()}`,
+      `Ville : ${form.city.trim() || "Non précisée"}`,
+      `Précisions : ${form.message.trim() || "Aucune"}`,
+      "Merci de m'envoyer les prochaines étapes et les modalités d'inscription."
+    ].join("\n");
+    window.open(`${BRAND.whatsapp}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    onClose();
+  }
+  return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section className="auth-modal register-modal course-request-modal" role="dialog" aria-modal="true" aria-labelledby="course-request-title">
+      <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">×</button>
+      <span className="eyebrow">DEMANDE D'INSCRIPTION</span>
+      <h2 id="course-request-title">S'inscrire à une formation</h2>
+      <div className="selected-course-notice"><strong>{course.title}</strong><span>{formatPrice(course.price)}</span></div>
+      <p className="auth-description">Remplis ce formulaire : WhatsApp s'ouvrira avec ton message prérempli. Tu devras appuyer sur Envoyer dans WhatsApp.</p>
+      <form onSubmit={submit}>
+        <div className="form-field"><label htmlFor="course-request-name">Nom complet</label><input id="course-request-name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} autoComplete="name" required maxLength={120}/></div>
+        <div className="form-field"><label htmlFor="course-request-phone">Téléphone</label><input id="course-request-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} autoComplete="tel" required maxLength={30}/></div>
+        <div className="form-field"><label htmlFor="course-request-city">Ville</label><input id="course-request-city" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={100}/></div>
+        <div className="form-field"><label htmlFor="course-request-message">Précisions (facultatif)</label><textarea id="course-request-message" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={3} maxLength={1000}/></div>
+        {error && <p className="form-error" role="alert">{error}</p>}
+        <button className="button button-whatsapp" type="submit">Continuer sur WhatsApp</button>
+        <p className="form-help">Aucun compte n'est créé par ce formulaire. L'envoi se termine dans WhatsApp.</p>
+      </form>
+    </section>
+  </div>;
+}
+
+/* =====================================================
    FENÊTRE DE CRÉATION DE COMPTE
 ===================================================== */
 
@@ -2004,39 +2063,8 @@ function AccountSection({
             </div>
           )}
 
-          {activeTab === "messages" && (
-            <div className="account-tab-content">
-              <div className="account-section-title">
-                <div>
-                  <span className="eyebrow">COMMUNICATION</span>
-                  <h2>Ma messagerie</h2>
-                </div>
-              </div>
-
-              <div className="account-content-card">
-                <div className="empty-state">
-                  <span className="empty-state-icon" aria-hidden="true">
-                    ✉
-                  </span>
-
-                  <h3>Ta messagerie personnelle</h3>
-
-                  <p>
-                    L'affichage des messages privés nécessite une table
-                    de messagerie configurée dans Supabase.
-                  </p>
-
-                  <a
-                    className="button button-primary"
-                    href={BRAND.whatsapp}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Contacter l'équipe sur WhatsApp
-                  </a>
-                </div>
-              </div>
-            </div>
+          {activeTab === "messages" && user && (
+            <MessagesSection user={user} onNotify={notify} />
           )}
 
           {activeTab === "reservations" && role === "admin" && (
@@ -2252,6 +2280,7 @@ function App() {
   const [activePage, setActivePage] = useState("home");
   const [authModal, setAuthModal] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseRequestCourse, setCourseRequestCourse] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
 
@@ -2437,7 +2466,11 @@ function App() {
 
   /* Ouverture de l'inscription */
   function openRegister(course = null) {
-    setSelectedCourse(course);
+    if (course) {
+      setCourseRequestCourse(course);
+      return;
+    }
+    setSelectedCourse(null);
     setAuthModal("register");
   }
 
@@ -2880,6 +2913,8 @@ return (
       </footer>
 
       {/* Fenêtre de connexion */}
+      {courseRequestCourse && <CourseRequestModal course={courseRequestCourse} onClose={() => setCourseRequestCourse(null)} />}
+
       {authModal === "login" && (
         <LoginModal
           onClose={() => setAuthModal(null)}

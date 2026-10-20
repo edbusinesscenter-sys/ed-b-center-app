@@ -3850,3 +3850,34 @@ button{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}butt
   .services-display-grid .service-image-wrapper { aspect-ratio: 16 / 9; min-height: 0; }
   .services-display-grid .service-card-content { padding: 18px !important; }
 }
+
+/* Gestion des réservations : actions administratives et formulaire WhatsApp */
+.workshop-reservation-row-actions { display: flex; flex-wrap: wrap; gap: 6px; min-width: 180px; }
+.workshop-reservation-row-actions .button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 10px; font-size: .78rem; white-space: nowrap; }
+.workshop-admin-action-modal > label { display: grid; gap: 7px; margin: 14px 0; font-weight: 600; }
+.workshop-admin-action-modal input, .workshop-admin-action-modal textarea { width: 100%; border: 1px solid var(--border-color, #d8dce5); border-radius: 10px; padding: 11px 12px; font: inherit; background: #fff; color: #172033; }
+.workshop-admin-action-buttons { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.workshop-reservation-mobile-card .workshop-reservation-row-actions { margin-top: 12px; }
+.course-request-modal textarea { width: 100%; resize: vertical; }
+.course-request-modal .form-help { margin-top: 10px; font-size: .85rem; opacity: .8; }
+.course-request-modal .button-whatsapp, .atelier-reservation-form .button-whatsapp { width: 100%; margin-top: 10px; }
+@media (max-width: 760px) {
+  .workshop-reservation-row-actions { min-width: 0; }
+  .workshop-admin-action-buttons { flex-direction: column-reverse; }
+  .workshop-admin-action-buttons .button { width: 100%; }
+}
+
+/* Messagerie interne : confirmations de réservation et messages liés au compte */
+.internal-messages-section { width: 100%; }
+.internal-message-list { display: grid; gap: 14px; margin-top: 20px; }
+.internal-message-card { display: flex; align-items: flex-start; gap: 14px; padding: 18px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 16px; background: var(--surface, #fff); }
+.internal-message-card.is-unread { border-color: var(--primary-color, #2563eb); background: rgba(37, 99, 235, .045); }
+.internal-message-icon { flex: 0 0 40px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: rgba(37, 99, 235, .1); color: var(--primary-color, #2563eb); }
+.internal-message-content { min-width: 0; flex: 1; }
+.internal-message-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.internal-message-heading strong { color: var(--text-color, #172033); }
+.internal-message-heading small, .internal-message-reference { color: var(--muted-color, #64748b); font-size: .78rem; }
+.internal-message-content p { margin: 9px 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.internal-message-direction { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: .75rem; }
+.internal-message-content .notification-mark { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; }
+@media (max-width: 640px) { .internal-message-card { padding: 13px; gap: 10px; } .internal-message-icon { flex-basis: 34px; width: 34px; height: 34px; } .internal-message-direction { display: none; } }
