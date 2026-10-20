@@ -30,6 +30,7 @@ const BRAND = {
   email: "edbusinesscenter@gmail.com",
   phone: "+237 690 418 794",
   whatsapp: "https://wa.me/237690418794",
+  whatsappChannel: "https://whatsapp.com/channel/0029VbDMmDnC1FuDUIDiXm25",
   facebook:
     "https://www.facebook.com/profile.php?id=61595517983213",
   instagram:
@@ -674,13 +675,14 @@ function IntroSection({ onNavigate, onRegister }) {
             Découvrir les formations
           </button>
 
-          <button
-            type="button"
+          <a
             className="button button-outline"
-            onClick={onRegister}
+            href={BRAND.whatsappChannel}
+            target="_blank"
+            rel="noopener noreferrer"
           >
             Rejoindre la communauté
-          </button>
+          </a>
         </div>
 
         <div className="intro-highlights">
@@ -729,8 +731,22 @@ function IntroSection({ onNavigate, onRegister }) {
 
 function ServicesSection({ onNavigate, onSelectService }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches
+      ? 1
+      : 3
+  );
 
-  const visibleCount = 3;
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      setVisibleCount(window.matchMedia("(max-width: 760px)").matches ? 1 : 3);
+    };
+
+    updateVisibleCount();
+    window.addEventListener("resize", updateVisibleCount);
+    return () => window.removeEventListener("resize", updateVisibleCount);
+  }, []);
+
   const maxIndex = Math.max(0, SERVICES.length - visibleCount);
 
   function showPrevious() {
@@ -1420,6 +1436,69 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
             Créer un compte
           </button>
         </p>
+      </section>
+    </div>
+  );
+}
+
+/* =====================================================
+   FORMULAIRE DE DEMANDE D'INSCRIPTION À UNE FORMATION
+   Prépare un message que le client envoie lui-même sur WhatsApp.
+===================================================== */
+function CourseRegistrationModal({ onClose, selectedCourse }) {
+  const [form, setForm] = useState({ name: "", phone: "", email: "", message: "" });
+  const [error, setError] = useState("");
+
+  function updateField(event) {
+    const { name, value } = event.target;
+    setForm((previous) => ({ ...previous, [name]: value }));
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    if (!selectedCourse) {
+      setError("Aucune formation n'a été sélectionnée. Ferme ce formulaire et choisis une formation.");
+      return;
+    }
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError("Renseigne ton nom complet et ton numéro de téléphone.");
+      return;
+    }
+    const messageText = [
+      "Bonjour ED BUSINESS CENTER, je souhaite m'inscrire à une formation.",
+      "",
+      `Nom complet : ${form.name.trim()}`,
+      `Téléphone : ${form.phone.trim()}`,
+      `E-mail : ${form.email.trim() || "Non renseigné"}`,
+      `Formation : ${selectedCourse.title}`,
+      `Tarif : ${formatPrice(selectedCourse.price)}`,
+      `Durée : ${selectedCourse.duration || "À confirmer"}`,
+      form.message.trim() ? `Informations complémentaires : ${form.message.trim()}` : "",
+    ].filter(Boolean).join("\n");
+    const url = `${BRAND.whatsapp}?text=${encodeURIComponent(messageText)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    onClose();
+  }
+
+  return (
+    <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="auth-modal register-modal" role="dialog" aria-modal="true" aria-labelledby="course-registration-title">
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">×</button>
+        <div className="auth-modal-brand"><img src={image("logo-ed-b-center.png")} alt="Logo ED BUSINESS CENTER" /></div>
+        <span className="eyebrow">ED B-ACADEMY</span>
+        <h2 id="course-registration-title">Demande d'inscription</h2>
+        <p className="auth-description">Remplis ces informations. Ta demande sera préparée dans WhatsApp pour que tu puisses l'envoyer à notre équipe.</p>
+        {selectedCourse && <div className="selected-course-notice"><strong>Formation choisie :</strong><span>{selectedCourse.title}</span><span>{formatPrice(selectedCourse.price)}</span></div>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-field"><label htmlFor="course-reg-name">Nom complet</label><input id="course-reg-name" name="name" value={form.name} onChange={updateField} autoComplete="name" placeholder="Ton nom complet" required /></div>
+          <div className="form-field"><label htmlFor="course-reg-phone">Téléphone / WhatsApp</label><input id="course-reg-phone" name="phone" value={form.phone} onChange={updateField} autoComplete="tel" type="tel" placeholder="+237..." required /></div>
+          <div className="form-field"><label htmlFor="course-reg-email">Adresse e-mail (facultatif)</label><input id="course-reg-email" name="email" value={form.email} onChange={updateField} autoComplete="email" type="email" placeholder="nom@exemple.com" /></div>
+          <div className="form-field"><label htmlFor="course-reg-message">Questions ou précisions (facultatif)</label><textarea id="course-reg-message" name="message" value={form.message} onChange={updateField} rows="3" placeholder="Tes questions sur la formation..." /></div>
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <button type="submit" className="button button-primary">Continuer sur WhatsApp</button>
+          <button type="button" className="button button-outline" onClick={onClose}>Annuler</button>
+        </form>
       </section>
     </div>
   );
@@ -2466,6 +2545,11 @@ function App() {
     setAuthModal("register");
   }
 
+  function openCourseRegistration(course) {
+    setSelectedCourse(course);
+    setAuthModal("course-registration");
+  }
+
   /* Connexion réussie */
   async function handleLoginSuccess(loggedInUser) {
     setUser(loggedInUser);
@@ -2740,7 +2824,7 @@ return (
             />
 
             <CoursesSection
-              onRegister={openRegister}
+              onRegister={openCourseRegistration}
               onNavigate={navigateTo}
             />
 
@@ -2912,6 +2996,13 @@ return (
           onClose={() => setAuthModal(null)}
           onLoginSuccess={handleLoginSuccess}
           onSwitchToRegister={() => setAuthModal("register")}
+        />
+      )}
+
+      {authModal === "course-registration" && (
+        <CourseRegistrationModal
+          onClose={() => { setAuthModal(null); setSelectedCourse(null); }}
+          selectedCourse={selectedCourse}
         />
       )}
 
