@@ -8,9 +8,6 @@ export const IMAGE_BUCKET = import.meta.env.VITE_SUPABASE_IMAGE_BUCKET || "ed-b-
 export const IMAGE_BASE_URL = `${SUPABASE_URL}/storage/v1/object/public/${IMAGE_BUCKET}`;
 
 export const IMAGE_ASSETS = [
-  { "name": "interface-communaute.png", "category": "interfaces" },
-  { "name": "interface-atelier.png", "category": "interfaces" },
-
   {
     "name": "atelier-visuel-aucun-evenement.png",
     "category": "ateliers"

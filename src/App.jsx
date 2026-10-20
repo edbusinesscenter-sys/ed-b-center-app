@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { imageUrl } from "./imageCatalog";
 import CommunitySection from "./CommunitySection";
 import NotificationsSection from "./NotificationsSection";
 import AtelierSection from "./AtelierSection";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
-import WorkshopReservationsAdmin from "./WorkshopReservationsAdmin";
-import MessagesSection from "./MessagesSection";
+import ImageLibrarySection from "./ImageLibrarySection";
 import "./styles.css";
+import "./responsive-mobile.css";
+import "./premium.css";
 
 /* =====================================================
    ED BUSINESS CENTER
@@ -16,13 +18,7 @@ import "./styles.css";
 ===================================================== */
 
 /* Chemin des images */
-const COORDINATOR_USER_ID = "938f3b7a-b7a9-4ed6-b9df-aff3bfc3ddb2";
-
-const SUPABASE_IMAGES_URL =
-  "https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images";
-
-const image = (filename) =>
-  `${SUPABASE_IMAGES_URL}/${encodeURIComponent(filename)}`;
+const image = (filename) => imageUrl(filename);
 
 /* Informations de l'entreprise */
 const BRAND = {
@@ -44,25 +40,25 @@ const BRAND = {
 const SOCIALS = [
   {
     name: "WhatsApp",
-    image: "logo-whatsapp.png",
+    image: "logo-ed-b-center.png",
     url: BRAND.whatsapp,
     description: "Contacter l'équipe ED BUSINESS CENTER sur WhatsApp",
   },
   {
     name: "Facebook",
-    image: "logo-facebook.png",
+    image: "logo-ed-b-center.png",
     url: BRAND.facebook,
     description: "Retrouver ED BUSINESS CENTER sur Facebook",
   },
   {
     name: "Instagram",
-    image: "logo-instagram.jpeg",
+    image: "logo-ed-b-center.png",
     url: BRAND.instagram,
     description: "Découvrir les activités d'ED BUSINESS CENTER sur Instagram",
   },
   {
     name: "Gmail",
-    image: "logo-gmail.png",
+    image: "logo-ed-b-center.png",
     url: `mailto:${BRAND.email}`,
     description: "Envoyer un e-mail à ED BUSINESS CENTER",
   },
@@ -74,38 +70,18 @@ const SOCIALS = [
 ===================================================== */
 
 const MOTIVATION_IMAGES = [
-  {
-    image: "motivation-1-entrepreneur.png",
-    title: "Construis ton avenir",
-    text:
-      "Chaque compétence acquise peut devenir le point de départ d'une nouvelle opportunité.",
-    alt:
-      "Entrepreneur motivé qui avance vers ses objectifs professionnels.",
-  },
-  {
-    image: "motivation-2-reflexion.jpeg",
-    title: "Transforme tes idées en projets",
-    text:
-      "Prends le temps de réfléchir, de planifier et de préparer tes prochaines actions.",
-    alt:
-      "Personne en pleine réflexion sur ses idées et ses projets.",
-  },
-  {
-    image: "motivation-3-entrepreneur.jpeg",
-    title: "Passe à l'action",
-    text:
-      "Apprends, entraîne-toi et développe des réalisations concrètes pour progresser.",
-    alt:
-      "Entrepreneur concentré sur le développement de son activité.",
-  },
-  {
-    image: "motivation-4-meditation.jpeg",
-    title: "Crois en ton potentiel",
-    text:
-      "La progression demande de la patience, de la discipline et une volonté d'apprendre.",
-    alt:
-      "Personne prenant un moment de calme pour se recentrer sur ses objectifs.",
-  },
+  { image: "motivation-01-discipline-et-perseverance.png", title: "Discipline et persévérance", text: "Les progrès durables se construisent par des actions régulières.", alt: "Illustration de discipline et de persévérance." },
+  { image: "motivation-02-formation-et-competences.png", title: "Forme-toi et développe tes compétences", text: "Chaque apprentissage peut ouvrir de nouvelles possibilités professionnelles.", alt: "Illustration de formation et de compétences." },
+  { image: "motivation-03-passer-a-laction.png", title: "Passe à l'action", text: "Apprends, entraîne-toi et développe des réalisations concrètes.", alt: "Illustration du passage à l'action." },
+  { image: "motivation-04-entrepreneuriat-et-reussite.png", title: "Entreprendre pour progresser", text: "Transforme les compétences acquises en projets concrets.", alt: "Illustration de l'entrepreneuriat et de la réussite." },
+  { image: "motivation-05-croire-en-son-potentiel.png", title: "Crois en ton potentiel", text: "La progression demande de la patience et de la volonté.", alt: "Illustration de confiance en son potentiel." },
+  { image: "motivation-06-apprendre-et-progresser.png", title: "Apprends et progresse", text: "Chaque exercice est une occasion de mieux maîtriser une compétence.", alt: "Illustration de l'apprentissage et de la progression." },
+  { image: "motivation-07-transformer-ses-idees-en-projets.png", title: "Transforme tes idées en projets", text: "Réfléchis, planifie et prépare tes prochaines actions.", alt: "Illustration de transformation des idées en projets." },
+  { image: "motivation-08-construire-son-avenir.png", title: "Construis ton avenir", text: "Prépare ton avenir avec des compétences utiles et des actions concrètes.", alt: "Illustration de construction de son avenir." },
+  { image: "motivation-09-investir-en-soi.png", title: "Investis en toi", text: "Le temps consacré à apprendre peut devenir un investissement professionnel.", alt: "Illustration de l'investissement en soi." },
+  { image: "motivation-10-oser-commencer.png", title: "Ose commencer", text: "Un premier pas concret vaut mieux qu'un projet toujours repoussé.", alt: "Illustration du courage de commencer." },
+  { image: "motivation-11-competences-et-opportunites.png", title: "Compétences et opportunités", text: "Développe des savoir-faire qui répondent à des besoins réels.", alt: "Illustration de compétences et d'opportunités." },
+  { image: "motivation-12-apprendre-pratiquer-entreprendre.png", title: "Apprendre, pratiquer, entreprendre", text: "La pratique aide à transformer les connaissances en réalisations.", alt: "Illustration du slogan ED BUSINESS CENTER." },
 ];
 
 /* =====================================================
@@ -143,7 +119,7 @@ const SERVICES = [
   },
   {
     id: "digital",
-    name: "ED DIGITAL AGENCY",
+    name: "ED DIGITAL SERVICE",
     category: "Communication digitale",
     image: "service-ed-digital-service.png",
     description:
@@ -171,7 +147,7 @@ const SERVICES = [
   },
   {
     id: "solution",
-    name: "ED B-SOLUTION",
+    name: "ED B-SOLUTIONS",
     category: "Solutions numériques",
     image: "service-ed-b-solutions.png",
     description:
@@ -186,15 +162,15 @@ const SERVICES = [
   {
     id: "reseau",
     name: "LE RÉSEAU",
-    category: "Recherche de produits et précommandes",
+    category: "Recherche de produits et petites commandes",
     image: "service-le-reseau.png",
     description:
-      "Un service de recherche de produits, de précommandes et d'approvisionnement adapté aux besoins des clients.",
+      "Un intermédiaire unique pour rechercher des produits, organiser les précommandes et proposer de petits stocks sans exposer directement les fournisseurs.",
     details: [
-      "Recherche de produits adaptés",
+      "Recherche de produits et fournisseurs",
       "Précommandes et petits stocks",
-      "Estimation du coût total",
-      "Accompagnement de la commande",
+      "Prix annoncé tout compris",
+      "Accompagnement des commandes",
     ],
   },
 ];
@@ -343,10 +319,10 @@ function VerifiedBadge({ role }) {
   const label =
     role === "admin"
       ? "Administrateur"
-      : ["trainer", "formatrice"].includes(role)
-      ? "Formatrice"
-      : role === "coordinateur"
-      ? "Coordinateur"
+      : role === "trainer"
+      ? "Formateur"
+      : role === "apprenant"
+      ? "Apprenant"
       : role;
 
   return (
@@ -365,7 +341,7 @@ function VerifiedBadge({ role }) {
    AVATAR UTILISATEUR
 ===================================================== */
 
-function UserAvatar({ user, size = "medium" }) {
+function UserAvatar({ user, size = "medium", role }) {
   const name =
     user?.full_name ||
     user?.name ||
@@ -385,7 +361,9 @@ function UserAvatar({ user, size = "medium" }) {
       aria-label={`Photo de profil de ${name}`}
     >
       {photo ? (
-        <img src={photo} alt={`Portrait de ${name}`} />
+        <img src={photo} alt={`Portrait de ${name}`} loading="lazy" />
+      ) : ["trainer", "formatrice", "formateur"].includes(String(role || user?.role || user?.user_role || "").toLowerCase()) ? (
+        <img src={image("avatar-default-formatrice.png")} alt="Avatar par défaut de la formatrice" loading="lazy" />
       ) : (
         <span>{getInitials(name)}</span>
       )}
@@ -405,6 +383,7 @@ function Header({
   onLogout,
   onNavigate,
   activePage,
+  role,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -412,10 +391,11 @@ function Header({
     { id: "home", label: "Accueil" },
     { id: "services", label: "Nos services" },
     { id: "courses", label: "Formations" },
-    { id: "community", label: "Communauté" },
-    { id: "workshops", label: "Ateliers" },
     { id: "news", label: "Actualités" },
+    { id: "community", label: "Communauté" },
+    { id: "atelier", label: "Ateliers" },
     { id: "contact", label: "Contact" },
+    ...(role === "admin" ? [{ id: "images", label: "Gestion des images" }] : []),
   ];
 
   function navigateTo(page) {
@@ -475,15 +455,6 @@ function Header({
 
           {user ? (
             <>
-              {user.id === COORDINATOR_USER_ID && (
-                <button
-                  type="button"
-                  className={`navigation-link ${activePage === "coordinator" ? "navigation-link-active" : ""}`}
-                  onClick={() => navigateTo("coordinator")}
-                >
-                  Coordinateur
-                </button>
-              )}
               <button
                 type="button"
                 className={`navigation-link notification-nav ${
@@ -730,7 +701,7 @@ function IntroSection({ onNavigate, onRegister }) {
       <div className="intro-visual">
         <div className="intro-image-card">
           <img
-            src={image("banniere-facebook-ed-b-center.png")}
+            src={image("banniere-ed-b-center.png")}
             alt="Bannière officielle présentant ED BUSINESS CENTER et ses activités"
           />
         </div>
@@ -745,64 +716,141 @@ function IntroSection({ onNavigate, onRegister }) {
 ===================================================== */
 
 function ServicesSection({ onNavigate, onSelectService }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const [visibleCount, setVisibleCount] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches ? 1 : 3
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 760px)");
+    const updateVisibleCount = () => setVisibleCount(media.matches ? 1 : 3);
+    updateVisibleCount();
+    media.addEventListener?.("change", updateVisibleCount);
+    return () => media.removeEventListener?.("change", updateVisibleCount);
+  }, []);
+
+  const maxIndex = Math.max(0, SERVICES.length - visibleCount);
+
+  function showPrevious() {
+    setCurrentIndex((previous) =>
+      previous <= 0 ? maxIndex : previous - 1
+    );
+  }
+
+  function showNext() {
+    setCurrentIndex((previous) =>
+      previous >= maxIndex ? 0 : previous + 1
+    );
+  }
+
   return (
     <section className="services-section section-container" id="services">
       <div className="section-heading">
         <span className="eyebrow">NOS DOMAINES D'ACTIVITÉ</span>
+
         <h2>
           Des services pour <span>faire avancer tes projets</span>
         </h2>
+
         <p>
           Découvre nos différents domaines d'intervention et identifie
           les services qui correspondent à tes besoins.
         </p>
       </div>
 
-      <div className="services-grid services-display-grid">
-        {SERVICES.map((service) => (
-          <article className="service-card" key={service.id}>
-            <div className="service-image-wrapper">
-              <img
-                src={image(service.image)}
-                alt={service.name}
-                loading="lazy"
-                onError={(event) => {
-                  event.currentTarget.style.visibility = "hidden";
-                  event.currentTarget.parentElement.classList.add("service-image-missing");
-                }}
-              />
-              <span className="service-category">{service.category}</span>
-            </div>
+      <div className="services-carousel">
+        <button
+          type="button"
+          className="section-carousel-arrow"
+          onClick={showPrevious}
+          aria-label="Services précédents"
+        >
+          ‹
+        </button>
 
-            <div className="service-card-content">
-              <h3>{service.name}</h3>
-              <p>{service.description}</p>
-              <ul className="service-details">
-                {service.details.slice(0, 3).map((detail) => (
-                  <li key={detail}>
-                    <span aria-hidden="true">✓</span>
-                    {detail}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                className="text-button"
-                onClick={() => {
-                  if (onSelectService) onSelectService(service);
-                  else onNavigate("contact");
-                }}
-              >
-                En savoir plus <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </article>
+        <div className="services-track-window">
+          <div
+            className="services-track"
+            style={{
+              "--services-index": currentIndex,
+              "--services-count": SERVICES.length,
+              "--services-visible": visibleCount,
+            }}
+          >
+            {SERVICES.map((service) => (
+              <div className="service-slide" key={service.id}><article className="service-card">
+                <div className="service-image-wrapper">
+                  <img
+                    src={image(service.image)}
+                    alt={`${service.name} : ${service.description}`}
+                    loading="lazy"
+                  />
+
+                  <span className="service-category">
+                    {service.category}
+                  </span>
+                </div>
+
+                <div className="service-card-content">
+                  <h3>{service.name}</h3>
+
+                  <p>{service.description}</p>
+
+                  <ul className="service-details">
+                    {service.details.slice(0, 3).map((detail) => (
+                      <li key={detail}>
+                        <span aria-hidden="true">✓</span>
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      if (onSelectService) {
+                        onSelectService(service);
+                      } else {
+                        onNavigate("contact");
+                      }
+                    }}
+                  >
+                    En savoir plus <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </article></div>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="section-carousel-arrow"
+          onClick={showNext}
+          aria-label="Services suivants"
+        >
+          ›
+        </button>
+      </div>
+
+      <div className="services-mobile-dots">
+        {SERVICES.map((service, index) => (
+          <button
+            key={service.id}
+            type="button"
+            className={`services-dot ${
+              index === currentIndex ? "services-dot-active" : ""
+            }`}
+            onClick={() => setCurrentIndex(Math.min(index, maxIndex))}
+            aria-label={`Afficher les services à partir de ${service.name}`}
+          />
         ))}
       </div>
     </section>
   );
 }
-
 /* =====================================================
    SECTION DES FORMATIONS
 ===================================================== */
@@ -1121,11 +1169,9 @@ function ContactSection() {
                 title={social.description}
                 aria-label={social.description}
               >
-                <img
-                  src={image(social.image)}
-                  alt={social.name}
-                  loading="lazy"
-                />
+                <span className={`social-fallback-mark social-${social.name.toLowerCase()}`} aria-hidden="true">
+                  {social.name === "WhatsApp" ? "WA" : social.name === "Facebook" ? "f" : social.name === "Instagram" ? "◎" : "@"}
+                </span>
               </a>
             ))}
           </div>
@@ -1375,64 +1421,6 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
       </section>
     </div>
   );
-}
-
-/* =====================================================
-   DEMANDE D'INSCRIPTION À UNE FORMATION VIA WHATSAPP
-===================================================== */
-function CourseRequestModal({ course, onClose }) {
-  const [form, setForm] = useState({ full_name: "", phone: "", city: "Douala", message: "" });
-  const [error, setError] = useState("");
-  function submit(event) {
-    event.preventDefault();
-    if (!form.full_name.trim() || !form.phone.trim()) {
-      setError("Renseigne ton nom complet et ton numéro de téléphone.");
-      return;
-    }
-    const requestPayload = {
-      course_title: course.title,
-      course_price: Number(course.price) || 0,
-      full_name: form.full_name.trim(),
-      phone: form.phone.trim(),
-      city: form.city.trim() || null,
-      message: form.message.trim() || null,
-      status: "new",
-    };
-    // Envoi en arrière-plan pour ne pas bloquer l'ouverture de WhatsApp par le navigateur.
-    supabase.from("training_interest_requests").insert(requestPayload).then(({ error: requestError }) => {
-      if (requestError) console.error("Enregistrement de la demande de formation :", requestError.message);
-    });
-    const text = [
-      "Bonjour ED BUSINESS CENTER, je souhaite m’inscrire à une formation.",
-      `Formation : ${course.title}`,
-      `Tarif affiché : ${formatPrice(course.price)}`,
-      `Nom complet : ${form.full_name.trim()}`,
-      `Téléphone : ${form.phone.trim()}`,
-      `Ville : ${form.city.trim() || "Non précisée"}`,
-      `Précisions : ${form.message.trim() || "Aucune"}`,
-      "Merci de m'envoyer les prochaines étapes et les modalités d'inscription."
-    ].join("\n");
-    window.open(`${BRAND.whatsapp}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-    onClose();
-  }
-  return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <section className="auth-modal register-modal course-request-modal" role="dialog" aria-modal="true" aria-labelledby="course-request-title">
-      <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">×</button>
-      <span className="eyebrow">DEMANDE D'INSCRIPTION</span>
-      <h2 id="course-request-title">S'inscrire à une formation</h2>
-      <div className="selected-course-notice"><strong>{course.title}</strong><span>{formatPrice(course.price)}</span></div>
-      <p className="auth-description">Remplis ce formulaire : WhatsApp s'ouvrira avec ton message prérempli. Tu devras appuyer sur Envoyer dans WhatsApp.</p>
-      <form onSubmit={submit}>
-        <div className="form-field"><label htmlFor="course-request-name">Nom complet</label><input id="course-request-name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} autoComplete="name" required maxLength={120}/></div>
-        <div className="form-field"><label htmlFor="course-request-phone">Téléphone</label><input id="course-request-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} autoComplete="tel" required maxLength={30}/></div>
-        <div className="form-field"><label htmlFor="course-request-city">Ville</label><input id="course-request-city" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={100}/></div>
-        <div className="form-field"><label htmlFor="course-request-message">Précisions (facultatif)</label><textarea id="course-request-message" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={3} maxLength={1000}/></div>
-        {error && <p className="form-error" role="alert">{error}</p>}
-        <button className="button button-whatsapp" type="submit">Continuer sur WhatsApp</button>
-        <p className="form-help">Aucun compte n'est créé par ce formulaire. L'envoi se termine dans WhatsApp.</p>
-      </form>
-    </section>
-  </div>;
 }
 
 /* =====================================================
@@ -1730,6 +1718,7 @@ function AccountSection({
   onNavigate,
   onLogout,
   onEditProfile,
+  onPlatformStatusChange,
 }) {
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -1742,12 +1731,12 @@ function AccountSection({
   const points = Number(profile?.points || 0);
 
   const roleLabel =
-    role === "coordinateur"
-      ? "Coordinateur"
-      : role === "admin"
+    role === "admin"
       ? "Administrateur"
-      : ["trainer", "formatrice"].includes(role)
-      ? "Formatrice"
+      : role === "trainer"
+      ? "Formateur"
+      : role === "apprenant"
+      ? "Apprenant"
       : "Membre";
 
   return (
@@ -1768,6 +1757,7 @@ function AccountSection({
 
         <UserAvatar
           user={{ ...profile, ...user, full_name: displayName }}
+          role={role}
           size="large"
         />
       </div>
@@ -1852,18 +1842,14 @@ function AccountSection({
               </button>
             )}
 
-            {role === "admin" && (
-              <button
-                type="button"
-                className={
-                  activeTab === "reservations" ? "account-nav-active" : ""
-                }
-                onClick={() => setActiveTab("reservations")}
-              >
-                <span aria-hidden="true">🎟</span>
-                Réservations ateliers
-              </button>
-            )}
+            <button
+              type="button"
+              className={activeTab === "coordinator" ? "account-nav-active" : ""}
+              onClick={() => setActiveTab("coordinator")}
+            >
+              <span aria-hidden="true">🛡</span>
+              Sécurité plateforme
+            </button>
           </nav>
 
           <button
@@ -1977,6 +1963,7 @@ function AccountSection({
               </div>
 
               <div className="account-content-card profile-details-card">
+                <img className="account-feature-preview" src={image("interface-profil-public.png")} alt="Aperçu des profils sur ED BUSINESS CENTER" loading="lazy" />
                 <div className="profile-detail-row">
                   <span>Nom complet</span>
                   <strong>{displayName}</strong>
@@ -2065,12 +2052,46 @@ function AccountSection({
             </div>
           )}
 
-          {activeTab === "messages" && user && (
-            <MessagesSection user={user} onNotify={notify} />
+          {activeTab === "messages" && (
+            <div className="account-tab-content">
+              <div className="account-section-title">
+                <div>
+                  <span className="eyebrow">COMMUNICATION</span>
+                  <h2>Ma messagerie</h2>
+                </div>
+              </div>
+
+              <div className="account-content-card">
+                <div className="empty-state">
+                  <img className="account-feature-preview" src={image("interface-messagerie.png")} alt="Aperçu de la messagerie" loading="lazy" />
+                  <span className="empty-state-icon" aria-hidden="true">
+                    ✉
+                  </span>
+
+                  <h3>Ta messagerie personnelle</h3>
+
+                  <p>
+                    L'affichage des messages privés nécessite une table
+                    de messagerie configurée dans Supabase.
+                  </p>
+
+                  <a
+                    className="button button-primary"
+                    href={BRAND.whatsapp}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Contacter l'équipe sur WhatsApp
+                  </a>
+                </div>
+              </div>
+            </div>
           )}
 
-          {activeTab === "reservations" && role === "admin" && (
-            <WorkshopReservationsAdmin />
+          {activeTab === "coordinator" && (
+            <div className="account-tab-content">
+              <CoordinatorPanel onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} onStatusChange={onPlatformStatusChange} />
+            </div>
           )}
 
           {activeTab === "admin" && role === "admin" && (
@@ -2282,14 +2303,21 @@ function App() {
   const [activePage, setActivePage] = useState("home");
   const [authModal, setAuthModal] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [courseRequestCourse, setCourseRequestCourse] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
 
   const [notification, setNotification] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [maintenance, setMaintenance] = useState({ enabled: false, message: "APPLICATION FERMÉE — maintenance en cours", checked: false });
+  const [platformClosed, setPlatformClosed] = useState(false);
+  const [platformClosureMessage, setPlatformClosureMessage] = useState("APPLICATION FERMÉE — maintenance en cours");
+
+  /* Images introuvables : masquées proprement */
+  useEffect(() => {
+    const hide = (event) => { if (event.target?.tagName === "IMG") event.target.classList.add("img-broken"); };
+    document.addEventListener("error", hide, true);
+    return () => document.removeEventListener("error", hide, true);
+  }, []);
 
   /* Notifications */
   function notify(message) {
@@ -2299,6 +2327,25 @@ function App() {
       setNotification("");
     }, 4000);
   }
+
+  useEffect(() => {
+    const handleAppNotification = (event) => notify(event.detail || "Action effectuée.");
+    window.addEventListener("ed-bcenter-notify", handleAppNotification);
+    return () => window.removeEventListener("ed-bcenter-notify", handleAppNotification);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function checkPlatformStatus() {
+      const { data, error } = await supabase.rpc("get_platform_public_status");
+      if (error || !active || !data) return;
+      setPlatformClosed(Boolean(data.maintenance_mode));
+      if (data.maintenance_message) setPlatformClosureMessage(data.maintenance_message);
+    }
+    checkPlatformStatus();
+    const timer = window.setInterval(checkPlatformStatus, 30000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
 
   /* Chargement du profil utilisateur */
   async function loadUserData(currentUser) {
@@ -2339,12 +2386,6 @@ function App() {
     }
 
     setProfile(currentProfile);
-
-    /* Le coordinateur est identifié séparément des rôles classiques. */
-    if (currentUser.id === COORDINATOR_USER_ID) {
-      setRole("coordinateur");
-      return;
-    }
 
     /* Récupération du rôle */
     try {
@@ -2406,6 +2447,11 @@ function App() {
         if (!mounted) return;
 
         const currentUser = data.session?.user || null;
+        const { data: platformStatus } = await supabase.rpc("get_platform_public_status");
+        if (platformStatus) {
+          setPlatformClosed(Boolean(platformStatus.maintenance_mode));
+          if (platformStatus.maintenance_message) setPlatformClosureMessage(platformStatus.maintenance_message);
+        }
 
         setUser(currentUser);
 
@@ -2468,11 +2514,7 @@ function App() {
 
   /* Ouverture de l'inscription */
   function openRegister(course = null) {
-    if (course) {
-      setCourseRequestCourse(course);
-      return;
-    }
-    setSelectedCourse(null);
+    setSelectedCourse(course);
     setAuthModal("register");
   }
 
@@ -2584,7 +2626,7 @@ function App() {
 
       if (uploadError) {
         throw new Error(
-          "Impossible d'envoyer la photo. Vérifie la configuration du stockage Supabase."
+          "Impossible d'envoyer la photo. Vérifie les règles de stockage du bucket ed-b-center-images dans Supabase."
         );
       }
 
@@ -2650,33 +2692,6 @@ function App() {
     navigateTo("contact");
   }
 
-  /* Les pages publiques restent accessibles sans connexion. Les actions privées
-     (publication, réservation, espace personnel) sont protégées par leurs composants
-     et par les politiques Supabase. */
-
-  /* État de maintenance public, servi par une fonction SQL en lecture seule. */
-  useEffect(() => {
-    let active = true;
-    async function checkMaintenance() {
-      const { data, error } = await supabase.rpc("get_platform_public_status");
-      if (!active) return;
-      if (error) {
-        // Ne pas bloquer tout le site si la fonction n'a pas encore été appliquée.
-        console.warn("État de maintenance indisponible :", error.message);
-        setMaintenance((old) => ({ ...old, checked: true }));
-        return;
-      }
-      setMaintenance({
-        enabled: Boolean(data?.maintenance_mode),
-        message: data?.maintenance_message || "APPLICATION FERMÉE — maintenance en cours",
-        checked: true,
-      });
-    }
-    checkMaintenance();
-    const timer = window.setInterval(checkMaintenance, 60000);
-    return () => { active = false; window.clearInterval(timer); };
-  }, []);
-
   /* Affichage du chargement */
   if (loading) {
     return (
@@ -2691,32 +2706,81 @@ function App() {
     );
   }
 
-  /* Aucun accès à l'application sans session authentifiée. */
-  if (!user) {
+  /* Fermeture globale pilotée par le coordinateur via Supabase. */
+  if (platformClosed) {
     return (
-      <div className="app auth-required-screen">
-        <section className="maintenance-screen section-container" role="region" aria-labelledby="auth-required-title">
-          <div className="maintenance-card">
-            <img src={image("logo-ed-b-center.png")} alt="Logo ED BUSINESS CENTER" style={{ maxWidth: "150px", height: "auto", marginBottom: "1rem" }} />
-            <span className="eyebrow">ED BUSINESS CENTER</span>
-            <h1 id="auth-required-title">Connexion obligatoire</h1>
-            <p>Crée un compte ou connecte-toi pour accéder à l’application.</p>
-            <div className="coordinator-action-row" style={{ justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-              <button type="button" className="button button-primary" onClick={openLogin}>Se connecter</button>
-              <button type="button" className="button button-outline" onClick={() => openRegister()}>Créer un compte</button>
-            </div>
-          </div>
-        </section>
-        {authModal === "login" && (
-          <LoginModal onClose={() => setAuthModal(null)} onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setAuthModal("register")} />
-        )}
-        {authModal === "register" && (
-          <RegisterModal onClose={() => setAuthModal(null)} onRegisterSuccess={handleRegisterSuccess} onSwitchToLogin={() => setAuthModal("login")} selectedCourse={selectedCourse} />
-        )}
-        {notification && <div className="toast-notification" role="status">{notification}</div>}
+      <div className="app platform-maintenance-page">
+        <div className="platform-maintenance-card">
+          <img src={image("logo-ed-b-center.png")} alt="Logo ED BUSINESS CENTER" />
+          <span className="eyebrow">INFORMATION IMPORTANTE</span>
+          <h1>{platformClosureMessage || "APPLICATION FERMÉE"}</h1>
+          <p>La plateforme est temporairement indisponible. Merci de revenir plus tard.</p>
+          {user ? (
+            <CoordinatorPanel onNotify={notify} onStatusChange={(closed, message) => { setPlatformClosed(closed); if (message) setPlatformClosureMessage(message); }} />
+          ) : (
+            <>
+              <button type="button" className="button button-primary" onClick={openLogin}>Connexion coordinateur</button>
+              {authModal === "login" && <LoginModal onClose={() => setAuthModal(null)} onLoginSuccess={handleLoginSuccess} onSwitchToRegister={() => setAuthModal("register")} />}
+            </>
+          )}
+        </div>
       </div>
     );
   }
+
+  /* Protection : connexion obligatoire */
+if (!user) {
+  return (
+    <div className="app auth-required">
+      <div className="auth-required-content">
+        <img
+          src={image("logo-ed-b-center.png")}
+          alt="Logo ED BUSINESS CENTER"
+        />
+
+        <h1>Bienvenue chez ED BUSINESS CENTER</h1>
+
+        <p>
+          Crée ton compte ou connecte-toi pour accéder
+          à notre plateforme.
+        </p>
+
+        <button
+          type="button"
+          className="button button-primary"
+          onClick={openLogin}
+        >
+          Se connecter
+        </button>
+
+        <button
+          type="button"
+          className="button button-outline"
+          onClick={() => openRegister()}
+        >
+          Créer un compte
+        </button>
+      </div>
+
+      {authModal === "login" && (
+        <LoginModal
+          onClose={() => setAuthModal(null)}
+          onLoginSuccess={handleLoginSuccess}
+          onSwitchToRegister={() => setAuthModal("register")}
+        />
+      )}
+
+      {authModal === "register" && (
+        <RegisterModal
+          onClose={() => setAuthModal(null)}
+          onRegisterSuccess={handleRegisterSuccess}
+          onSwitchToLogin={() => setAuthModal("login")}
+          selectedCourse={selectedCourse}
+        />
+      )}
+    </div>
+  );
+}
 
 /* Interface principale */
 return (
@@ -2730,19 +2794,10 @@ return (
         onLogout={handleLogout}
         onNavigate={navigateTo}
         activePage={activePage}
+        role={role}
       />
 
       <main>
-        {maintenance.enabled && user?.id !== COORDINATOR_USER_ID ? (
-          <section className="maintenance-screen section-container" role="status" aria-live="polite">
-            <div className="maintenance-card">
-              <span className="eyebrow">ED BUSINESS CENTER</span>
-              <h1>Application temporairement indisponible</h1>
-              <p>{maintenance.message}</p>
-              <p>Nous effectuons une maintenance. Merci de revenir un peu plus tard.</p>
-            </div>
-          </section>
-        ) : <>
         {activePage === "home" && (
           <>
             <MotivationCarousel />
@@ -2766,6 +2821,14 @@ return (
           </>
         )}
 
+        {activePage === "news" && <NewsSection user={user} role={role} onNotify={notify} />}
+
+        {activePage === "images" && (role === "admin" ? <ImageLibrarySection onNotify={notify} /> : <section className="section-container"><h1>Accès réservé</h1><p>La médiathèque est réservée aux administrateurs.</p></section>)}
+
+        {activePage === "notifications" && user && (
+          <NotificationsSection user={user} onNotify={notify} />
+        )}
+
         {activePage === "community" && (
           <CommunitySection
             user={user}
@@ -2775,22 +2838,8 @@ return (
           />
         )}
 
-        {activePage === "news" && (
-          <NewsSection user={user} role={role} onNotify={notify} />
-        )}
-
-        {activePage === "workshops" && (
+        {activePage === "atelier" && (
           <AtelierSection user={user} profile={profile} role={role} onNotify={notify} />
-        )}
-
-        {activePage === "coordinator" && user?.id === COORDINATOR_USER_ID && (
-          <div className="section-container coordinator-page-wrap">
-            <CoordinatorPanel onNotify={notify} onStatusChange={(enabled, message) => setMaintenance({ enabled, message: message || "APPLICATION FERMÉE — maintenance en cours", checked: true })} />
-          </div>
-        )}
-
-        {activePage === "notifications" && user && (
-          <NotificationsSection user={user} onNotify={notify} />
         )}
 
         {activePage === "services" && (
@@ -2838,6 +2887,7 @@ return (
               onNavigate={navigateTo}
               onLogout={handleLogout}
               onEditProfile={() => setEditProfileOpen(true)}
+              onPlatformStatusChange={(closed, message) => { setPlatformClosed(closed); if (message) setPlatformClosureMessage(message); }}
             />
           ) : (
             <section className="account-access-denied section-container">
@@ -2865,7 +2915,6 @@ return (
             </section>
           )
         )}
-        </>}
       </main>
 
       {/* Pied de page */}
@@ -2903,9 +2952,9 @@ return (
             >
               Formations
             </button>
-            <button type="button" onClick={() => navigateTo("community")}>Communauté</button>
-            <button type="button" onClick={() => navigateTo("workshops")}>Ateliers</button>
             <button type="button" onClick={() => navigateTo("news")}>Actualités</button>
+            <button type="button" onClick={() => navigateTo("community")}>Communauté</button>
+            <button type="button" onClick={() => navigateTo("atelier")}>Ateliers</button>
 
             <button
               type="button"
@@ -2925,11 +2974,9 @@ return (
                 aria-label={social.description}
                 title={social.name}
               >
-                <img
-                  src={image(social.image)}
-                  alt={social.name}
-                  loading="lazy"
-                />
+                <span className={`social-fallback-mark social-${social.name.toLowerCase()}`} aria-hidden="true">
+                  {social.name === "WhatsApp" ? "WA" : social.name === "Facebook" ? "f" : social.name === "Instagram" ? "◎" : "@"}
+                </span>
               </a>
             ))}
           </div>
@@ -2942,8 +2989,6 @@ return (
       </footer>
 
       {/* Fenêtre de connexion */}
-      {courseRequestCourse && <CourseRequestModal course={courseRequestCourse} onClose={() => setCourseRequestCourse(null)} />}
-
       {authModal === "login" && (
         <LoginModal
           onClose={() => setAuthModal(null)}

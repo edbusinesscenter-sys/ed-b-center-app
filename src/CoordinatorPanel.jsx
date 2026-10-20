@@ -13,44 +13,28 @@ export default function CoordinatorPanel({ onNotify, onStatusChange }) {
 
   async function refresh() {
     setChecking(true);
-    try {
-      const { data, error } = await supabase.rpc("coordinator_get_control_state");
-      if (error) {
-        console.error("Contrôle coordinateur :", error.message);
-        setAuthorized(false);
-        setSettings(null);
-        onNotify?.("Le panneau coordinateur ne peut pas charger ses paramètres : la fonction Supabase coordinator_get_control_state est absente ou refuse l'accès.");
-        return;
-      }
-      setAuthorized(Boolean(data?.authorized));
-      setSettings(data?.settings || null);
-      onStatusChange?.(Boolean(data?.settings?.maintenance_mode), data?.settings?.maintenance_message || "");
-    } catch (error) {
-      console.error("Contrôle coordinateur :", error);
+    const { data, error } = await supabase.rpc("coordinator_get_control_state");
+    if (error) {
+      console.error("Contrôle coordinateur :", error.message);
       setAuthorized(false);
       setSettings(null);
-      onNotify?.("Impossible de vérifier les autorisations du coordinateur.");
-    } finally {
       setChecking(false);
+      return;
     }
+    setAuthorized(Boolean(data?.authorized));
+    setSettings(data?.settings || null);
+    onStatusChange?.(Boolean(data?.settings?.maintenance_mode), data?.settings?.maintenance_message || "");
+    setChecking(false);
   }
 
   async function loadUsers() {
     setLoadingUsers(true);
-    try {
-      const { data, error } = await supabase.rpc("coordinator_list_users");
-      if (error) {
-        onNotify?.("La liste des comptes est indisponible : la fonction Supabase coordinator_list_users est absente ou refuse l'accès.");
-        console.error("Liste des comptes :", error.message);
-      } else {
-        setUsers(Array.isArray(data) ? data : []);
-      }
-    } catch (error) {
-      console.error("Liste des comptes :", error);
-      onNotify?.("Une erreur inattendue empêche le chargement des comptes.");
-    } finally {
-      setLoadingUsers(false);
-    }
+    const { data, error } = await supabase.rpc("coordinator_list_users");
+    if (error) {
+      onNotify?.("Impossible de charger les comptes. Vérifie les fonctions SQL du coordinateur.");
+      console.error("Liste des comptes :", error.message);
+    } else setUsers(Array.isArray(data) ? data : []);
+    setLoadingUsers(false);
   }
 
   useEffect(() => { refresh(); }, []);
@@ -58,24 +42,17 @@ export default function CoordinatorPanel({ onNotify, onStatusChange }) {
 
   async function runAction(action, payload = {}) {
     setBusy(action);
-    try {
-      const { data, error } = await supabase.rpc(action, payload);
-      if (error) {
-        console.error(`Action coordinateur ${action} :`, error.message);
-        onNotify?.(`Action non effectuée : la fonction ${action} est indisponible ou l'accès est refusé.`);
-        return false;
-      }
-      onNotify?.(data?.message || "Action effectuée.");
-      await refresh();
-      await loadUsers();
-      return true;
-    } catch (error) {
-      console.error(`Action coordinateur ${action} :`, error);
-      onNotify?.("Une erreur inattendue a empêché cette action.");
+    const { data, error } = await supabase.rpc(action, payload);
+    setBusy("");
+    if (error) {
+      console.error(`Action coordinateur ${action} :`, error.message);
+      onNotify?.("Action refusée ou impossible. Vérifie les autorisations Supabase.");
       return false;
-    } finally {
-      setBusy("");
     }
+    onNotify?.(data?.message || "Action effectuée.");
+    await refresh();
+    await loadUsers();
+    return true;
   }
 
   async function updateRole(target, nextRole) {
@@ -105,7 +82,7 @@ export default function CoordinatorPanel({ onNotify, onStatusChange }) {
     <div className="coordinator-action-row"><label htmlFor="maintenance-message">Message affiché aux utilisateurs</label><input id="maintenance-message" value={message} onChange={(event) => setMessage(event.target.value)} maxLength={300} placeholder="APPLICATION FERMÉE — maintenance en cours"/><button type="button" className="button button-primary" disabled={Boolean(busy)} onClick={() => runAction("coordinator_set_maintenance", { p_enabled: !settings?.maintenance_mode, p_message: (message.trim() || "APPLICATION FERMÉE — maintenance en cours") })}>{busy ? "Traitement…" : settings?.maintenance_mode ? "Réouvrir l'application" : "Fermer l'application"}</button></div>
     <div className="coordinator-security-note"><strong>Limite de sécurité importante</strong><p>Le mode maintenance masque l'application côté interface. Il ne désactive pas à lui seul l'accès direct à Supabase ou aux dépôts GitHub. Les autorisations RLS, les clés et les accès aux comptes doivent rester protégés séparément.</p></div>
     <div className="coordinator-users-heading"><div><span className="eyebrow">COMPTES ET AUTORISATIONS</span><h3>Gestion des utilisateurs</h3></div><button type="button" className="button button-outline" onClick={loadUsers} disabled={loadingUsers}>{loadingUsers ? "Actualisation…" : "Actualiser"}</button></div>
-    {loadingUsers && users.length === 0 ? <p>Chargement des comptes…</p> : users.length === 0 ? <p>Aucun compte à afficher ou la fonction SQL n'est pas disponible.</p> : <div className="coordinator-users-list">{users.map((item) => <article className="coordinator-user-card" key={item.id}><div className="coordinator-user-info"><strong>{item.full_name || "Utilisateur"}</strong><span>{item.email || item.id}</span><small>Rôle : {item.role || "client"} · {item.is_banned ? "Compte bloqué" : "Compte actif"}</small></div><div className="coordinator-user-actions"><label className="sr-only" htmlFor={`role-${item.id}`}>Rôle de {item.full_name || item.email}</label><select id={`role-${item.id}`} value={item.role || "client"} onChange={(event) => updateRole(item, event.target.value)} disabled={Boolean(busy) || item.is_coordinator}><option value="client">Client</option><option value="formatrice">Formatrice</option><option value="admin">Administrateur</option></select><button type="button" className="button button-outline" onClick={() => toggleBan(item)} disabled={Boolean(busy) || item.is_coordinator}>{item.is_banned ? "Réactiver" : "Bannir"}</button><button type="button" className="button button-danger" onClick={() => deleteUser(item)} disabled={Boolean(busy) || item.is_coordinator}>Supprimer</button></div></article>)}</div>}
+    {loadingUsers && users.length === 0 ? <p>Chargement des comptes…</p> : users.length === 0 ? <p>Aucun compte à afficher ou la fonction SQL n'est pas disponible.</p> : <div className="coordinator-users-list">{users.map((item) => <article className="coordinator-user-card" key={item.id}><div className="coordinator-user-info"><strong>{item.full_name || "Utilisateur"}</strong><span>{item.email || item.id}</span><small>Rôle : {item.role || "client"} · {item.is_banned ? "Compte bloqué" : "Compte actif"}</small></div><div className="coordinator-user-actions"><label className="sr-only" htmlFor={`role-${item.id}`}>Rôle de {item.full_name || item.email}</label><select id={`role-${item.id}`} value={item.role || "client"} onChange={(event) => updateRole(item, event.target.value)} disabled={Boolean(busy) || item.is_coordinator}><option value="client">Client</option><option value="apprenant">Apprenant</option><option value="trainer">Formateur</option><option value="admin">Administrateur</option></select><button type="button" className="button button-outline" onClick={() => toggleBan(item)} disabled={Boolean(busy) || item.is_coordinator}>{item.is_banned ? "Réactiver" : "Bannir"}</button><button type="button" className="button button-danger" onClick={() => deleteUser(item)} disabled={Boolean(busy) || item.is_coordinator}>Supprimer</button></div></article>)}</div>}
     <p className="coordinator-footnote">Le compte coordinateur principal ne peut pas être modifié, banni ou supprimé depuis cette interface.</p>
   </section>;
 }
