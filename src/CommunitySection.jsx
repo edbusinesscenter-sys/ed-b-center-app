@@ -26,13 +26,27 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
       setPosts([]);
     } else {
       const ids = (data || []).map((p) => p.id);
+      const authorIds = [...new Set((data || []).map((p) => p.author_id).filter(Boolean))];
       let reactions = [];
+      let profilesById = {};
       if (ids.length) {
-        const result = await supabase.from("publication_interactions").select("publication_id, user_id, interaction_type, content").in("publication_id", ids);
+        const result = await supabase.from("publication_interactions")
+          .select("id, publication_id, user_id, interaction_type, content, created_at")
+          .in("publication_id", ids)
+          .order("created_at", { ascending: true });
         if (!result.error) reactions = result.data || [];
+      }
+      if (authorIds.length) {
+        const profileResult = await supabase.from("profiles")
+          .select("id, full_name, avatar_url")
+          .in("id", authorIds);
+        if (!profileResult.error) {
+          profilesById = Object.fromEntries((profileResult.data || []).map((item) => [item.id, item]));
+        }
       }
       setPosts((data || []).map((post) => ({
         ...post,
+        profiles: profilesById[post.author_id] || null,
         interactions: reactions.filter((r) => r.publication_id === post.id),
       })));
     }
@@ -48,7 +62,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
     if (!newBody.trim()) { onNotify?.("Écris le contenu de ta publication."); return; }
     setCreating(true);
     const { error } = await supabase.from("publications").insert({
-      title: newTitle.trim() || null,
+      title: newTitle.trim() || "Publication communautaire",
       body: newBody.trim(),
       image_url: newImageUrl.trim() || null,
       author_id: user.id,
@@ -125,7 +139,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
           {post.image_url && <img className="publication-image" src={post.image_url} alt={post.title || "Publication ED B-CENTER"} loading="lazy" />}
           <div className="publication-stats"><span>♥ {interactions.filter((r) => r.interaction_type === "like").length} J’aime</span><span>▢ {postComments.length} commentaire(s)</span></div>
           <div className="publication-actions"><button type="button" className={liked ? "publication-action liked" : "publication-action"} disabled={sending === post.id + "like"} onClick={() => interact(post.id, "like")}>{liked ? "♥ Aimé" : "♡ J’aime"}</button><span className="publication-action-divider"/><label className="publication-comment-label" htmlFor={`comment-${post.id}`}>Commenter</label>{user?.id === post.author_id && <button type="button" className="publication-action publication-delete-action" onClick={() => deletePost(post)}>Supprimer</button>}</div>
-          {postComments.map((c) => <div className="publication-comment" key={c.user_id + c.created_at}><strong>{c.user_id === user?.id ? "Vous" : "Membre"}</strong><p>{c.content}</p></div>)}
+          {postComments.map((c) => <div className="publication-comment" key={c.id || `${c.user_id}-${c.created_at}-${c.content}`}><strong>{c.user_id === user?.id ? "Vous" : "Membre"}</strong><p>{c.content}</p></div>)}
           <form className="publication-comment-form" onSubmit={(e) => { e.preventDefault(); interact(post.id, "comment"); }}><input id={`comment-${post.id}`} value={comments[post.id] || ""} onChange={(e) => setComments((prev) => ({ ...prev, [post.id]: e.target.value }))} placeholder="Écrire un commentaire…" maxLength={1000}/><button className="button button-primary" disabled={sending === post.id + "comment"}>Envoyer</button></form>
         </article>;
       })}</div>}

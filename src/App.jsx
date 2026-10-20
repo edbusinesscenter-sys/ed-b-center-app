@@ -14,6 +14,8 @@ import "./styles.css";
 ===================================================== */
 
 /* Chemin des images */
+const COORDINATOR_USER_ID = "938f3b7a-b7a9-4ed6-b9df-aff3bfc3ddb2";
+
 const SUPABASE_IMAGES_URL =
   "https://jvwmkoshkkzupgrjcttx.supabase.co/storage/v1/object/public/ed-b-center-images";
 
@@ -30,7 +32,6 @@ const BRAND = {
   email: "edbusinesscenter@gmail.com",
   phone: "+237 690 418 794",
   whatsapp: "https://wa.me/237690418794",
-  whatsappChannel: "https://whatsapp.com/channel/0029VbDMmDnC1FuDUIDiXm25",
   facebook:
     "https://www.facebook.com/profile.php?id=61595517983213",
   instagram:
@@ -407,6 +408,8 @@ function Header({
     { id: "home", label: "Accueil" },
     { id: "services", label: "Nos services" },
     { id: "courses", label: "Formations" },
+    { id: "community", label: "Communauté" },
+    { id: "workshops", label: "Ateliers" },
     { id: "news", label: "Actualités" },
     { id: "contact", label: "Contact" },
   ];
@@ -468,6 +471,15 @@ function Header({
 
           {user ? (
             <>
+              {user.id === COORDINATOR_USER_ID && (
+                <button
+                  type="button"
+                  className={`navigation-link ${activePage === "coordinator" ? "navigation-link-active" : ""}`}
+                  onClick={() => navigateTo("coordinator")}
+                >
+                  Coordinateur
+                </button>
+              )}
               <button
                 type="button"
                 className={`navigation-link notification-nav ${
@@ -675,14 +687,13 @@ function IntroSection({ onNavigate, onRegister }) {
             Découvrir les formations
           </button>
 
-          <a
+          <button
+            type="button"
             className="button button-outline"
-            href={BRAND.whatsappChannel}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={onRegister}
           >
             Rejoindre la communauté
-          </a>
+          </button>
         </div>
 
         <div className="intro-highlights">
@@ -731,22 +742,8 @@ function IntroSection({ onNavigate, onRegister }) {
 
 function ServicesSection({ onNavigate, onSelectService }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches
-      ? 1
-      : 3
-  );
 
-  useEffect(() => {
-    const updateVisibleCount = () => {
-      setVisibleCount(window.matchMedia("(max-width: 760px)").matches ? 1 : 3);
-    };
-
-    updateVisibleCount();
-    window.addEventListener("resize", updateVisibleCount);
-    return () => window.removeEventListener("resize", updateVisibleCount);
-  }, []);
-
+  const visibleCount = 3;
   const maxIndex = Math.max(0, SERVICES.length - visibleCount);
 
   function showPrevious() {
@@ -1442,69 +1439,6 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
 }
 
 /* =====================================================
-   FORMULAIRE DE DEMANDE D'INSCRIPTION À UNE FORMATION
-   Prépare un message que le client envoie lui-même sur WhatsApp.
-===================================================== */
-function CourseRegistrationModal({ onClose, selectedCourse }) {
-  const [form, setForm] = useState({ name: "", phone: "", email: "", message: "" });
-  const [error, setError] = useState("");
-
-  function updateField(event) {
-    const { name, value } = event.target;
-    setForm((previous) => ({ ...previous, [name]: value }));
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-    if (!selectedCourse) {
-      setError("Aucune formation n'a été sélectionnée. Ferme ce formulaire et choisis une formation.");
-      return;
-    }
-    if (!form.name.trim() || !form.phone.trim()) {
-      setError("Renseigne ton nom complet et ton numéro de téléphone.");
-      return;
-    }
-    const messageText = [
-      "Bonjour ED BUSINESS CENTER, je souhaite m'inscrire à une formation.",
-      "",
-      `Nom complet : ${form.name.trim()}`,
-      `Téléphone : ${form.phone.trim()}`,
-      `E-mail : ${form.email.trim() || "Non renseigné"}`,
-      `Formation : ${selectedCourse.title}`,
-      `Tarif : ${formatPrice(selectedCourse.price)}`,
-      `Durée : ${selectedCourse.duration || "À confirmer"}`,
-      form.message.trim() ? `Informations complémentaires : ${form.message.trim()}` : "",
-    ].filter(Boolean).join("\n");
-    const url = `${BRAND.whatsapp}?text=${encodeURIComponent(messageText)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-    onClose();
-  }
-
-  return (
-    <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="auth-modal register-modal" role="dialog" aria-modal="true" aria-labelledby="course-registration-title">
-        <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">×</button>
-        <div className="auth-modal-brand"><img src={image("logo-ed-b-center.png")} alt="Logo ED BUSINESS CENTER" /></div>
-        <span className="eyebrow">ED B-ACADEMY</span>
-        <h2 id="course-registration-title">Demande d'inscription</h2>
-        <p className="auth-description">Remplis ces informations. Ta demande sera préparée dans WhatsApp pour que tu puisses l'envoyer à notre équipe.</p>
-        {selectedCourse && <div className="selected-course-notice"><strong>Formation choisie :</strong><span>{selectedCourse.title}</span><span>{formatPrice(selectedCourse.price)}</span></div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-field"><label htmlFor="course-reg-name">Nom complet</label><input id="course-reg-name" name="name" value={form.name} onChange={updateField} autoComplete="name" placeholder="Ton nom complet" required /></div>
-          <div className="form-field"><label htmlFor="course-reg-phone">Téléphone / WhatsApp</label><input id="course-reg-phone" name="phone" value={form.phone} onChange={updateField} autoComplete="tel" type="tel" placeholder="+237..." required /></div>
-          <div className="form-field"><label htmlFor="course-reg-email">Adresse e-mail (facultatif)</label><input id="course-reg-email" name="email" value={form.email} onChange={updateField} autoComplete="email" type="email" placeholder="nom@exemple.com" /></div>
-          <div className="form-field"><label htmlFor="course-reg-message">Questions ou précisions (facultatif)</label><textarea id="course-reg-message" name="message" value={form.message} onChange={updateField} rows="3" placeholder="Tes questions sur la formation..." /></div>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <button type="submit" className="button button-primary">Continuer sur WhatsApp</button>
-          <button type="button" className="button button-outline" onClick={onClose}>Annuler</button>
-        </form>
-      </section>
-    </div>
-  );
-}
-
-/* =====================================================
    FENÊTRE DE CRÉATION DE COMPTE
 ===================================================== */
 
@@ -1811,9 +1745,11 @@ function AccountSection({
   const points = Number(profile?.points || 0);
 
   const roleLabel =
-    role === "admin"
+    role === "coordinateur"
+      ? "Coordinateur"
+      : role === "admin"
       ? "Administrateur"
-      : role === "trainer"
+      : ["trainer", "formatrice"].includes(role)
       ? "Formatrice"
       : "Membre";
 
@@ -2369,6 +2305,7 @@ function App() {
   const [notification, setNotification] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [maintenance, setMaintenance] = useState({ enabled: false, message: "APPLICATION FERMÉE — maintenance en cours", checked: false });
 
   /* Notifications */
   function notify(message) {
@@ -2418,6 +2355,12 @@ function App() {
     }
 
     setProfile(currentProfile);
+
+    /* Le coordinateur est identifié séparément des rôles classiques. */
+    if (currentUser.id === COORDINATOR_USER_ID) {
+      setRole("coordinateur");
+      return;
+    }
 
     /* Récupération du rôle */
     try {
@@ -2545,11 +2488,6 @@ function App() {
     setAuthModal("register");
   }
 
-  function openCourseRegistration(course) {
-    setSelectedCourse(course);
-    setAuthModal("course-registration");
-  }
-
   /* Connexion réussie */
   async function handleLoginSuccess(loggedInUser) {
     setUser(loggedInUser);
@@ -2647,10 +2585,10 @@ function App() {
         photoFile.name.split(".").pop() || "jpg";
 
       const filePath =
-        `${user.id}/${Date.now()}.${extension}`;
+        `user-avatars/${user.id}/${Date.now()}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
+        .from("ed-b-center-images")
         .upload(filePath, photoFile, {
           upsert: true,
           contentType: photoFile.type,
@@ -2663,7 +2601,7 @@ function App() {
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from("avatars")
+        .from("ed-b-center-images")
         .getPublicUrl(filePath);
 
       avatarUrl = publicUrlData.publicUrl;
@@ -2738,61 +2676,32 @@ function App() {
     );
   }
 
-  /* Protection : connexion obligatoire */
-if (!user) {
-  return (
-    <div className="app auth-required">
-      {authModal === null && (
-      <div className="auth-required-content">
-        <img
-          src={image("logo-ed-b-center.png")}
-          alt="Logo ED BUSINESS CENTER"
-        />
+  /* Les pages publiques restent accessibles sans connexion. Les actions privées
+     (publication, réservation, espace personnel) sont protégées par leurs composants
+     et par les politiques Supabase. */
 
-        <h1>Bienvenue chez ED BUSINESS CENTER</h1>
-
-        <p>
-          Crée ton compte ou connecte-toi pour accéder
-          à notre plateforme.
-        </p>
-
-        <button
-          type="button"
-          className="button button-primary"
-          onClick={openLogin}
-        >
-          Se connecter
-        </button>
-
-        <button
-          type="button"
-          className="button button-outline"
-          onClick={() => openRegister()}
-        >
-          Créer un compte
-        </button>
-      </div>
-      )}
-
-      {authModal === "login" && (
-        <LoginModal
-          onClose={() => setAuthModal(null)}
-          onLoginSuccess={handleLoginSuccess}
-          onSwitchToRegister={() => setAuthModal("register")}
-        />
-      )}
-
-      {authModal === "register" && (
-        <RegisterModal
-          onClose={() => setAuthModal(null)}
-          onRegisterSuccess={handleRegisterSuccess}
-          onSwitchToLogin={() => setAuthModal("login")}
-          selectedCourse={selectedCourse}
-        />
-      )}
-    </div>
-  );
-}
+  /* État de maintenance public, servi par une fonction SQL en lecture seule. */
+  useEffect(() => {
+    let active = true;
+    async function checkMaintenance() {
+      const { data, error } = await supabase.rpc("get_platform_public_status");
+      if (!active) return;
+      if (error) {
+        // Ne pas bloquer tout le site si la fonction n'a pas encore été appliquée.
+        console.warn("État de maintenance indisponible :", error.message);
+        setMaintenance((old) => ({ ...old, checked: true }));
+        return;
+      }
+      setMaintenance({
+        enabled: Boolean(data?.maintenance_mode),
+        message: data?.maintenance_message || "APPLICATION FERMÉE — maintenance en cours",
+        checked: true,
+      });
+    }
+    checkMaintenance();
+    const timer = window.setInterval(checkMaintenance, 60000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
 
 /* Interface principale */
 return (
@@ -2809,6 +2718,16 @@ return (
       />
 
       <main>
+        {maintenance.enabled && user?.id !== COORDINATOR_USER_ID ? (
+          <section className="maintenance-screen section-container" role="status" aria-live="polite">
+            <div className="maintenance-card">
+              <span className="eyebrow">ED BUSINESS CENTER</span>
+              <h1>Application temporairement indisponible</h1>
+              <p>{maintenance.message}</p>
+              <p>Nous effectuons une maintenance. Merci de revenir un peu plus tard.</p>
+            </div>
+          </section>
+        ) : <>
         {activePage === "home" && (
           <>
             <MotivationCarousel />
@@ -2824,7 +2743,7 @@ return (
             />
 
             <CoursesSection
-              onRegister={openCourseRegistration}
+              onRegister={openRegister}
               onNavigate={navigateTo}
             />
 
@@ -2832,13 +2751,27 @@ return (
           </>
         )}
 
-        {activePage === "news" && (
+        {activePage === "community" && (
           <CommunitySection
             user={user}
             profile={profile}
             onNotify={notify}
             onPointsUpdated={(nextPoints) => setProfile((previous) => previous ? { ...previous, points: nextPoints } : previous)}
           />
+        )}
+
+        {activePage === "news" && (
+          <NewsSection user={user} role={role} onNotify={notify} />
+        )}
+
+        {activePage === "workshops" && (
+          <AtelierSection user={user} profile={profile} role={role} onNotify={notify} />
+        )}
+
+        {activePage === "coordinator" && user?.id === COORDINATOR_USER_ID && (
+          <div className="section-container coordinator-page-wrap">
+            <CoordinatorPanel onNotify={notify} onStatusChange={(enabled, message) => setMaintenance({ enabled, message: message || "APPLICATION FERMÉE — maintenance en cours", checked: true })} />
+          </div>
         )}
 
         {activePage === "notifications" && user && (
@@ -2917,6 +2850,7 @@ return (
             </section>
           )
         )}
+        </>}
       </main>
 
       {/* Pied de page */}
@@ -2954,6 +2888,8 @@ return (
             >
               Formations
             </button>
+            <button type="button" onClick={() => navigateTo("community")}>Communauté</button>
+            <button type="button" onClick={() => navigateTo("workshops")}>Ateliers</button>
             <button type="button" onClick={() => navigateTo("news")}>Actualités</button>
 
             <button
@@ -2996,13 +2932,6 @@ return (
           onClose={() => setAuthModal(null)}
           onLoginSuccess={handleLoginSuccess}
           onSwitchToRegister={() => setAuthModal("register")}
-        />
-      )}
-
-      {authModal === "course-registration" && (
-        <CourseRegistrationModal
-          onClose={() => { setAuthModal(null); setSelectedCourse(null); }}
-          selectedCourse={selectedCourse}
         />
       )}
 
