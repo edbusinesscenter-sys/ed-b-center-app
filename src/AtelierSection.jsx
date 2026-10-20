@@ -16,10 +16,6 @@ export default function AtelierSection({ user, profile, role, onNotify }) {
   const [fullName, setFullName] = useState(profile?.full_name || user?.user_metadata?.full_name || "");
   const [phone, setPhone] = useState(profile?.phone || user?.user_metadata?.phone || "");
   const [saving, setSaving] = useState(false);
-  const [reservationId, setReservationId] = useState(null);
-  const [showPaymentReference, setShowPaymentReference] = useState(false);
-  const [paymentReference, setPaymentReference] = useState("");
-  const [submittingReference, setSubmittingReference] = useState(false);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState({ title: "", description: "", image_url: "", starts_at: "", location: "" });
   const [publishing, setPublishing] = useState(false);
@@ -95,7 +91,7 @@ export default function AtelierSection({ user, profile, role, onNotify }) {
   async function reserve(event) {
     event.preventDefault();
     if (!user) {
-      onNotify?.("Connecte-toi à ton compte pour préparer une réservation.");
+      onNotify?.("Connecte-toi pour préparer une réservation.");
       return;
     }
     if (!selected) return;
@@ -105,7 +101,8 @@ export default function AtelierSection({ user, profile, role, onNotify }) {
     }
     setSaving(true);
     setError("");
-    const { data, error: insertError } = await supabase.rpc("create_workshop_reservation", {
+    // Réservation uniquement en attente : aucun ticket n'est confirmé sans vérification du paiement côté serveur.
+    const { error: insertError } = await supabase.rpc("create_workshop_reservation", {
       p_workshop_id: selected.id,
       p_full_name: fullName.trim(),
       p_phone: phone.trim(),
@@ -118,54 +115,8 @@ export default function AtelierSection({ user, profile, role, onNotify }) {
         : "Impossible de préparer la réservation. Vérifie les informations puis réessaie.");
       return;
     }
-    const reservation = Array.isArray(data) ? data[0] : data;
-    if (!reservation?.reservation_id) {
-      setError("La réservation a été envoyée, mais son numéro n'a pas été retourné. Actualise tes réservations ou contacte l'équipe.");
-      return;
-    }
-    setReservationId(reservation.reservation_id);
-    setShowPaymentReference(false);
-    setPaymentReference("");
-    onNotify?.("Réservation enregistrée. Suis la procédure de dépôt, puis indique ta référence de transaction.");
-  }
-
-  function requestDepositProcedure() {
-    if (!selected) return;
-    const message = [
-      "Bonjour ED BUSINESS CENTER, je souhaite recevoir la procédure de dépôt pour mon ticket d’atelier.",
-      `Atelier : ${selected.title}`,
-      `Montant : ${money(TICKET_PRICE)}`,
-      `Nom : ${fullName.trim()}`,
-      `Téléphone : ${phone.trim()}`,
-      reservationId ? `Référence de réservation : ${reservationId}` : "",
-      "Merci de m’indiquer la procédure de dépôt. Je transmettrai ensuite la référence de transaction dans l’application."
-    ].filter(Boolean).join("\n");
-    window.open(`https://wa.me/237690418794?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
-  }
-
-  async function submitPaymentReference(event) {
-    event.preventDefault();
-    if (!reservationId || paymentReference.trim().length < 4) {
-      setError("Saisis la référence figurant sur le message de confirmation du dépôt.");
-      return;
-    }
-    setSubmittingReference(true);
-    setError("");
-    const { error: referenceError } = await supabase.rpc("submit_workshop_payment_reference", {
-      p_reservation_id: reservationId,
-      p_payment_reference: paymentReference.trim(),
-    });
-    setSubmittingReference(false);
-    if (referenceError) {
-      console.error("Envoi de la référence de paiement :", referenceError.message);
-      setError("Impossible d'envoyer la référence. Vérifie que la migration de notifications et de références de paiement a été appliquée dans Supabase.");
-      return;
-    }
-    onNotify?.("Référence transmise à ED BUSINESS CENTER. Ton ticket reste en attente jusqu'à la vérification du paiement.");
     setSelected(null);
-    setReservationId(null);
-    setShowPaymentReference(false);
-    setPaymentReference("");
+    onNotify?.("Demande enregistrée en attente. Le ticket ne sera confirmé qu'après vérification effective du paiement.");
   }
 
   return (
@@ -185,11 +136,11 @@ export default function AtelierSection({ user, profile, role, onNotify }) {
         <article><img src={asset("publication-atelier-03-confirmation-et-participants.png")} alt="Confirmation du ticket" loading="lazy" /><h2>Confirmation du ticket</h2><p>Seules les réservations dont le paiement a été vérifié peuvent être considérées comme confirmées.</p></article>
       </div>
 
-      {(["admin", "trainer", "formatrice"].includes(role)) && <section className="atelier-manager"><span className="eyebrow">ESPACE ÉQUIPE AUTORISÉE</span><h2>Publier un atelier</h2><form className="atelier-manager-form" onSubmit={publishWorkshop}><label>Titre de l'atelier<input value={draft.title} onChange={(e) => setDraft((p) => ({ ...p, title: e.target.value }))} required minLength={3} maxLength={180} /></label><label>Description<textarea value={draft.description} onChange={(e) => setDraft((p) => ({ ...p, description: e.target.value }))} rows={3} maxLength={5000} required /></label><label>URL de l'affiche (facultatif)<input type="url" value={draft.image_url} onChange={(e) => setDraft((p) => ({ ...p, image_url: e.target.value }))} placeholder="https://…" /></label><div className="atelier-manager-fields"><label>Date et heure<input type="datetime-local" value={draft.starts_at} onChange={(e) => setDraft((p) => ({ ...p, starts_at: e.target.value }))} /></label><label>Lieu<input value={draft.location} onChange={(e) => setDraft((p) => ({ ...p, location: e.target.value }))} maxLength={180} /></label></div>{error && <p className="form-error" role="alert">{error}</p>}<button className="button button-primary" type="submit" disabled={publishing}>{publishing ? "Publication…" : "Publier l'atelier"}</button></form></section>}
+      {(role === "admin" || role === "formatrice") && <section className="atelier-manager"><span className="eyebrow">ESPACE ÉQUIPE AUTORISÉE</span><h2>Publier un atelier</h2><form className="atelier-manager-form" onSubmit={publishWorkshop}><label>Titre de l'atelier<input value={draft.title} onChange={(e) => setDraft((p) => ({ ...p, title: e.target.value }))} required minLength={3} maxLength={180} /></label><label>Description<textarea value={draft.description} onChange={(e) => setDraft((p) => ({ ...p, description: e.target.value }))} rows={3} maxLength={5000} required /></label><label>URL de l'affiche (facultatif)<input type="url" value={draft.image_url} onChange={(e) => setDraft((p) => ({ ...p, image_url: e.target.value }))} placeholder="https://…" /></label><div className="atelier-manager-fields"><label>Date et heure<input type="datetime-local" value={draft.starts_at} onChange={(e) => setDraft((p) => ({ ...p, starts_at: e.target.value }))} /></label><label>Lieu<input value={draft.location} onChange={(e) => setDraft((p) => ({ ...p, location: e.target.value }))} maxLength={180} /></label></div>{error && <p className="form-error" role="alert">{error}</p>}<button className="button button-primary" type="submit" disabled={publishing}>{publishing ? "Publication…" : "Publier l'atelier"}</button></form></section>}
       <div className="atelier-section-heading"><div><span className="eyebrow">PROGRAMME</span><h2>Ateliers disponibles</h2></div><span className="atelier-price-badge">Ticket : {money(TICKET_PRICE)}</span></div>
-      {loading ? <div className="community-empty">Chargement des ateliers…</div> : error && workshops.length === 0 ? <div className="community-empty"><img src={asset("atelier-visuel-aucun-evenement.png")} alt="Aucun atelier disponible" /><h2>Aucun atelier affiché pour le moment</h2><p>{error}</p></div> : workshops.length === 0 ? <div className="community-empty"><img src={asset("atelier-visuel-aucun-evenement.png")} alt="Aucun atelier disponible" /><h2>Aucun atelier disponible pour le moment</h2><p>Reviens bientôt pour découvrir les prochaines activités.</p></div> : <div className="atelier-card-grid">{workshops.map((item) => <article className="atelier-card" key={item.id}>{item.image_url ? <img className="atelier-card-image" src={item.image_url} alt={item.title} loading="lazy" /> : <img className="atelier-card-image" src={asset("interface-atelier-1.png")} alt="Atelier ED BUSINESS CENTER" loading="lazy" />}<div className="atelier-card-body"><span className="atelier-price-badge">{money(TICKET_PRICE)}</span><h3>{item.title}</h3><p>{item.description}</p><div className="atelier-meta">{item.starts_at && <span>📅 {new Date(item.starts_at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}</span>}{item.location && <span>📍 {item.location}</span>}</div><button className="button button-primary" type="button" onClick={() => { setSelected(item); setError(""); }}>Réserver mon ticket</button><div className="atelier-confirmed-participants"><img className="atelier-participants-preview" src={asset("interface-participants-atelier.png")} alt="Liste des participants confirmés" loading="lazy"/><h4>Participants confirmés ({(participants[item.id] || []).length})</h4><p>Seules les personnes dont le paiement est vérifié apparaissent ici.</p>{(participants[item.id] || []).length > 0 ? <div className="atelier-participant-list">{participants[item.id].map((person, index) => <div className="atelier-participant" key={`${person.full_name}-${index}`}>{person.avatar_url ? <img src={person.avatar_url} alt="" loading="lazy" /> : <span>{(person.full_name || "M").split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</span>}<strong>{person.full_name}</strong></div>)}</div> : <small>Aucun participant confirmé pour le moment.</small>}</div>{(["admin", "trainer", "formatrice"].includes(role)) && <button className="button button-outline atelier-delete-button" type="button" onClick={() => deleteWorkshop(item)}>Supprimer l'atelier</button>}</div></article>)}</div>}
+      {loading ? <div className="community-empty">Chargement des ateliers…</div> : error && workshops.length === 0 ? <div className="community-empty"><img src={asset("atelier-visuel-aucun-evenement.png")} alt="Aucun atelier disponible" /><h2>Aucun atelier affiché pour le moment</h2><p>{error}</p></div> : workshops.length === 0 ? <div className="community-empty"><img src={asset("atelier-visuel-aucun-evenement.png")} alt="Aucun atelier disponible" /><h2>Aucun atelier disponible pour le moment</h2><p>Reviens bientôt pour découvrir les prochaines activités.</p></div> : <div className="atelier-card-grid">{workshops.map((item) => <article className="atelier-card" key={item.id}>{item.image_url ? <img className="atelier-card-image" src={item.image_url} alt={item.title} loading="lazy" /> : <img className="atelier-card-image" src={asset("interface-atelier-1.png")} alt="Atelier ED BUSINESS CENTER" loading="lazy" />}<div className="atelier-card-body"><span className="atelier-price-badge">{money(TICKET_PRICE)}</span><h3>{item.title}</h3><p>{item.description}</p><div className="atelier-meta">{item.starts_at && <span>📅 {new Date(item.starts_at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}</span>}{item.location && <span>📍 {item.location}</span>}</div><button className="button button-primary" type="button" onClick={() => { setSelected(item); setError(""); }}>Réserver mon ticket</button><div className="atelier-confirmed-participants"><img className="atelier-participants-preview" src={asset("interface-participants-atelier.png")} alt="Liste des participants confirmés" loading="lazy"/><h4>Participants confirmés ({(participants[item.id] || []).length})</h4><p>Seules les personnes dont le paiement est vérifié apparaissent ici.</p>{(participants[item.id] || []).length > 0 ? <div className="atelier-participant-list">{participants[item.id].map((person, index) => <div className="atelier-participant" key={`${person.full_name}-${index}`}>{person.avatar_url ? <img src={person.avatar_url} alt="" loading="lazy" /> : <span>{(person.full_name || "M").split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</span>}<strong>{person.full_name}</strong></div>)}</div> : <small>Aucun participant confirmé pour le moment.</small>}</div>{(role === "admin" || role === "formatrice") && <button className="button button-outline atelier-delete-button" type="button" onClick={() => deleteWorkshop(item)}>Supprimer l'atelier</button>}</div></article>)}</div>}
 
-      {selected && <div className="atelier-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}><section className="atelier-reservation-modal" role="dialog" aria-modal="true" aria-labelledby="atelier-reservation-title"><button className="atelier-modal-close" type="button" onClick={() => setSelected(null)} aria-label="Fermer">×</button><img src={asset("interface-reservation-atelier.png")} alt="Réservation d'atelier" /><span className="eyebrow">RÉSERVATION</span><h2 id="atelier-reservation-title">{selected.title}</h2><p>Prix du ticket : <strong>{money(TICKET_PRICE)}</strong></p>{!user ? <div className="atelier-pending-note">Connecte-toi à ton compte pour préparer une réservation.</div> : !reservationId ? <form onSubmit={reserve} className="atelier-reservation-form"><label>Nom complet<input value={fullName} onChange={(event) => setFullName(event.target.value)} required maxLength={120} autoComplete="name" /></label><label>Numéro de téléphone<input value={phone} onChange={(event) => setPhone(event.target.value)} required maxLength={30} autoComplete="tel" /></label><div className="atelier-pending-note"><img className="atelier-payment-safe-image" src={asset("atelier-visuel-paiement-securise.png")} alt="Paiement à vérifier avant confirmation" loading="lazy" />Commence par enregistrer ta réservation. Elle restera en attente jusqu'à ce que l'équipe vérifie le dépôt.</div>{error && <p className="form-error" role="alert">{error}</p>}<button className="button button-primary" type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Préparer ma réservation"}</button></form> : <div className="atelier-reservation-form"><div className="atelier-pending-note"><strong>Étape 2 — Effectuer le dépôt</strong><p>Ouvre WhatsApp pour recevoir la procédure, puis effectue le dépôt selon les instructions de l'équipe. Garde la référence exacte du message de transaction.</p></div><button className="button button-whatsapp" type="button" onClick={requestDepositProcedure}>Recevoir la procédure de dépôt sur WhatsApp</button><button className="button button-primary" type="button" onClick={() => { setShowPaymentReference(true); setError(""); }}>J'ai payé</button>{showPaymentReference && <form onSubmit={submitPaymentReference}><label>Référence du message de dépôt<input value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} required minLength={4} maxLength={120} placeholder="Ex. SM261020.1239.B70446" autoComplete="off" /></label><p className="form-help">Exemple de référence : SM261020.1239.B70446. La saisie de cette référence ne confirme pas automatiquement le paiement : l'équipe la vérifiera.</p><button className="button button-primary" type="submit" disabled={submittingReference}>{submittingReference ? "Envoi…" : "Envoyer ma référence"}</button></form>}{error && <p className="form-error" role="alert">{error}</p>}</div>}</section></div>}
+      {selected && <div className="atelier-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}><section className="atelier-reservation-modal" role="dialog" aria-modal="true" aria-labelledby="atelier-reservation-title"><button className="atelier-modal-close" type="button" onClick={() => setSelected(null)} aria-label="Fermer">×</button><img src={asset("interface-reservation-atelier.png")} alt="Réservation d'atelier" /><span className="eyebrow">RÉSERVATION</span><h2 id="atelier-reservation-title">{selected.title}</h2><p>Prix du ticket : <strong>{money(TICKET_PRICE)}</strong></p>{!user ? <div className="atelier-pending-note">Connecte-toi à ton compte pour préparer une réservation.</div> : <form onSubmit={reserve} className="atelier-reservation-form"><label>Nom complet<input value={fullName} onChange={(event) => setFullName(event.target.value)} required maxLength={120} autoComplete="name" /></label><label>Numéro de téléphone<input value={phone} onChange={(event) => setPhone(event.target.value)} required maxLength={30} autoComplete="tel" /></label><div className="atelier-pending-note"><img className="atelier-payment-safe-image" src={asset("atelier-visuel-paiement-securise.png")} alt="Paiement à vérifier avant confirmation" loading="lazy" />La demande sera enregistrée en attente. Le ticket ne sera confirmé qu'après intégration et vérification du paiement sécurisé.</div>{error && <p className="form-error" role="alert">{error}</p>}<button className="button button-primary" type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Préparer ma réservation"}</button></form>}</section></div>}
     </section>
   );
 }
