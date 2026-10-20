@@ -5,6 +5,7 @@ import NotificationsSection from "./NotificationsSection";
 import AtelierSection from "./AtelierSection";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
+import WorkshopReservationsAdmin from "./WorkshopReservationsAdmin";
 import "./styles.css";
 
 /* =====================================================
@@ -143,7 +144,7 @@ const SERVICES = [
     id: "digital",
     name: "ED DIGITAL AGENCY",
     category: "Communication digitale",
-    image: "service-ed-digital-agency.png",
+    image: "service-ed-digital-service.png",
     description:
       "Des solutions de communication visuelle et digitale pour valoriser les activités des particuliers et des entreprises.",
     details: [
@@ -171,7 +172,7 @@ const SERVICES = [
     id: "solution",
     name: "ED B-SOLUTION",
     category: "Solutions numériques",
-    image: "service-ed-b-solution.png",
+    image: "service-ed-b-solutions.png",
     description:
       "Des solutions numériques destinées à faciliter certaines activités et à améliorer l'organisation du travail.",
     details: [
@@ -182,17 +183,17 @@ const SERVICES = [
     ],
   },
   {
-    id: "photographie",
-    name: "ED B-PHOTOGRAPHIE",
-    category: "Photographie",
-    image: "service-packs-photographie.png",
+    id: "reseau",
+    name: "LE RÉSEAU",
+    category: "Recherche de produits et précommandes",
+    image: "service-le-reseau.png",
     description:
-      "Des prestations photographiques pour mettre en valeur les personnes, les produits et les activités professionnelles.",
+      "Un service de recherche de produits, de précommandes et d'approvisionnement adapté aux besoins des clients.",
     details: [
-      "Séances photo",
-      "Photographie de produits",
-      "Images pour la communication",
-      "Valorisation des marques et activités",
+      "Recherche de produits adaptés",
+      "Précommandes et petits stocks",
+      "Estimation du coût total",
+      "Accompagnement de la commande",
     ],
   },
 ];
@@ -741,129 +742,64 @@ function IntroSection({ onNavigate, onRegister }) {
 ===================================================== */
 
 function ServicesSection({ onNavigate, onSelectService }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const visibleCount = 3;
-  const maxIndex = Math.max(0, SERVICES.length - visibleCount);
-
-  function showPrevious() {
-    setCurrentIndex((previous) =>
-      previous <= 0 ? maxIndex : previous - 1
-    );
-  }
-
-  function showNext() {
-    setCurrentIndex((previous) =>
-      previous >= maxIndex ? 0 : previous + 1
-    );
-  }
-
   return (
     <section className="services-section section-container" id="services">
       <div className="section-heading">
         <span className="eyebrow">NOS DOMAINES D'ACTIVITÉ</span>
-
         <h2>
           Des services pour <span>faire avancer tes projets</span>
         </h2>
-
         <p>
           Découvre nos différents domaines d'intervention et identifie
           les services qui correspondent à tes besoins.
         </p>
       </div>
 
-      <div className="services-carousel">
-        <button
-          type="button"
-          className="section-carousel-arrow"
-          onClick={showPrevious}
-          aria-label="Services précédents"
-        >
-          ‹
-        </button>
+      <div className="services-grid services-display-grid">
+        {SERVICES.map((service) => (
+          <article className="service-card" key={service.id}>
+            <div className="service-image-wrapper">
+              <img
+                src={image(service.image)}
+                alt={service.name}
+                loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.style.visibility = "hidden";
+                  event.currentTarget.parentElement.classList.add("service-image-missing");
+                }}
+              />
+              <span className="service-category">{service.category}</span>
+            </div>
 
-        <div className="services-track-window">
-          <div
-            className="services-track"
-            style={{
-              "--services-index": currentIndex,
-              "--services-count": SERVICES.length,
-            }}
-          >
-            {SERVICES.map((service) => (
-              <article className="service-card" key={service.id}>
-                <div className="service-image-wrapper">
-                  <img
-                    src={image(service.image)}
-                    alt={`${service.name} : ${service.description}`}
-                    loading="lazy"
-                  />
-
-                  <span className="service-category">
-                    {service.category}
-                  </span>
-                </div>
-
-                <div className="service-card-content">
-                  <h3>{service.name}</h3>
-
-                  <p>{service.description}</p>
-
-                  <ul className="service-details">
-                    {service.details.slice(0, 3).map((detail) => (
-                      <li key={detail}>
-                        <span aria-hidden="true">✓</span>
-                        {detail}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() => {
-                      if (onSelectService) {
-                        onSelectService(service);
-                      } else {
-                        onNavigate("contact");
-                      }
-                    }}
-                  >
-                    En savoir plus <span aria-hidden="true">→</span>
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="section-carousel-arrow"
-          onClick={showNext}
-          aria-label="Services suivants"
-        >
-          ›
-        </button>
-      </div>
-
-      <div className="services-mobile-dots">
-        {SERVICES.map((service, index) => (
-          <button
-            key={service.id}
-            type="button"
-            className={`services-dot ${
-              index === currentIndex ? "services-dot-active" : ""
-            }`}
-            onClick={() => setCurrentIndex(Math.min(index, maxIndex))}
-            aria-label={`Afficher les services à partir de ${service.name}`}
-          />
+            <div className="service-card-content">
+              <h3>{service.name}</h3>
+              <p>{service.description}</p>
+              <ul className="service-details">
+                {service.details.slice(0, 3).map((detail) => (
+                  <li key={detail}>
+                    <span aria-hidden="true">✓</span>
+                    {detail}
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => {
+                  if (onSelectService) onSelectService(service);
+                  else onNavigate("contact");
+                }}
+              >
+                En savoir plus <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
         ))}
       </div>
     </section>
   );
 }
+
 /* =====================================================
    SECTION DES FORMATIONS
 ===================================================== */
@@ -1854,6 +1790,19 @@ function AccountSection({
                 Administration
               </button>
             )}
+
+            {role === "admin" && (
+              <button
+                type="button"
+                className={
+                  activeTab === "reservations" ? "account-nav-active" : ""
+                }
+                onClick={() => setActiveTab("reservations")}
+              >
+                <span aria-hidden="true">🎟</span>
+                Réservations ateliers
+              </button>
+            )}
           </nav>
 
           <button
@@ -2088,6 +2037,10 @@ function AccountSection({
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === "reservations" && role === "admin" && (
+            <WorkshopReservationsAdmin />
           )}
 
           {activeTab === "admin" && role === "admin" && (

@@ -3719,3 +3719,134 @@ button{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}butt
 .maintenance-card { width: min(100%, 720px); padding: clamp(1.5rem, 5vw, 3rem); text-align: center; border: 1px solid rgba(35, 91, 150, .18); border-radius: 24px; background: var(--surface, #fff); box-shadow: 0 18px 50px rgba(20, 50, 90, .10); }
 .maintenance-card h1 { margin: .75rem 0; }
 .maintenance-card p { line-height: 1.7; }
+
+/* Gestion des réservations d'ateliers — espace Administration */
+.workshop-reservations-admin { min-width: 0; }
+.workshop-reservations-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.workshop-reservations-heading p { margin:8px 0 0; color:var(--ed-muted, #64748b); max-width:680px; }
+.workshop-reservations-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.workshop-reservations-actions .button { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.workshop-reservation-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:22px 0; }
+.workshop-reservation-stats article { padding:18px; border:1px solid var(--ed-border, #e2e8f0); border-radius:16px; background:var(--ed-surface, #fff); display:flex; flex-direction:column; gap:8px; }
+.workshop-reservation-stats article span { color:var(--ed-muted, #64748b); font-size:.88rem; }
+.workshop-reservation-stats article strong { font-size:1.65rem; line-height:1.2; color:var(--ed-primary, #173e72); }
+.workshop-reservation-filters { display:flex; align-items:flex-end; gap:14px; margin:0 0 18px; }
+.workshop-reservation-search { flex:1; min-width:180px; display:flex; align-items:center; gap:9px; border:1px solid var(--ed-border, #e2e8f0); background:#fff; border-radius:12px; padding:0 12px; min-height:46px; }
+.workshop-reservation-search input { border:0!important; outline:0!important; box-shadow:none!important; background:transparent!important; width:100%; min-width:0; padding:11px 0!important; }
+.workshop-reservation-status-filter { display:flex; flex-direction:column; gap:6px; min-width:180px; color:var(--ed-muted, #64748b); font-size:.86rem; }
+.workshop-reservation-status-filter select { min-height:46px; border:1px solid var(--ed-border, #e2e8f0); background:#fff; border-radius:12px; padding:0 12px; color:var(--ed-text, #172033); }
+.workshop-reservation-error { display:flex; align-items:flex-start; gap:10px; padding:14px 16px; margin:12px 0; color:#991b1b; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; }
+.workshop-reservation-table-wrap { width:100%; }
+.workshop-reservation-table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--ed-border, #e2e8f0); border-radius:14px; overflow:hidden; }
+.workshop-reservation-table th,.workshop-reservation-table td { padding:13px 12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--ed-border, #e2e8f0); }
+.workshop-reservation-table th { background:#f8fafc; color:#475569; font-size:.78rem; text-transform:uppercase; letter-spacing:.035em; }
+.workshop-reservation-table td { font-size:.9rem; }
+.workshop-reservation-table td strong,.workshop-reservation-table td span,.workshop-reservation-table td small { display:block; margin-bottom:4px; overflow-wrap:anywhere; }
+.workshop-reservation-table td small { max-width:180px; color:#94a3b8; font-size:.68rem; }
+.workshop-reservation-table td span { color:#64748b; }
+.workshop-reservation-table td span svg { vertical-align:middle; }
+.workshop-status-pill { display:inline-flex!important; align-items:center; width:max-content; max-width:100%; padding:5px 9px; border-radius:999px; font-size:.78rem; font-weight:700; margin:0!important; white-space:normal; }
+.workshop-status-pending { color:#92400e!important; background:#fef3c7; }
+.workshop-status-confirmed { color:#166534!important; background:#dcfce7; }
+.workshop-status-cancelled { color:#991b1b!important; background:#fee2e2; }
+.workshop-status-refunded { color:#5b21b6!important; background:#ede9fe; }
+.workshop-reservation-footnote { color:#64748b; font-size:.84rem; margin-top:14px; }
+.workshop-reservation-mobile-list { display:none; }
+.workshop-reservation-mobile-card { border:1px solid var(--ed-border, #e2e8f0); border-radius:14px; padding:15px; background:#fff; margin-bottom:12px; }
+.workshop-reservation-mobile-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.workshop-reservation-mobile-card p { margin:7px 0; color:#64748b; }
+.workshop-reservation-mobile-card h3 { margin:10px 0; font-size:1rem; }
+.workshop-reservation-mobile-meta { display:grid; gap:7px; font-size:.86rem; color:#64748b; overflow-wrap:anywhere; }
+@media (max-width: 900px) {
+  .workshop-reservation-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .workshop-reservations-heading { flex-direction:column; }
+  .workshop-reservations-actions { width:100%; }
+}
+@media (max-width: 680px) {
+  .workshop-reservation-filters { flex-direction:column; align-items:stretch; }
+  .workshop-reservation-search,.workshop-reservation-status-filter { width:100%; min-width:0; box-sizing:border-box; }
+  .workshop-reservation-table { display:none; }
+  .workshop-reservation-mobile-list { display:block; }
+  .workshop-reservation-stats article { padding:13px; }
+  .workshop-reservation-stats article strong { font-size:1.35rem; }
+  .workshop-reservations-actions .button { flex:1; }
+}
+
+/* Correction globale des services : cartes proportionnées, grille responsive */
+.services-display-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 24px !important;
+  width: 100%;
+}
+.services-display-grid > .service-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--ed-line, #dce6f0);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(10, 38, 88, .08);
+}
+.services-display-grid .service-image-wrapper {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 150px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #eaf2ff, #f7fbff);
+}
+.services-display-grid .service-image-wrapper img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.services-display-grid .service-image-wrapper.service-image-missing::after {
+  content: "ED BUSINESS CENTER";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #0b4eb5;
+  font-size: clamp(.85rem, 1.4vw, 1.1rem);
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.services-display-grid .service-card-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 22px !important;
+}
+.services-display-grid .service-card-content h3 {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.services-display-grid .service-card-content p {
+  margin: 0;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.services-display-grid .service-details { margin: 0; }
+.services-display-grid .service-card-content .text-button { margin-top: auto; }
+@media (max-width: 980px) {
+  .services-display-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 18px !important; }
+}
+@media (max-width: 600px) {
+  .services-display-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; }
+  .services-display-grid .service-image-wrapper { aspect-ratio: 16 / 9; min-height: 0; }
+  .services-display-grid .service-card-content { padding: 18px !important; }
+}
