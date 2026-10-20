@@ -2662,20 +2662,6 @@ function App() {
     navigateTo("contact");
   }
 
-  /* Affichage du chargement */
-  if (loading) {
-    return (
-      <div className="app-loading">
-        <img
-          src={image("logo-ed-b-center.png")}
-          alt="Logo ED BUSINESS CENTER"
-        />
-
-        <p>Chargement de ED BUSINESS CENTER...</p>
-      </div>
-    );
-  }
-
   /* Les pages publiques restent accessibles sans connexion. Les actions privées
      (publication, réservation, espace personnel) sont protégées par leurs composants
      et par les politiques Supabase. */
@@ -2702,6 +2688,20 @@ function App() {
     const timer = window.setInterval(checkMaintenance, 60000);
     return () => { active = false; window.clearInterval(timer); };
   }, []);
+
+  /* Affichage du chargement */
+  if (loading) {
+    return (
+      <div className="app-loading">
+        <img
+          src={image("logo-ed-b-center.png")}
+          alt="Logo ED BUSINESS CENTER"
+        />
+
+        <p>Chargement de ED BUSINESS CENTER...</p>
+      </div>
+    );
+  }
 
 /* Interface principale */
 return (
