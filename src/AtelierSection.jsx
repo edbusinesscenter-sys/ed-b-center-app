@@ -30,7 +30,7 @@ export default function AtelierSection({ user, profile, role, onNotify }) {
       .from("workshops")
       .select("id, title, description, image_url, starts_at, location, status, created_at")
       .eq("status", "published")
-      .order("starts_at", { ascending: true });
+      .order("created_at", { ascending: false });
     if (queryError) {
       console.error("Chargement des ateliers :", queryError.message);
       setWorkshops([]);

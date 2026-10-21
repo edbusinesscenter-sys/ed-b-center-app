@@ -1,3 +1,4 @@
+import { AuthorAvatar, AuthorBadge } from "./AuthorBadge";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { imageUrl } from "./imageCatalog";
@@ -31,8 +32,17 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
         const result = await supabase.from("publication_interactions").select("publication_id, user_id, interaction_type, content").in("publication_id", ids);
         if (!result.error) reactions = result.data || [];
       }
+      let cards = {};
+      const authorIds = [...new Set((data || []).map((p) => p.author_id).filter(Boolean))];
+      if (authorIds.length) {
+        const cardResult = await supabase.rpc("get_author_cards", { p_ids: authorIds });
+        if (!cardResult.error && Array.isArray(cardResult.data)) {
+          cards = Object.fromEntries(cardResult.data.map((c) => [c.id, c]));
+        }
+      }
       setPosts((data || []).map((post) => ({
         ...post,
+        author: cards[post.author_id] || null,
         interactions: reactions.filter((r) => r.publication_id === post.id),
       })));
     }
@@ -120,7 +130,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
         const liked = interactions.some((r) => r.user_id === user?.id && r.interaction_type === "like");
         const postComments = interactions.filter((r) => r.interaction_type === "comment");
         return <article className="publication-card" key={post.id}>
-          <div className="publication-author"><div className="publication-avatar">ED</div><div><strong>{post.profiles?.full_name || "ED BUSINESS CENTER"}</strong><small>{new Date(post.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</small></div></div>
+          <div className="publication-author"><AuthorAvatar card={post.author} /><div><strong>{post.author?.full_name || "ED BUSINESS CENTER"}</strong><AuthorBadge card={post.author} /><small>{new Date(post.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</small></div></div>
           {post.title && <h2>{post.title}</h2>}<p className="publication-body">{post.body}</p>
           {post.image_url && <img className="publication-image" src={post.image_url} alt={post.title || "Publication ED B-CENTER"} loading="lazy" />}
           <div className="publication-stats"><span>♥ {interactions.filter((r) => r.interaction_type === "like").length} J’aime</span><span>▢ {postComments.length} commentaire(s)</span></div>
