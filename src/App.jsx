@@ -7,6 +7,9 @@ import AtelierSection from "./AtelierSection";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import ImageLibrarySection from "./ImageLibrarySection";
+import CourseEnrollmentModal from "./CourseEnrollmentModal";
+import ResetPasswordModal from "./ResetPasswordModal";
+import { ServicesAdmin, EnrollmentsAdmin } from "./ServicesAdmin";
 import "./styles.css";
 import "./responsive-mobile.css";
 import "./premium.css";
@@ -717,6 +720,33 @@ function IntroSection({ onNavigate, onRegister }) {
 
 function ServicesSection({ onNavigate, onSelectService }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [publishedServices, setPublishedServices] = useState([]);
+
+  /* Services publiés par l'administrateur (table "services") */
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("services")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error || !active) return;
+        setPublishedServices(
+          (data || []).map((row) => ({
+            id: `db-${row.id}`,
+            name: row.name,
+            category: row.category || "Service",
+            description: row.description || "",
+            details: row.details || [],
+            image_url: row.image_url || "",
+          }))
+        );
+      });
+    return () => { active = false; };
+  }, []);
+
+  const allServices = [...publishedServices, ...SERVICES];
 
   const [visibleCount, setVisibleCount] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches ? 1 : 3
@@ -730,7 +760,7 @@ function ServicesSection({ onNavigate, onSelectService }) {
     return () => media.removeEventListener?.("change", updateVisibleCount);
   }, []);
 
-  const maxIndex = Math.max(0, SERVICES.length - visibleCount);
+  const maxIndex = Math.max(0, allServices.length - visibleCount);
 
   function showPrevious() {
     setCurrentIndex((previous) =>
@@ -774,15 +804,15 @@ function ServicesSection({ onNavigate, onSelectService }) {
             className="services-track"
             style={{
               "--services-index": currentIndex,
-              "--services-count": SERVICES.length,
+              "--services-count": allServices.length,
               "--services-visible": visibleCount,
             }}
           >
-            {SERVICES.map((service) => (
+            {allServices.map((service) => (
               <div className="service-slide" key={service.id}><article className="service-card">
                 <div className="service-image-wrapper">
                   <img
-                    src={image(service.image)}
+                    src={service.image_url || image(service.image)}
                     alt={`${service.name} : ${service.description}`}
                     loading="lazy"
                   />
@@ -836,7 +866,7 @@ function ServicesSection({ onNavigate, onSelectService }) {
       </div>
 
       <div className="services-mobile-dots">
-        {SERVICES.map((service, index) => (
+        {allServices.map((service, index) => (
           <button
             key={service.id}
             type="button"
@@ -1292,6 +1322,25 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [info, setInfo] = useState("");
+
+  async function handleForgot(event) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    setInfo("");
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      email.trim(),
+      { redirectTo: window.location.origin }
+    );
+    setLoading(false);
+    if (resetError) {
+      setError(resetError.message || "Envoi impossible. Réessaie dans un instant.");
+      return;
+    }
+    setInfo("Si cette adresse correspond à un compte, un e-mail de réinitialisation vient d'être envoyé. Pense à vérifier tes courriers indésirables.");
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -1364,7 +1413,7 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
           Connecte-toi pour accéder à ton espace personnel.
         </p>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={forgotMode ? handleForgot : handleSubmit}>
           <div className="form-field">
             <label htmlFor="login-email">Adresse e-mail</label>
 
@@ -1379,6 +1428,7 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
             />
           </div>
 
+          {!forgotMode && (
           <div className="form-field">
             <label htmlFor="login-password">Mot de passe</label>
 
@@ -1392,10 +1442,17 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
               required
             />
           </div>
+          )}
 
           {error && (
             <div className="form-error" role="alert">
               {error}
+            </div>
+          )}
+
+          {info && (
+            <div className="form-success" role="status">
+              {info}
             </div>
           )}
 
@@ -1404,7 +1461,17 @@ function LoginModal({ onClose, onSwitchToRegister, onLoginSuccess }) {
             className="button button-primary button-full"
             disabled={loading}
           >
-            {loading ? "Connexion en cours..." : "Se connecter"}
+            {forgotMode
+              ? (loading ? "Envoi en cours..." : "Envoyer le lien de réinitialisation")
+              : (loading ? "Connexion en cours..." : "Se connecter")}
+          </button>
+
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => { setForgotMode(!forgotMode); setError(""); setInfo(""); }}
+          >
+            {forgotMode ? "Retour à la connexion" : "Mot de passe oublié ?"}
           </button>
         </form>
 
@@ -2110,13 +2177,15 @@ function AccountSection({
                   Cet espace est réservé aux comptes dont le rôle
                   administrateur est attribué dans la base de données.
                 </p>
-
-                <p>
-                  Les fonctions de publication, de gestion des comptes,
-                  de messagerie et de suivi des formations nécessitent
-                  leur configuration côté Supabase.
-                </p>
               </div>
+
+              <EnrollmentsAdmin
+                onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))}
+              />
+
+              <ServicesAdmin
+                onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))}
+              />
             </div>
           )}
         </div>
@@ -2305,6 +2374,8 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [enrollCourse, setEnrollCourse] = useState(null);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
 
   const [notification, setNotification] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -2477,6 +2548,10 @@ function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user || null;
 
+      if (_event === "PASSWORD_RECOVERY") {
+        setRecoveryOpen(true);
+      }
+
       setUser(currentUser);
 
       if (currentUser) {
@@ -2527,6 +2602,15 @@ function App() {
     setAuthModal(null);
 
     notify("Connexion réussie. Bienvenue chez ED B-CENTER !");
+  }
+
+  /* Inscription à une formation : formulaire dédié puis WhatsApp */
+  function openEnrollment(course) {
+    if (!user) {
+      openRegister(course);
+      return;
+    }
+    setEnrollCourse(course);
   }
 
   /* Inscription réussie */
@@ -2813,7 +2897,7 @@ return (
             />
 
             <CoursesSection
-              onRegister={openRegister}
+              onRegister={openEnrollment}
               onNavigate={navigateTo}
             />
 
@@ -2851,7 +2935,7 @@ return (
 
         {activePage === "courses" && (
           <CoursesSection
-            onRegister={openRegister}
+            onRegister={openEnrollment}
             onNavigate={navigateTo}
           />
         )}
@@ -3007,6 +3091,25 @@ return (
           onRegisterSuccess={handleRegisterSuccess}
           onSwitchToLogin={() => setAuthModal("login")}
           selectedCourse={selectedCourse}
+        />
+      )}
+
+      {/* Inscription à une formation */}
+      {enrollCourse && user && (
+        <CourseEnrollmentModal
+          user={user}
+          profile={profile}
+          course={enrollCourse}
+          onClose={() => setEnrollCourse(null)}
+          onNotify={notify}
+        />
+      )}
+
+      {/* Nouveau mot de passe (lien reçu par e-mail) */}
+      {recoveryOpen && user && (
+        <ResetPasswordModal
+          onClose={() => setRecoveryOpen(false)}
+          onNotify={notify}
         />
       )}
 
