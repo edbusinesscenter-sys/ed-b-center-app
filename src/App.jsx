@@ -665,7 +665,7 @@ function IntroSection({ onNavigate, onRegister }) {
           <button
             type="button"
             className="button button-outline"
-            onClick={onRegister}
+            onClick={() => window.open("https://whatsapp.com/channel/0029VbDMmDnC1FuDUIDiXm25", "_blank", "noopener,noreferrer")}
           >
             Rejoindre la communauté
           </button>
