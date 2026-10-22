@@ -6,6 +6,7 @@ import NotificationsSection from "./NotificationsSection";
 import AtelierSection from "./AtelierSection";
 import Messenger from "./Messenger";
 import ProfileCardModal from "./ProfileCardModal";
+import AdminSpace from "./AdminSpace";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import ImageLibrarySection from "./ImageLibrarySection";
@@ -1862,7 +1863,7 @@ function AccountSection({
               Messagerie
             </button>
 
-            {role === "admin" && (
+            {(role === "admin" || role === "trainer") && (
               <button
                 type="button"
                 className={
@@ -2093,31 +2094,11 @@ function AccountSection({
                   <h2>Ma messagerie</h2>
                 </div>
               </div>
-
-              <div className="account-content-card">
-                <div className="empty-state">
-                  <img className="account-feature-preview" src={image("interface-messagerie.png")} alt="Aperçu de la messagerie" loading="lazy" />
-                  <span className="empty-state-icon" aria-hidden="true">
-                    ✉
-                  </span>
-
-                  <h3>Ta messagerie personnelle</h3>
-
-                  <p>
-                    L'affichage des messages privés nécessite une table
-                    de messagerie configurée dans Supabase.
-                  </p>
-
-                  <a
-                    className="button button-primary"
-                    href={BRAND.whatsapp}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Contacter l'équipe sur WhatsApp
-                  </a>
-                </div>
-              </div>
+              <Messenger
+                user={user}
+                role={role}
+                onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))}
+              />
             </div>
           )}
 
@@ -2127,30 +2108,8 @@ function AccountSection({
             </div>
           )}
 
-          {activeTab === "admin" && role === "admin" && (
-            <div className="account-tab-content">
-              <div className="account-section-title">
-                <div>
-                  <span className="eyebrow">GESTION DE LA PLATEFORME</span>
-                  <h2>Administration</h2>
-                </div>
-              </div>
-
-              <div className="account-content-card admin-highlight">
-                <h3>Bienvenue dans l'administration</h3>
-
-                <p>
-                  Cet espace est réservé aux comptes dont le rôle
-                  administrateur est attribué dans la base de données.
-                </p>
-
-                <p>
-                  Les fonctions de publication, de gestion des comptes,
-                  de messagerie et de suivi des formations nécessitent
-                  leur configuration côté Supabase.
-                </p>
-              </div>
-            </div>
+          {activeTab === "admin" && (role === "admin" || role === "trainer") && (
+            <AdminSpace onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
           )}
         </div>
       </div>
