@@ -7,6 +7,7 @@ import AtelierSection from "./AtelierSection";
 import Messenger from "./Messenger";
 import ProfileCardModal from "./ProfileCardModal";
 import AdminSpace from "./AdminSpace";
+import HomeAnnouncement from "./HomeAnnouncement";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import ImageLibrarySection from "./ImageLibrarySection";
@@ -2808,6 +2809,8 @@ return (
       <main>
         {activePage === "home" && (
           <>
+            <HomeAnnouncement />
+
             <MotivationCarousel />
 
             <IntroSection

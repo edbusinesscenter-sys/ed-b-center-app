@@ -452,3 +452,112 @@ img[class*="avatar"],
   border-radius: 12px;
   box-shadow: 0 8px 22px rgba(4, 24, 38, 0.22);
 }
+
+/* ---------- ANNONCE DE LA PAGE D'ACCUEIL ---------- */
+
+.home-announcement {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.home-announcement-image {
+  width: min(100%, 340px);
+  aspect-ratio: 1122 / 1402;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--ed-gradient);
+  box-shadow: var(--ed-shadow-lg);
+}
+
+.home-announcement-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-announcement-info {
+  padding: 22px 20px;
+  border-radius: 20px;
+  background: var(--ed-gradient-dark);
+  color: #fff;
+  box-shadow: var(--ed-shadow-lg);
+}
+
+.home-announcement-info .eyebrow {
+  background: rgba(157, 242, 236, 0.18);
+  color: var(--ed-turquoise-light);
+}
+
+.home-announcement-info h2 {
+  margin: 6px 0 8px;
+  color: #fff;
+  font-size: clamp(1.4rem, 6vw, 2rem);
+}
+
+.home-announcement-info p {
+  margin: 0 0 14px;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.announcement-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.announcement-fact {
+  padding: 12px 14px;
+  border: 1px solid rgba(157, 242, 236, 0.3);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.announcement-fact dt {
+  color: var(--ed-turquoise-light);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.announcement-fact dd {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.announcement-price {
+  border-color: transparent;
+  background: linear-gradient(145deg, #ffe39a, #f5b942);
+  color: #4a3000;
+}
+
+.announcement-price dt {
+  color: #6b4700;
+}
+
+.admin-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-check input {
+  width: auto;
+}
+
+@media (min-width: 760px) {
+  .home-announcement {
+    grid-template-columns: minmax(260px, 360px) 1fr;
+    gap: 28px;
+  }
+
+  .announcement-facts {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
