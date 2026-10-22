@@ -5,10 +5,15 @@ import { AuthorBadge } from "./AuthorBadge";
 export default function ProfileCardModal({ userId, me, onClose, onNotify, onMessage }) {
   const [card, setCard] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   async function load() {
     const { data, error } = await supabase.rpc("get_profile_card", { p_user: userId });
-    if (error) { onNotify?.("Profil indisponible : installe le SQL « partie 8 »."); onClose(); return; }
+    if (error) {
+      setLoadError(/function|schema cache|does not exist/i.test(error.message) ? "Le SQL « partie 8 » n'est pas installé dans Supabase." : error.message);
+      return;
+    }
+    setLoadError("");
     setCard(data);
   }
   useEffect(() => { load(); }, [userId]);
@@ -27,7 +32,7 @@ export default function ProfileCardModal({ userId, me, onClose, onNotify, onMess
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <section className="auth-modal profile-modal" role="dialog" aria-modal="true" aria-label="Profil" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">×</button>
-        {!card ? <p>Chargement…</p> : (
+        {loadError ? <p className="form-error" role="alert">Profil indisponible : {loadError}</p> : !card ? <p>Chargement…</p> : (
           <>
             {card.avatar_url ? <img className="profile-modal-avatar" src={card.avatar_url} alt="" /> : <div className="profile-modal-avatar">{card.full_name.slice(0, 2).toUpperCase()}</div>}
             <h2>{card.full_name}</h2>

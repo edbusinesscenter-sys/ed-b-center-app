@@ -29,11 +29,11 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
       const ids = (data || []).map((p) => p.id);
       let reactions = [];
       if (ids.length) {
-        const result = await supabase.from("publication_interactions").select("publication_id, user_id, interaction_type, content").in("publication_id", ids);
+        const result = await supabase.from("publication_interactions").select("publication_id, user_id, interaction_type, content, created_at").in("publication_id", ids);
         if (!result.error) reactions = result.data || [];
       }
       let cards = {};
-      const authorIds = [...new Set((data || []).map((p) => p.author_id).filter(Boolean))];
+      const authorIds = [...new Set([...(data || []).map((p) => p.author_id), ...reactions.filter((r) => r.interaction_type === "comment").map((r) => r.user_id)].filter(Boolean))];
       if (authorIds.length) {
         const cardResult = await supabase.rpc("get_author_cards", { p_ids: authorIds });
         if (!cardResult.error && Array.isArray(cardResult.data)) {
@@ -43,6 +43,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
       setPosts((data || []).map((post) => ({
         ...post,
         author: cards[post.author_id] || null,
+        cards,
         interactions: reactions.filter((r) => r.publication_id === post.id),
       })));
     }
@@ -130,12 +131,12 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
         const liked = interactions.some((r) => r.user_id === user?.id && r.interaction_type === "like");
         const postComments = interactions.filter((r) => r.interaction_type === "comment");
         return <article className="publication-card" key={post.id}>
-          <div className="publication-author"><AuthorAvatar card={post.author} /><div><strong>{post.author?.full_name || "ED BUSINESS CENTER"}</strong><AuthorBadge card={post.author} /><small>{new Date(post.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</small></div></div>
+          <div className="publication-author" style={{ cursor: user ? "pointer" : "default" }} role="button" tabIndex={0} onClick={() => { if (!user) return; if (!post.author_id) { onNotify?.("Cette ancienne publication n'a pas d'auteur lié."); return; } window.dispatchEvent(new CustomEvent("ed-open-profile", { detail: post.author_id })); }}><AuthorAvatar card={post.author} /><div><strong>{post.author?.full_name || "ED BUSINESS CENTER"}</strong><AuthorBadge card={post.author} /><small>{new Date(post.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</small></div></div>
           {post.title && <h2>{post.title}</h2>}<p className="publication-body">{post.body}</p>
           {post.image_url && <img className="publication-image" src={post.image_url} alt={post.title || "Publication ED B-CENTER"} loading="lazy" />}
           <div className="publication-stats"><span>♥ {interactions.filter((r) => r.interaction_type === "like").length} J’aime</span><span>▢ {postComments.length} commentaire(s)</span></div>
           <div className="publication-actions"><button type="button" className={liked ? "publication-action liked" : "publication-action"} disabled={sending === post.id + "like"} onClick={() => interact(post.id, "like")}>{liked ? "♥ Aimé" : "♡ J’aime"}</button><span className="publication-action-divider"/><label className="publication-comment-label" htmlFor={`comment-${post.id}`}>Commenter</label>{user?.id === post.author_id && <button type="button" className="publication-action publication-delete-action" onClick={() => deletePost(post)}>Supprimer</button>}</div>
-          {postComments.map((c) => <div className="publication-comment" key={c.user_id + c.created_at}><strong>{c.user_id === user?.id ? "Vous" : "Membre"}</strong><p>{c.content}</p></div>)}
+          {postComments.map((c) => <div className="publication-comment" key={`${c.user_id}-${c.created_at}-${c.content}`}><strong style={c.user_id === user?.id ? undefined : { cursor: "pointer" }} onClick={() => c.user_id !== user?.id && window.dispatchEvent(new CustomEvent("ed-open-profile", { detail: c.user_id }))}>{c.user_id === user?.id ? "Vous" : (post.cards?.[c.user_id]?.full_name || "Membre")}</strong><p>{c.content}</p></div>)}
           <form className="publication-comment-form" onSubmit={(e) => { e.preventDefault(); interact(post.id, "comment"); }}><input id={`comment-${post.id}`} value={comments[post.id] || ""} onChange={(e) => setComments((prev) => ({ ...prev, [post.id]: e.target.value }))} placeholder="Écrire un commentaire…" maxLength={1000}/><button className="button button-primary" disabled={sending === post.id + "comment"}>Envoyer</button></form>
         </article>;
       })}</div>}
