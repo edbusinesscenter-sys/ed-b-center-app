@@ -4,6 +4,8 @@ import { imageUrl } from "./imageCatalog";
 import CommunitySection from "./CommunitySection";
 import NotificationsSection from "./NotificationsSection";
 import AtelierSection from "./AtelierSection";
+import Messenger from "./Messenger";
+import ProfileCardModal from "./ProfileCardModal";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import ImageLibrarySection from "./ImageLibrarySection";
@@ -469,6 +471,7 @@ function Header({
                   <span className="notification-count">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
                 )}
               </button>
+              <button type="button" className={`navigation-link ${activePage === "messages" ? "navigation-link-active" : ""}`} onClick={() => navigateTo("messages")}>✉ Messagerie</button>
               <span className="header-points" title="Points gagnés sur les publications">★ {Number(profile?.points || 0)}</span>
               <button
                 type="button"
@@ -2335,6 +2338,8 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [enrollCourse, setEnrollCourse] = useState(null);
   const [recovery, setRecovery] = useState(false);
+  const [profileView, setProfileView] = useState(null);
+  const [chatWith, setChatWith] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
 
@@ -2343,6 +2348,13 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [platformClosed, setPlatformClosed] = useState(false);
   const [platformClosureMessage, setPlatformClosureMessage] = useState("APPLICATION FERMÉE — maintenance en cours");
+
+  /* Ouverture d'un profil depuis la communauté */
+  useEffect(() => {
+    const open = (event) => setProfileView(event.detail);
+    window.addEventListener("ed-open-profile", open);
+    return () => window.removeEventListener("ed-open-profile", open);
+  }, []);
 
   /* Images introuvables : masquées proprement */
   useEffect(() => {
@@ -2866,6 +2878,10 @@ return (
           <NotificationsSection user={user} onNotify={notify} />
         )}
 
+        {activePage === "messages" && user && (
+          <Messenger user={user} role={role} onNotify={notify} initialUser={chatWith} />
+        )}
+
         {activePage === "community" && (
           <CommunitySection
             user={user}
@@ -3040,6 +3056,7 @@ return (
       {enrollCourse && (
         <CourseEnrollModal course={enrollCourse} user={user} profile={profile} whatsapp={BRAND.whatsapp} onClose={() => setEnrollCourse(null)} onNotify={notify} />
       )}
+      {profileView && user && <ProfileCardModal userId={profileView} me={user} onClose={() => setProfileView(null)} onNotify={notify} onMessage={(id) => { setProfileView(null); setChatWith(id); navigateTo("messages"); }} />}
       {recovery && <PasswordRecoveryModal onClose={() => setRecovery(false)} onNotify={notify} />}
 
       {/* Fenêtre d'inscription */}
