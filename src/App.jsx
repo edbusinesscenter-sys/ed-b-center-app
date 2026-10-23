@@ -2809,9 +2809,9 @@ return (
       <main>
         {activePage === "home" && (
           <>
-            <HomeAnnouncement />
-
             <MotivationCarousel />
+
+            <HomeAnnouncement />
 
             <IntroSection
               onNavigate={navigateTo}
