@@ -561,3 +561,10 @@ img[class*="avatar"],
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* ---------- RÉSEAU, SIGNALEMENT, SUPPRESSION ---------- */
+.follow-row { cursor: pointer; align-items: center; }
+.danger-zone { border-color: rgba(229, 72, 77, 0.45); background: linear-gradient(180deg, #fff, #fff6f6); }
+.danger-zone .button { justify-self: start; }
+.publication-report-action { color: #9a3b3b; }
+.notification-readall { margin-left: 8px; }

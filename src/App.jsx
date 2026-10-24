@@ -7,6 +7,8 @@ import AtelierSection from "./AtelierSection";
 import Messenger from "./Messenger";
 import ProfileCardModal from "./ProfileCardModal";
 import AdminSpace from "./AdminSpace";
+import FollowLists from "./FollowLists";
+import DeleteAccount from "./DeleteAccount";
 import HomeAnnouncement from "./HomeAnnouncement";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
@@ -1864,6 +1866,15 @@ function AccountSection({
               Messagerie
             </button>
 
+            <button
+              type="button"
+              className={activeTab === "network" ? "account-nav-active" : ""}
+              onClick={() => setActiveTab("network")}
+            >
+              <span aria-hidden="true">♧</span>
+              Mon réseau
+            </button>
+
             {(role === "admin" || role === "trainer") && (
               <button
                 type="button"
@@ -2036,6 +2047,7 @@ function AccountSection({
                   Modifier mon profil
                 </button>
               </div>
+            <DeleteAccount onDeleted={onLogout} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
             </div>
           )}
 
@@ -2084,6 +2096,18 @@ function AccountSection({
                   Voir le catalogue
                 </button>
               </div>
+            </div>
+          )}
+
+          {activeTab === "network" && (
+            <div className="account-tab-content">
+              <div className="account-section-title">
+                <div>
+                  <span className="eyebrow">COMMUNAUTÉ</span>
+                  <h2>Mon réseau</h2>
+                </div>
+              </div>
+              <FollowLists onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
             </div>
           )}
 
