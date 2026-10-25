@@ -568,3 +568,31 @@ img[class*="avatar"],
 .danger-zone .button { justify-self: start; }
 .publication-report-action { color: #9a3b3b; }
 .notification-readall { margin-left: 8px; }
+
+/* ---------- PIÈCES JOINTES ET VIDÉOS ---------- */
+.attachment-picker { display: grid; gap: 8px; }
+.attachment-link { display: flex; gap: 8px; }
+.attachment-link input { flex: 1; min-width: 0; }
+.attachment-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.attachment-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 6px 12px; border-radius: 999px; background: #e6faf9; color: #07566b; font-size: 0.85rem; font-weight: 700; overflow-wrap: anywhere; text-decoration: none; }
+.attachment-chip button { border: 0; background: none; font-size: 1.1rem; color: #9a3b3b; }
+.attachment-image { display: block; max-width: 100%; max-height: 320px; border-radius: 14px; object-fit: cover; }
+.video-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.video-card { background: #fff; border: 1px solid var(--ed-border); border-radius: 18px; padding: 12px; box-shadow: var(--ed-shadow-sm); }
+.video-card h3 { margin: 10px 4px 2px; color: var(--ed-blue-night); }
+.video-card p { margin: 0 4px 4px; color: var(--ed-text-muted); }
+.video-frame { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; background: #06193A; }
+.admin-form { display: grid; gap: 8px; }
+@media (min-width: 760px) { .video-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ---------- PIÈCES JOINTES ET VIDÉOS ---------- */
+.chat-composer { flex-wrap: wrap; }
+.chat-composer .attachment-picker { width: 100%; }
+.chat-composer input:not([type="file"]) { flex: 1; min-width: 0; }
+.video-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.video-card { background: #fff; border: 1px solid rgba(10,138,160,.16); border-radius: 18px; padding: 12px; box-shadow: var(--ed-shadow-sm); }
+.video-card h3 { margin: 10px 0 4px; color: var(--ed-blue-night); }
+.video-card p { margin: 0; color: var(--ed-text-muted); }
+.video-frame { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; background: #000; }
+.admin-form { display: grid; gap: 10px; }
+@media (min-width: 760px) { .video-grid { grid-template-columns: repeat(2, 1fr); } }

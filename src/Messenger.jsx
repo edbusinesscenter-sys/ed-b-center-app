@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { AttachmentList, AttachmentPicker } from "./Attachments";
 import { AuthorAvatar, AuthorBadge } from "./AuthorBadge";
 
 export default function Messenger({ user, role, onNotify, initialUser }) {
@@ -11,6 +12,7 @@ export default function Messenger({ user, role, onNotify, initialUser }) {
   const [text, setText] = useState("");
   const [broadcast, setBroadcast] = useState("");
   const [busy, setBusy] = useState(false);
+  const [files, setFiles] = useState([]);
   const endRef = useRef(null);
   const staff = role === "admin" || role === "trainer";
 
@@ -45,12 +47,12 @@ export default function Messenger({ user, role, onNotify, initialUser }) {
 
   async function send(event) {
     event.preventDefault();
-    if (!text.trim() || !active) return;
+    if ((!text.trim() && files.length === 0) || !active) return;
     setBusy(true);
-    const { error } = await supabase.rpc("send_message", { p_to: active.id, p_body: text.trim() });
+    const { error } = await supabase.rpc("send_message", { p_to: active.id, p_body: text.trim() || "Pièce jointe", p_attachments: files });
     setBusy(false);
     if (error) { onNotify?.(error.message); return; }
-    setText("");
+    setText(""); setFiles([]);
     loadChat(active.id);
     loadLists();
   }
@@ -79,10 +81,11 @@ export default function Messenger({ user, role, onNotify, initialUser }) {
         <h2 className="chat-title"><AuthorAvatar card={active} /> {active.full_name} <AuthorBadge card={active} /></h2>
         <div className="chat-box">
           {messages.length === 0 && <p>Aucun message pour le moment. Écris le premier !</p>}
-          {messages.map((m) => <div key={m.id} className={m.mine ? "chat-bubble chat-bubble-mine" : "chat-bubble"}>{m.body}<small>{new Date(m.created_at).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div>)}
+          {messages.map((m) => <div key={m.id} className={m.mine ? "chat-bubble chat-bubble-mine" : "chat-bubble"}>{m.body}<AttachmentList items={m.attachments} /><small>{new Date(m.created_at).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div>)}
           <div ref={endRef} />
         </div>
         <form className="chat-composer" onSubmit={send}>
+          <AttachmentPicker user={user} value={files} onChange={setFiles} full max={3} onNotify={onNotify} />
           <input value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} placeholder="Écris ton message…" />
           <button type="submit" className="button button-primary" disabled={busy}>Envoyer</button>
         </form>

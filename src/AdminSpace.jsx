@@ -3,15 +3,16 @@ import { supabase } from "./supabaseClient";
 import WorkshopReservationsAdmin from "./WorkshopReservationsAdmin";
 import { ServiceManager } from "./Step2";
 import AnnouncementEditor from "./AnnouncementEditor";
+import VideoManager from "./VideoManager";
 
 const TABS = [
   ["stats", "Tableau de bord"], ["formations", "Formations"], ["tickets", "Tickets"],
-  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["annonce", "Notification"],
+  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["annonce", "Notification"],
 ];
 const STATUS = { new: "Nouvelle", contacted: "Contactée", enrolled: "Inscrite", cancelled: "Annulée" };
 const missing = "Installe le SQL « partie 9 » dans Supabase.";
 
-export default function AdminSpace({ onNotify }) {
+export default function AdminSpace({ user, onNotify }) {
   const [tab, setTab] = useState("stats");
   const [stats, setStats] = useState(null);
   const [regs, setRegs] = useState([]);
@@ -171,6 +172,8 @@ export default function AdminSpace({ onNotify }) {
       {tab === "services" && <ServiceManager onNotify={onNotify} />}
 
       {tab === "home" && <AnnouncementEditor onNotify={onNotify} />}
+
+      {tab === "videos" && <VideoManager user={user} onNotify={onNotify} />}
 
       {tab === "annonce" && (
         <form className="account-content-card" onSubmit={sendAnnouncement}>

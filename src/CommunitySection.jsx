@@ -1,10 +1,13 @@
 import { AuthorAvatar, AuthorBadge } from "./AuthorBadge";
 import ReportDialog from "./ReportDialog";
+import { AttachmentList, AttachmentPicker } from "./Attachments";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { imageUrl } from "./imageCatalog";
 
-function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
+function CommunitySection({ user, profile, role, onNotify, onPointsUpdated }) {
+  const [files, setFiles] = useState([]);
+  const isStaff = role === "admin" || role === "trainer";
   const [posts, setPosts] = useState([]);
   const [reporting, setReporting] = useState(null);
   const [comments, setComments] = useState({});
@@ -19,7 +22,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("publications")
-      .select("id, title, body, image_url, created_at, author_id")
+      .select("id, title, body, image_url, attachments, created_at, author_id")
       .eq("is_published", true)
       .eq("category", "community")
       .order("created_at", { ascending: false });
@@ -63,7 +66,8 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
     const { error } = await supabase.from("publications").insert({
       title: newTitle.trim() || null,
       body: newBody.trim(),
-      image_url: newImageUrl.trim() || null,
+      image_url: (files.find((f) => f.type === "image") || {}).url || null,
+      attachments: files.filter((f, i) => !(f.type === "image" && f === files.find((x) => x.type === "image"))),
       author_id: user.id,
       category: "community",
       is_published: true,
@@ -125,7 +129,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
         <article><img src={imageUrl("publication-communaute-02-interagir-et-commenter.png")} alt="Interagir et commenter" loading="lazy"/><h2>Interagir et commenter</h2><p>Connecte-toi pour aimer une publication ou ajouter un commentaire.</p></article>
         <article><img src={imageUrl("publication-communaute-03-profils-et-abonnements.png")} alt="Profils et abonnements" loading="lazy"/><h2>Découvrir les membres</h2><p>Explore les profils publics et les possibilités de suivi disponibles.</p></article>
       </div>
-      {user && <form className="community-create-form" onSubmit={createPost}><h2>Partager avec la communauté</h2><label>Titre (facultatif)<input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} maxLength={180} placeholder="Le titre de ta publication" /></label><label>Ton message<textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} required maxLength={5000} rows={4} placeholder="Partage une idée, une expérience ou une question…" /></label><label>URL d'une image (facultatif)<input type="url" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="https://…" /></label><button className="button button-primary" type="submit" disabled={creating}>{creating ? "Publication…" : "Publier"}</button></form>}
+      {user && <form className="community-create-form" onSubmit={createPost}><h2>Partager avec la communauté</h2><label>Titre (facultatif)<input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} maxLength={180} placeholder="Le titre de ta publication" /></label><label>Ton message<textarea value={newBody} onChange={(e) => setNewBody(e.target.value)} required maxLength={5000} rows={4} placeholder="Partage une idée, une expérience ou une question…" /></label><AttachmentPicker user={user} value={files} onChange={setFiles} full={isStaff} onNotify={onNotify} /><button className="button button-primary" type="submit" disabled={creating}>{creating ? "Publication…" : "Publier"}</button></form>}
       {loading ? <div className="community-empty">Chargement des publications…</div> : posts.length === 0 ? (
         <div className="community-empty"><img src={imageUrl("illustration-conversation-vide.png")} alt="Aucune publication pour le moment" loading="lazy" /><h2>Aucune publication pour le moment</h2><p>Les publications publiées par l’équipe apparaîtront ici.</p></div>
       ) : <div className="publication-list">{posts.map((post) => {
@@ -135,7 +139,7 @@ function CommunitySection({ user, profile, onNotify, onPointsUpdated }) {
         return <article className="publication-card" key={post.id}>
           <div className="publication-author" style={{ cursor: user ? "pointer" : "default" }} role="button" tabIndex={0} onClick={() => { if (!user) return; if (!post.author_id) { onNotify?.("Cette ancienne publication n'a pas d'auteur lié."); return; } window.dispatchEvent(new CustomEvent("ed-open-profile", { detail: post.author_id })); }}><AuthorAvatar card={post.author} /><div><strong>{post.author?.full_name || "ED BUSINESS CENTER"}</strong><AuthorBadge card={post.author} /><small>{new Date(post.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</small></div></div>
           {post.title && <h2>{post.title}</h2>}<p className="publication-body">{post.body}</p>
-          {post.image_url && <img className="publication-image" src={post.image_url} alt={post.title || "Publication ED B-CENTER"} loading="lazy" />}
+          {post.image_url && <img className="publication-image" src={post.image_url} alt={post.title || "Publication ED B-CENTER"} loading="lazy" />}<AttachmentList items={post.attachments} />
           <div className="publication-stats"><span>♥ {interactions.filter((r) => r.interaction_type === "like").length} J’aime</span><span>▢ {postComments.length} commentaire(s)</span></div>
           <div className="publication-actions"><button type="button" className={liked ? "publication-action liked" : "publication-action"} disabled={sending === post.id + "like"} onClick={() => interact(post.id, "like")}>{liked ? "♥ Aimé" : "♡ J’aime"}</button><span className="publication-action-divider"/><label className="publication-comment-label" htmlFor={`comment-${post.id}`}>Commenter</label>{user?.id === post.author_id && <button type="button" className="publication-action publication-delete-action" onClick={() => deletePost(post)}>Supprimer</button>}{user && user.id !== post.author_id && <button type="button" className="publication-action publication-report-action" onClick={() => setReporting(post)}>Signaler</button>}</div>{reporting?.id === post.id && <ReportDialog post={post} onClose={() => setReporting(null)} onNotify={onNotify} />}
           {postComments.map((c) => <div className="publication-comment" key={`${c.user_id}-${c.created_at}-${c.content}`}><strong style={c.user_id === user?.id ? undefined : { cursor: "pointer" }} onClick={() => c.user_id !== user?.id && window.dispatchEvent(new CustomEvent("ed-open-profile", { detail: c.user_id }))}>{c.user_id === user?.id ? "Vous" : (post.cards?.[c.user_id]?.full_name || "Membre")}</strong><p>{c.content}</p></div>)}

@@ -10,6 +10,7 @@ import AdminSpace from "./AdminSpace";
 import FollowLists from "./FollowLists";
 import DeleteAccount from "./DeleteAccount";
 import HomeAnnouncement from "./HomeAnnouncement";
+import LearnerVideos from "./LearnerVideos";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import ImageLibrarySection from "./ImageLibrarySection";
@@ -2134,7 +2135,7 @@ function AccountSection({
           )}
 
           {activeTab === "admin" && (role === "admin" || role === "trainer") && (
-            <AdminSpace onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            <AdminSpace user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
           )}
         </div>
       </div>
@@ -2836,6 +2837,8 @@ return (
             <MotivationCarousel />
 
             <HomeAnnouncement />
+
+            <LearnerVideos />
 
             <IntroSection
               onNavigate={navigateTo}
