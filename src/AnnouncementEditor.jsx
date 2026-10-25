@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { uploadFile } from "./Attachments";
+import { imageUrl } from "./imageCatalog";
 
 const EMPTY = { image_name: "mon livre.jpeg", title: "", description: "", event_day: "", event_date: "", price: "", is_published: true };
 
-export default function AnnouncementEditor({ onNotify }) {
+export default function AnnouncementEditor({ user, onNotify }) {
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
   const set = (key) => (event) => setForm((prev) => ({ ...prev, [key]: event.target.type === "checkbox" ? event.target.checked : event.target.value }));
@@ -14,6 +16,16 @@ export default function AnnouncementEditor({ onNotify }) {
       else if (data) setForm({ ...EMPTY, ...data, event_date: data.event_date || "" });
     });
   }, []);
+
+  async function pickImage(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { onNotify?.("Choisis une image (JPG, PNG ou WebP)."); return; }
+    setBusy(true);
+    try { const url = await uploadFile(user, file, "announcements"); setForm((prev) => ({ ...prev, image_name: url })); onNotify?.("Photo téléversée. Clique sur Enregistrer pour la publier."); }
+    catch (error) { onNotify?.(error.message || "Échec du téléversement."); }
+    setBusy(false);
+  }
 
   async function save(event) {
     event.preventDefault();
@@ -36,7 +48,8 @@ export default function AnnouncementEditor({ onNotify }) {
   return (
     <form className="account-content-card" onSubmit={save}>
       <h3>Annonce de la page d'accueil</h3>
-      <label>Nom de l'image (dans le stockage Supabase)<input value={form.image_name} onChange={set("image_name")} placeholder="mon livre.jpeg" /></label>
+      <label>Photo de l'annonce (choisis une image dans ta galerie)<input type="file" accept="image/*" onChange={pickImage} disabled={busy} /></label>
+      {form.image_name && <img className="announcement-preview" src={/^https?:\/\//i.test(form.image_name) ? form.image_name : imageUrl(form.image_name)} alt="Aperçu de la photo" />}
       <label>Titre<input value={form.title} onChange={set("title")} maxLength={120} /></label>
       <label>Texte court<textarea rows={3} value={form.description} onChange={set("description")} maxLength={300} /></label>
       <label>Jour<input value={form.event_day} onChange={set("event_day")} placeholder="Samedi" maxLength={30} /></label>

@@ -22,7 +22,7 @@ export default function HomeAnnouncement() {
   return (
     <section className="home-announcement section-container" aria-label="Annonce">
       <figure className="home-announcement-image">
-        <img src={imageUrl(item.image_name)} alt={item.title || "Annonce"} width="1122" height="1402" />
+        <img src={/^https?:\/\//i.test(item.image_name) ? item.image_name : imageUrl(item.image_name)} alt={item.title || "Annonce"} width="1122" height="1402" />
       </figure>
       <div className="home-announcement-info">
         <span className="eyebrow">ANNONCE</span>
