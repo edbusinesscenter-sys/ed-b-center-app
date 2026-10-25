@@ -4,15 +4,17 @@ import WorkshopReservationsAdmin from "./WorkshopReservationsAdmin";
 import { ServiceManager } from "./Step2";
 import AnnouncementEditor from "./AnnouncementEditor";
 import VideoManager from "./VideoManager";
+import PriceManager from "./PriceManager";
+import RegPayment from "./RegPayment";
 
 const TABS = [
-  ["stats", "Tableau de bord"], ["formations", "Formations"], ["tickets", "Tickets"],
+  ["stats", "Tableau de bord"], ["formations", "Formations"], ["prices", "Prix"], ["tickets", "Tickets"],
   ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["annonce", "Notification"],
 ];
 const STATUS = { new: "Nouvelle", contacted: "Contactée", enrolled: "Inscrite", cancelled: "Annulée" };
 const missing = "Installe le SQL « partie 9 » dans Supabase.";
 
-export default function AdminSpace({ user, onNotify }) {
+export default function AdminSpace({ user, catalog, onNotify }) {
   const [tab, setTab] = useState("stats");
   const [stats, setStats] = useState(null);
   const [regs, setRegs] = useState([]);
@@ -105,6 +107,7 @@ export default function AdminSpace({ user, onNotify }) {
                 <strong>{r.full_name}</strong> — {r.course_title}
                 <p><a href={`tel:${r.phone}`}>{r.phone}</a>{r.email ? ` · ${r.email}` : ""}</p>
                 {r.message && <p>{r.message}</p>}
+                <RegPayment reg={r} onDone={() => load("formations")} onNotify={onNotify} />
                 <small>{new Date(r.created_at).toLocaleString("fr-FR")}</small>
               </div>
               <select value={r.status} onChange={(e) => setRegStatus(r.id, e.target.value)} aria-label="Statut">
@@ -116,6 +119,8 @@ export default function AdminSpace({ user, onNotify }) {
       )}
 
       {tab === "tickets" && <WorkshopReservationsAdmin onNotify={onNotify} />}
+
+      {tab === "prices" && catalog && <PriceManager catalog={catalog} onNotify={onNotify} />}
 
       {tab === "posts" && (
         <div className="account-content-card">

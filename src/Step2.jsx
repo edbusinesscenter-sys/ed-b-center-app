@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import CoursePayment from "./CoursePayment";
 
 function Shell({ title, onClose, children }) {
   return (
@@ -22,20 +23,23 @@ export function CourseEnrollModal({ course, user, profile, whatsapp, onClose, on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [regId, setRegId] = useState(null);
 
   async function submit(event) {
     event.preventDefault();
     if (name.trim().length < 2 || phone.trim().length < 5) { setError("Renseigne ton nom et ton numéro de téléphone."); return; }
     setBusy(true);
     setError("");
-    const { error: err } = await supabase.rpc("register_for_course", {
+    const { data: regData, error: err } = await supabase.rpc("register_for_course", {
+      p_course_key: course.id, p_amount: course.price ?? null,
       p_course_title: course.title, p_full_name: name.trim(), p_phone: phone.trim(),
       p_email: email.trim() || null, p_message: message.trim() || null,
     });
     setBusy(false);
     if (err) { setError(err.message.includes("function") ? "Le SQL « partie 6 » doit être installé dans Supabase." : "Impossible d'enregistrer la demande. Réessaie."); return; }
+    setRegId(regData?.registration_id || null);
     setDone(true);
-    onNotify?.("Inscription enregistrée. Continue sur WhatsApp pour finaliser.");
+    onNotify?.("Inscription enregistrée. Suis les étapes de paiement.");
   }
 
   const text = `Bonjour, je souhaite m'inscrire à la formation « ${course.title} ». Nom : ${name.trim()}. Téléphone : ${phone.trim()}.`;
@@ -43,10 +47,7 @@ export function CourseEnrollModal({ course, user, profile, whatsapp, onClose, on
     <Shell title="Inscription à la formation" onClose={onClose}>
       <p className="auth-description"><strong>{course.title}</strong></p>
       {done ? (
-        <>
-          <p>Ta demande est enregistrée. Clique ci-dessous pour nous écrire sur WhatsApp.</p>
-          <a className="button button-whatsapp button-full" href={`${whatsapp}?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">Continuer sur WhatsApp</a>
-        </>
+        <CoursePayment course={course} regId={regId} whatsapp={whatsapp} whatsappText={text} onNotify={onNotify} />
       ) : (
         <form onSubmit={submit}>
           <label className="form-field">Nom complet<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} autoComplete="name" /></label>

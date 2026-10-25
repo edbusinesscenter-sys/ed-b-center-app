@@ -11,6 +11,7 @@ import FollowLists from "./FollowLists";
 import DeleteAccount from "./DeleteAccount";
 import HomeAnnouncement from "./HomeAnnouncement";
 import LearnerVideos from "./LearnerVideos";
+import { playPing } from "./sound";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import ImageLibrarySection from "./ImageLibrarySection";
@@ -824,7 +825,7 @@ function ServicesSection({ onNavigate, onSelectService }) {
                 <div className="service-card-content">
                   <h3>{service.name}</h3>
 
-                  <p>{service.description}</p>
+                  <p>{service.description}</p>{service.price && <p className="service-price">{service.price}</p>}
 
                   <ul className="service-details">
                     {service.details.slice(0, 3).map((detail) => (
@@ -2135,7 +2136,7 @@ function AccountSection({
           )}
 
           {activeTab === "admin" && (role === "admin" || role === "trainer") && (
-            <AdminSpace user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            <AdminSpace user={user} catalog={{ courses: COURSES.map((c) => ({ key: c.id, label: c.title, price: c.price, old: c.oldPrice })), services: SERVICES.map((s) => ({ key: s.id, label: s.name, text: s.price || "" })) }} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
           )}
         </div>
       </div>
@@ -2348,6 +2349,22 @@ function App() {
     return () => document.removeEventListener("error", hide, true);
   }, []);
 
+  /* Prix des formations et des services modifiables depuis l'administration */
+  const [, setPriceTick] = useState(0);
+  useEffect(() => {
+    async function loadPrices() {
+      const { data, error } = await supabase.from("catalog_prices").select("*");
+      if (error || !data) return;
+      const map = Object.fromEntries(data.map((r) => [r.item_key, r]));
+      COURSES.forEach((c) => { const o = map[c.id]; if (o) { if (o.price_xaf != null) c.price = o.price_xaf; c.oldPrice = o.old_price_xaf ?? null; } });
+      SERVICES.forEach((s) => { s.price = map[s.id]?.price_text || ""; });
+      setPriceTick((t) => t + 1);
+    }
+    loadPrices();
+    window.addEventListener("ed-prices-updated", loadPrices);
+    return () => window.removeEventListener("ed-prices-updated", loadPrices);
+  }, []);
+
   /* Notifications */
   function notify(message) {
     setNotification(message);
@@ -2453,7 +2470,7 @@ function App() {
     refreshUnread();
     const channel = supabase
       .channel(`notification-count-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, refreshUnread)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, (payload) => { if (payload.eventType === "INSERT") playPing(); refreshUnread(); })
       .subscribe();
     return () => {
       active = false;

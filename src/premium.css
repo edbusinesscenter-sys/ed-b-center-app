@@ -596,3 +596,9 @@ img[class*="avatar"],
 .video-frame { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; background: #000; }
 .admin-form { display: grid; gap: 10px; }
 @media (min-width: 760px) { .video-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.service-price { font-weight: 800; color: var(--ed-blue); }
+.reg-pay input { flex: 1; min-width: 0; }
+
+.service-price { font-weight: 800; color: var(--ed-blue); }
+.reg-pay input { flex: 1; min-width: 0; }
