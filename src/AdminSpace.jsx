@@ -9,13 +9,14 @@ import FinanceManager from "./FinanceManager";
 import CatalogManager from "./CatalogManager";
 import JobsAdmin from "./JobsAdmin";
 import ModerationManager from "./ModerationManager";
+import { PhotoAdmin } from "./CatalogPhoto";
 import PriceManager from "./PriceManager";
 import CohortAdmin from "./CohortAdmin";
 import RegPayment from "./RegPayment";
 
 const TABS = [
   ["stats", "Tableau de bord"], ["formations", "Formations"], ["prices", "Prix"], ["cohorts", "Promotions"], ["tickets", "Tickets"],
-  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["homemgr", "Page d'accueil"], ["finance", "Trésorerie"], ["catalog", "Catalogue formations"], ["emploi", "Emploi"], ["moderation", "Modération"], ["annonce", "Notification"],
+  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["homemgr", "Page d'accueil"], ["finance", "Trésorerie"], ["catalog", "Catalogue formations"], ["emploi", "Emploi"], ["moderation", "Modération"], ["photoadmin", "Photo : tarifs & commandes"], ["annonce", "Notification"],
 ];
 const STATUS = { new: "Nouvelle", contacted: "Contactée", enrolled: "Inscrite", cancelled: "Annulée" };
 const missing = "Installe le SQL « partie 9 » dans Supabase.";
@@ -197,6 +198,8 @@ export default function AdminSpace({ user, catalog, onNotify }) {
       {tab === "emploi" && <JobsAdmin onNotify={onNotify} />}
 
       {tab === "moderation" && <ModerationManager onNotify={onNotify} />}
+
+      {tab === "photoadmin" && <PhotoAdmin onNotify={onNotify} />}
 
       {tab === "annonce" && (
         <form className="account-content-card" onSubmit={sendAnnouncement}>

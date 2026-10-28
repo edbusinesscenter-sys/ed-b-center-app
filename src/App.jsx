@@ -17,6 +17,7 @@ import SearchBox from "./SearchBox";
 import { JobsHome, JobsPage } from "./JobsSection";
 import SchoolButton from "./SchoolButton";
 import { useCourseCatalog } from "./CourseCatalog";
+import CatalogPhoto, { CatalogsHome } from "./CatalogPhoto";
 import HomeAnnouncement from "./HomeAnnouncement";
 import LearnerVideos from "./LearnerVideos";
 import { playPing } from "./sound";
@@ -2942,6 +2943,8 @@ return (
               />
             </HomeGate>
 
+            <HomeGate section="catalogs"><CatalogsHome /></HomeGate>
+
             <HomeGate section="jobs"><JobsHome /></HomeGate>
 
             <HomeGate section="courses" defaultVisible={false}>
@@ -2958,6 +2961,8 @@ return (
         {activePage === "news" && <NewsSection user={user} role={role} onNotify={notify} />}
 
         {activePage === "jobs" && <JobsPage />}
+
+        {activePage === "photo" && <CatalogPhoto />}
 
         {activePage === "images" && (role === "admin" ? <ImageLibrarySection onNotify={notify} /> : <section className="section-container"><h1>Accès réservé</h1><p>La médiathèque est réservée aux administrateurs.</p></section>)}
 

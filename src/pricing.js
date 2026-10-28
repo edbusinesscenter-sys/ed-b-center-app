@@ -1,6 +1,5 @@
-// Calculateur de tarifs — règles confirmées par le brief.
-// Les valeurs non confirmées (cadres, livraison, express) restent à null : elles sont signalées
-// comme « à confirmer » et ne sont jamais inventées.
+// Calculateur de tarifs. Valeurs par défaut = tarifs confirmés ; l'administrateur peut les modifier
+// (table price_settings). Les valeurs non confirmées (cadres, livraison, express) restent à null.
 
 export const STUDIO = {
   photoPrice: 3000,
@@ -10,26 +9,38 @@ export const STUDIO = {
   extraOutfit: 500,
   includedPeople: 2,
   extraPerson: 1000,
-  extraPhotoNote: 3000,
 };
 
-export function studioQuote({ photos = 0, makeupPeople = 0, people = 2, outfits = 2 } = {}) {
-  const photoCount = Math.max(Number(photos) || 0, STUDIO.minPhotos);
-  const makeup = Math.max(Number(makeupPeople) || 0, 0);
-  const extraPeople = Math.max((Number(people) || 0) - STUDIO.includedPeople, 0);
-  const extraOutfits = Math.max((Number(outfits) || 0) - STUDIO.includedOutfits, 0);
-  const lines = [
-    { label: `${photoCount} photo(s) × ${STUDIO.photoPrice} FCFA`, amount: photoCount * STUDIO.photoPrice },
-  ];
-  if (makeup > 0) lines.push({ label: `Maquillage : ${makeup} personne(s) × ${STUDIO.makeupPerPerson} FCFA`, amount: makeup * STUDIO.makeupPerPerson });
-  if (extraPeople > 0) lines.push({ label: `Personnes supplémentaires : ${extraPeople} × ${STUDIO.extraPerson} FCFA`, amount: extraPeople * STUDIO.extraPerson });
-  if (extraOutfits > 0) lines.push({ label: `Tenues supplémentaires : ${extraOutfits} × ${STUDIO.extraOutfit} FCFA`, amount: extraOutfits * STUDIO.extraOutfit });
-  const total = lines.reduce((sum, l) => sum + l.amount, 0);
-  return { lines, total, minApplied: Number(photos || 0) < STUDIO.minPhotos };
+// Traduit les réglages de la base (clés price_settings) en configuration du calculateur
+export function studioConfigFrom(settings) {
+  const s = settings || {};
+  const num = (k, fallback) => (s[k] == null ? fallback : Number(s[k]));
+  return {
+    photoPrice: num("photo_price", STUDIO.photoPrice),
+    minPhotos: num("photo_min", STUDIO.minPhotos),
+    makeupPerPerson: num("makeup_price", STUDIO.makeupPerPerson),
+    includedOutfits: num("included_outfits", STUDIO.includedOutfits),
+    extraOutfit: num("extra_outfit", STUDIO.extraOutfit),
+    includedPeople: num("included_people", STUDIO.includedPeople),
+    extraPerson: num("extra_person", STUDIO.extraPerson),
+  };
 }
 
-// config : { sizes: {'24x30': 4000, ...}, framePrice: null|number, express: {available, fee},
-//            deliveryFrom: null|number, montageFee: 1000 }
+export function studioQuote({ photos = 0, makeupPeople = 0, people = 2, outfits = 2 } = {}, cfg = STUDIO) {
+  const photoCount = Math.max(Number(photos) || 0, cfg.minPhotos);
+  const makeup = Math.max(Number(makeupPeople) || 0, 0);
+  const extraPeople = Math.max((Number(people) || 0) - cfg.includedPeople, 0);
+  const extraOutfits = Math.max((Number(outfits) || 0) - cfg.includedOutfits, 0);
+  const lines = [
+    { label: `${photoCount} photo(s) × ${cfg.photoPrice} FCFA`, amount: photoCount * cfg.photoPrice },
+  ];
+  if (makeup > 0) lines.push({ label: `Maquillage : ${makeup} personne(s) × ${cfg.makeupPerPerson} FCFA`, amount: makeup * cfg.makeupPerPerson });
+  if (extraPeople > 0) lines.push({ label: `Personnes supplémentaires : ${extraPeople} × ${cfg.extraPerson} FCFA`, amount: extraPeople * cfg.extraPerson });
+  if (extraOutfits > 0) lines.push({ label: `Tenues supplémentaires : ${extraOutfits} × ${cfg.extraOutfit} FCFA`, amount: extraOutfits * cfg.extraOutfit });
+  const total = lines.reduce((sum, l) => sum + l.amount, 0);
+  return { lines, total, minApplied: Number(photos || 0) < cfg.minPhotos };
+}
+
 export const FRAME_DEFAULTS = {
   sizes: { "24x30": 4000, "30x45": 6000, "40x60": 15000, "50x70": 20000, "60x80": 26000 },
   framePrice: null,
