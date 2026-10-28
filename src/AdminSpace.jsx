@@ -4,12 +4,18 @@ import WorkshopReservationsAdmin from "./WorkshopReservationsAdmin";
 import { ServiceManager } from "./Step2";
 import AnnouncementEditor from "./AnnouncementEditor";
 import VideoManager from "./VideoManager";
+import HomeManager from "./HomeManager";
+import FinanceManager from "./FinanceManager";
+import CatalogManager from "./CatalogManager";
+import JobsAdmin from "./JobsAdmin";
+import ModerationManager from "./ModerationManager";
 import PriceManager from "./PriceManager";
+import CohortAdmin from "./CohortAdmin";
 import RegPayment from "./RegPayment";
 
 const TABS = [
-  ["stats", "Tableau de bord"], ["formations", "Formations"], ["prices", "Prix"], ["tickets", "Tickets"],
-  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["annonce", "Notification"],
+  ["stats", "Tableau de bord"], ["formations", "Formations"], ["prices", "Prix"], ["cohorts", "Promotions"], ["tickets", "Tickets"],
+  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["homemgr", "Page d'accueil"], ["finance", "Trésorerie"], ["catalog", "Catalogue formations"], ["emploi", "Emploi"], ["moderation", "Modération"], ["annonce", "Notification"],
 ];
 const STATUS = { new: "Nouvelle", contacted: "Contactée", enrolled: "Inscrite", cancelled: "Annulée" };
 const missing = "Installe le SQL « partie 9 » dans Supabase.";
@@ -120,6 +126,8 @@ export default function AdminSpace({ user, catalog, onNotify }) {
 
       {tab === "tickets" && <WorkshopReservationsAdmin onNotify={onNotify} />}
 
+      {tab === "cohorts" && <CohortAdmin onNotify={onNotify} />}
+
       {tab === "prices" && catalog && <PriceManager catalog={catalog} onNotify={onNotify} />}
 
       {tab === "posts" && (
@@ -176,9 +184,19 @@ export default function AdminSpace({ user, catalog, onNotify }) {
 
       {tab === "services" && <ServiceManager onNotify={onNotify} />}
 
-      {tab === "home" && <AnnouncementEditor onNotify={onNotify} />}
+      {tab === "home" && <AnnouncementEditor user={user} onNotify={onNotify} />}
 
       {tab === "videos" && <VideoManager user={user} onNotify={onNotify} />}
+
+      {tab === "homemgr" && <HomeManager user={user} onNotify={onNotify} />}
+
+      {tab === "finance" && <FinanceManager onNotify={onNotify} />}
+
+      {tab === "catalog" && <CatalogManager onNotify={onNotify} />}
+
+      {tab === "emploi" && <JobsAdmin onNotify={onNotify} />}
+
+      {tab === "moderation" && <ModerationManager onNotify={onNotify} />}
 
       {tab === "annonce" && (
         <form className="account-content-card" onSubmit={sendAnnouncement}>

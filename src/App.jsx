@@ -9,6 +9,14 @@ import ProfileCardModal from "./ProfileCardModal";
 import AdminSpace from "./AdminSpace";
 import FollowLists from "./FollowLists";
 import DeleteAccount from "./DeleteAccount";
+import Parcours from "./Parcours";
+import ParcoursManager from "./ParcoursManager";
+import HomeGate, { TopLearner } from "./HomeSections";
+import FollowCounts from "./FollowCounts";
+import SearchBox from "./SearchBox";
+import { JobsHome, JobsPage } from "./JobsSection";
+import SchoolButton from "./SchoolButton";
+import { useCourseCatalog } from "./CourseCatalog";
 import HomeAnnouncement from "./HomeAnnouncement";
 import LearnerVideos from "./LearnerVideos";
 import { playPing } from "./sound";
@@ -886,15 +894,16 @@ function ServicesSection({ onNavigate, onSelectService }) {
 ===================================================== */
 
 function CoursesSection({ onRegister, onNavigate }) {
+  const courses = useCourseCatalog(COURSES);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Toutes");
 
   const categories = [
     "Toutes",
-    ...new Set(COURSES.map((course) => course.category)),
+    ...new Set(courses.map((course) => course.category)),
   ];
 
-  const filteredCourses = COURSES.filter((course) => {
+  const filteredCourses = courses.filter((course) => {
     const matchesSearch =
       course.title.toLowerCase().includes(search.toLowerCase()) ||
       course.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -1808,6 +1817,8 @@ function AccountSection({
               user={{ ...profile, ...user, full_name: displayName }}
               size="large"
             />
+            <FollowCounts onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            <SchoolButton onOpen={() => setActiveTab("learner")} />
 
             <h3>{displayName}</h3>
 
@@ -1868,14 +1879,30 @@ function AccountSection({
               Messagerie
             </button>
 
-            <button
-              type="button"
-              className={activeTab === "network" ? "account-nav-active" : ""}
-              onClick={() => setActiveTab("network")}
-            >
-              <span aria-hidden="true">♧</span>
-              Mon réseau
-            </button>
+
+            {role === "apprenant" && (
+              <button type="button" className={activeTab === "learner" ? "account-nav-active" : ""} onClick={() => setActiveTab("learner")}>
+                <span aria-hidden="true">★</span>
+                Mon parcours
+              </button>
+            )}
+            {(role === "trainer" || role === "admin") && (
+              <button type="button" className={activeTab === "trainer" ? "account-nav-active" : ""} onClick={() => setActiveTab("trainer")}>
+                <span aria-hidden="true">✎</span>
+                Espace formateur
+              </button>
+            )}
+
+            {["apprenant", "trainer", "admin"].includes(role) && (
+              <button
+                type="button"
+                className={activeTab === "learning" ? "account-nav-active" : ""}
+                onClick={() => setActiveTab("learning")}
+              >
+                <span aria-hidden="true">✎</span>
+                {role === "apprenant" ? "Mon parcours" : "Apprenants"}
+              </button>
+            )}
 
             {(role === "admin" || role === "trainer") && (
               <button
@@ -2101,6 +2128,34 @@ function AccountSection({
             </div>
           )}
 
+          {activeTab === "learning" && ["apprenant", "trainer", "admin"].includes(role) && (
+            <div className="account-tab-content">
+              <div className="account-section-title">
+                <div>
+                  <span className="eyebrow">SUIVI DES APPRENANTS</span>
+                  <h2>{role === "apprenant" ? "Mon parcours" : "Gestion des apprenants"}</h2>
+                </div>
+              </div>
+              {role === "apprenant"
+                ? <Parcours user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+                : <ParcoursManager user={user} role={role} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />}
+            </div>
+          )}
+
+          {activeTab === "learner" && role === "apprenant" && (
+            <div className="account-tab-content">
+              <div className="account-section-title"><div><span className="eyebrow">ESPACE APPRENANT</span><h2>Mon parcours</h2></div></div>
+              <Parcours user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            </div>
+          )}
+
+          {activeTab === "trainer" && (role === "trainer" || role === "admin") && (
+            <div className="account-tab-content">
+              <div className="account-section-title"><div><span className="eyebrow">SUIVI DES APPRENANTS</span><h2>Espace formateur</h2></div></div>
+              <ParcoursManager user={user} role={role} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            </div>
+          )}
+
           {activeTab === "network" && (
             <div className="account-tab-content">
               <div className="account-section-title">
@@ -2320,6 +2375,18 @@ function App() {
   const [role, setRole] = useState("client");
 
   const [activePage, setActivePage] = useState("home");
+
+  useEffect(() => {
+    const handler = (event) => {
+      const value = String(event.detail || "");
+      const map = { "publication": "community", "workshop": "atelier", "job": "jobs", "messages": "messages", "school": "account" };
+      const kind = value.includes(":") ? value.split(":")[0] : "";
+      const target = kind ? map[kind] : value;
+      if (target) navigateTo(target);
+    };
+    window.addEventListener("ed-navigate", handler);
+    return () => window.removeEventListener("ed-navigate", handler);
+  }, []);
   const [authModal, setAuthModal] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [enrollCourse, setEnrollCourse] = useState(null);
@@ -2851,32 +2918,46 @@ return (
       <main>
         {activePage === "home" && (
           <>
+            <SearchBox />
+
             <MotivationCarousel />
 
-            <HomeAnnouncement />
+            <HomeGate section="announcement"><HomeAnnouncement /></HomeGate>
 
-            <LearnerVideos />
+            <HomeGate section="videos"><LearnerVideos /></HomeGate>
 
-            <IntroSection
-              onNavigate={navigateTo}
-              onRegister={() => openRegister()}
-            />
+            <HomeGate section="top_learner"><TopLearner /></HomeGate>
 
-            <ServicesSection
-              onNavigate={navigateTo}
-              onSelectService={handleSelectService}
-            />
+            <HomeGate section="intro">
+              <IntroSection
+                onNavigate={navigateTo}
+                onRegister={() => openRegister()}
+              />
+            </HomeGate>
 
-            <CoursesSection
-              onRegister={openRegister}
-              onNavigate={navigateTo}
-            />
+            <HomeGate section="services">
+              <ServicesSection
+                onNavigate={navigateTo}
+                onSelectService={handleSelectService}
+              />
+            </HomeGate>
+
+            <HomeGate section="jobs"><JobsHome /></HomeGate>
+
+            <HomeGate section="courses" defaultVisible={false}>
+              <CoursesSection
+                onRegister={openRegister}
+                onNavigate={navigateTo}
+              />
+            </HomeGate>
 
             <ContactSection />
           </>
         )}
 
         {activePage === "news" && <NewsSection user={user} role={role} onNotify={notify} />}
+
+        {activePage === "jobs" && <JobsPage />}
 
         {activePage === "images" && (role === "admin" ? <ImageLibrarySection onNotify={notify} /> : <section className="section-container"><h1>Accès réservé</h1><p>La médiathèque est réservée aux administrateurs.</p></section>)}
 

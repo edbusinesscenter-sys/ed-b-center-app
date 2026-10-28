@@ -38,6 +38,7 @@ export default function AnnouncementEditor({ user, onNotify }) {
       event_day: form.event_day.trim(),
       event_date: form.event_date || null,
       price: form.price.trim(),
+      price_xaf: form.price_xaf === "" || form.price_xaf == null ? null : Number(form.price_xaf),
       is_published: form.is_published,
       updated_at: new Date().toISOString(),
     }, { onConflict: "singleton" });
@@ -54,7 +55,8 @@ export default function AnnouncementEditor({ user, onNotify }) {
       <label>Texte court<textarea rows={3} value={form.description} onChange={set("description")} maxLength={300} /></label>
       <label>Jour<input value={form.event_day} onChange={set("event_day")} placeholder="Samedi" maxLength={30} /></label>
       <label>Date<input type="date" value={form.event_date} onChange={set("event_date")} /></label>
-      <label>Prix<input value={form.price} onChange={set("price")} placeholder="5 000 FCFA" maxLength={40} /></label>
+      <label>Prix affiché<input value={form.price} onChange={set("price")} placeholder="5 000 FCFA" maxLength={40} /></label>
+      <label>Prix en FCFA pour l'inscription (chiffres seulement)<input type="number" min="0" value={form.price_xaf ?? ""} onChange={(e) => setForm((p) => ({ ...p, price_xaf: e.target.value }))} /></label>
       <label className="admin-check"><input type="checkbox" checked={form.is_published} onChange={set("is_published")} /> Afficher l'annonce sur l'accueil</label>
       <button type="submit" className="button button-primary" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer"}</button>
     </form>
