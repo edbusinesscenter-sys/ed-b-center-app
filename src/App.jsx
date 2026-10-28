@@ -9,8 +9,6 @@ import ProfileCardModal from "./ProfileCardModal";
 import AdminSpace from "./AdminSpace";
 import FollowLists from "./FollowLists";
 import DeleteAccount from "./DeleteAccount";
-import Parcours from "./Parcours";
-import ParcoursManager from "./ParcoursManager";
 import HomeAnnouncement from "./HomeAnnouncement";
 import LearnerVideos from "./LearnerVideos";
 import { playPing } from "./sound";
@@ -1879,30 +1877,6 @@ function AccountSection({
               Mon réseau
             </button>
 
-            {role === "apprenant" && (
-              <button type="button" className={activeTab === "learner" ? "account-nav-active" : ""} onClick={() => setActiveTab("learner")}>
-                <span aria-hidden="true">★</span>
-                Mon parcours
-              </button>
-            )}
-            {(role === "trainer" || role === "admin") && (
-              <button type="button" className={activeTab === "trainer" ? "account-nav-active" : ""} onClick={() => setActiveTab("trainer")}>
-                <span aria-hidden="true">✎</span>
-                Espace formateur
-              </button>
-            )}
-
-            {["apprenant", "trainer", "admin"].includes(role) && (
-              <button
-                type="button"
-                className={activeTab === "learning" ? "account-nav-active" : ""}
-                onClick={() => setActiveTab("learning")}
-              >
-                <span aria-hidden="true">✎</span>
-                {role === "apprenant" ? "Mon parcours" : "Apprenants"}
-              </button>
-            )}
-
             {(role === "admin" || role === "trainer") && (
               <button
                 type="button"
@@ -2124,34 +2098,6 @@ function AccountSection({
                   Voir le catalogue
                 </button>
               </div>
-            </div>
-          )}
-
-          {activeTab === "learning" && ["apprenant", "trainer", "admin"].includes(role) && (
-            <div className="account-tab-content">
-              <div className="account-section-title">
-                <div>
-                  <span className="eyebrow">SUIVI DES APPRENANTS</span>
-                  <h2>{role === "apprenant" ? "Mon parcours" : "Gestion des apprenants"}</h2>
-                </div>
-              </div>
-              {role === "apprenant"
-                ? <Parcours user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
-                : <ParcoursManager user={user} role={role} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />}
-            </div>
-          )}
-
-          {activeTab === "learner" && role === "apprenant" && (
-            <div className="account-tab-content">
-              <div className="account-section-title"><div><span className="eyebrow">ESPACE APPRENANT</span><h2>Mon parcours</h2></div></div>
-              <Parcours user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
-            </div>
-          )}
-
-          {activeTab === "trainer" && (role === "trainer" || role === "admin") && (
-            <div className="account-tab-content">
-              <div className="account-section-title"><div><span className="eyebrow">SUIVI DES APPRENANTS</span><h2>Espace formateur</h2></div></div>
-              <ParcoursManager user={user} role={role} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
             </div>
           )}
 

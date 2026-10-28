@@ -176,7 +176,7 @@ export default function AdminSpace({ user, catalog, onNotify }) {
 
       {tab === "services" && <ServiceManager onNotify={onNotify} />}
 
-      {tab === "home" && <AnnouncementEditor user={user} onNotify={onNotify} />}
+      {tab === "home" && <AnnouncementEditor onNotify={onNotify} />}
 
       {tab === "videos" && <VideoManager user={user} onNotify={onNotify} />}
 
