@@ -69,6 +69,7 @@ export function SecondaryMenu() {
           <div className="sheet" role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="sheet-item" onClick={() => go("contact")}>✉ Contact</button>
             <button type="button" className="sheet-item" onClick={() => go("contact")}>? Assistance</button>
+            <button type="button" className="sheet-item" onClick={() => go("referral")}>🎁 Parrainage</button>
             <button type="button" className="sheet-item" onClick={() => go("account")}>⚙ Paramètres</button>
             <button type="button" className="sheet-item sheet-danger" onClick={logout}>⎋ Déconnexion</button>
           </div>
