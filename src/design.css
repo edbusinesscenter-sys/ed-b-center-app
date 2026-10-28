@@ -4,7 +4,7 @@
   body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
   .bottom-nav {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500;
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-template-columns: repeat(6, 1fr);
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
     background: rgba(255,255,255,.96); border-top: 1px solid var(--ed-border);
     box-shadow: 0 -8px 24px rgba(4,24,38,.12); backdrop-filter: blur(10px);

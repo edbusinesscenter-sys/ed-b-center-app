@@ -8,6 +8,7 @@ const ITEMS = [
   { page: "services", label: "Services", icon: "◈" },
   { page: "courses", label: "Formations", icon: "▤" },
   { page: "community", label: "Communauté", icon: "◎" },
+  { page: "jobs", label: "Emploi", icon: "⌘" },
   { page: "account", label: "Mon espace", icon: "◉" },
 ];
 
@@ -67,7 +68,11 @@ export function SecondaryMenu() {
       {open && (
         <div className="sheet-backdrop" role="presentation" onClick={() => setOpen(false)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="sheet-item" onClick={() => go("contact")}>✉ Contact</button>
+            <button type="button" className="sheet-item" onClick={() => go("news")}>📰 Actualités</button>
+            <button type="button" className="sheet-item" onClick={() => go("atelier")}>🧭 Ateliers</button>
+            <button type="button" className="sheet-item" onClick={() => go("messages")}>✉ Messagerie</button>
+            <button type="button" className="sheet-item" onClick={() => go("notifications")}>🔔 Notifications</button>
+            <button type="button" className="sheet-item" onClick={() => go("contact")}>☎ Contact</button>
             <button type="button" className="sheet-item" onClick={() => go("contact")}>? Assistance</button>
             <button type="button" className="sheet-item" onClick={() => go("referral")}>🎁 Parrainage</button>
             <button type="button" className="sheet-item" onClick={() => go("account")}>⚙ Paramètres</button>

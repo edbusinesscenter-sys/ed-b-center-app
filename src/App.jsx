@@ -20,6 +20,7 @@ import { useCourseCatalog } from "./CourseCatalog";
 import CatalogPhoto, { CatalogsHome } from "./CatalogPhoto";
 import { BottomNav, BellButton, SecondaryMenu } from "./BottomNav";
 import ReferralPanel from "./ReferralPanel";
+import ReferralBadge from "./ReferralBadge";
 import HomeAnnouncement from "./HomeAnnouncement";
 import LearnerVideos from "./LearnerVideos";
 import { playPing } from "./sound";
@@ -1089,6 +1090,7 @@ function ContactSection() {
     subject: "Demande d'information",
     message: "",
   });
+  const [open, setOpen] = useState(false);
 
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1221,7 +1223,9 @@ function ContactSection() {
           </div>
         </div>
 
-        <form className="contact-form" onSubmit={handleSubmit}>
+        {open ? (
+        <form className="contact-form" onSubmit={(event) => { handleSubmit(event); setOpen(false); }}>
+          <button type="button" className="contact-close" onClick={() => setOpen(false)}>Fermer</button>
           <h3>Envoie-nous un message</h3>
 
           <p>
@@ -1322,6 +1326,9 @@ function ContactSection() {
             L'envoi final du message se fait dans WhatsApp.
           </small>
         </form>
+        ) : (
+          <button type="button" className="button button-primary contact-open" onClick={() => setOpen(true)}>Envoyez-nous un message</button>
+        )}
       </div>
     </section>
   );
@@ -1824,6 +1831,7 @@ function AccountSection({
             />
             <FollowCounts onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
             <SchoolButton onOpen={() => setActiveTab("learner")} />
+            <ReferralBadge />
 
             <h3>{displayName}</h3>
 

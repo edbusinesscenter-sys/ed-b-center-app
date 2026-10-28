@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import SplashScreen from "./SplashScreen.jsx";
 import "./styles.css";
+import "./design.css";
+import "./compact.css";
 
 // Évite l'icône d'image cassée si un fichier n'existe pas encore dans Supabase.
 // L'image de secours est locale (SVG intégré), aucun service supplémentaire requis.
