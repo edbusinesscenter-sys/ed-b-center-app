@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
+import SplashScreen from "./SplashScreen.jsx";
 import "./styles.css";
 
 // Évite l'icône d'image cassée si un fichier n'existe pas encore dans Supabase.
@@ -16,6 +17,8 @@ document.addEventListener("error", (event) => {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <SplashScreen>
+      <App />
+    </SplashScreen>
   </React.StrictMode>
 );
