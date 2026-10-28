@@ -18,6 +18,7 @@ import { JobsHome, JobsPage } from "./JobsSection";
 import SchoolButton from "./SchoolButton";
 import { useCourseCatalog } from "./CourseCatalog";
 import CatalogPhoto, { CatalogsHome } from "./CatalogPhoto";
+import { BottomNav, BellButton, SecondaryMenu } from "./BottomNav";
 import HomeAnnouncement from "./HomeAnnouncement";
 import LearnerVideos from "./LearnerVideos";
 import { playPing } from "./sound";
@@ -441,6 +442,8 @@ function Header({
             <small>Apprendre, pratiquer, entreprendre !</small>
           </span>
         </button>
+
+        <span className="header-tools"><BellButton /><SecondaryMenu /></span>
 
         <button
           className="mobile-menu-button"
@@ -3064,6 +3067,8 @@ return (
           )
         )}
       </main>
+
+      <BottomNav activePage={activePage} />
 
       {/* Pied de page */}
       <footer className="site-footer">
