@@ -2,20 +2,33 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import WorkshopReservationsAdmin from "./WorkshopReservationsAdmin";
 import { ServiceManager } from "./Step2";
+import AnnouncementEditor from "./AnnouncementEditor";
+import VideoManager from "./VideoManager";
+import HomeManager from "./HomeManager";
+import FinanceManager from "./FinanceManager";
+import CatalogManager from "./CatalogManager";
+import JobsAdmin from "./JobsAdmin";
+import ModerationManager from "./ModerationManager";
+import { PhotoAdmin } from "./CatalogPhoto";
+import AdminReferral from "./AdminReferral";
+import PriceManager from "./PriceManager";
+import CohortAdmin from "./CohortAdmin";
+import RegPayment from "./RegPayment";
 
 const TABS = [
-  ["stats", "Tableau de bord"], ["formations", "Formations"], ["tickets", "Tickets"],
-  ["posts", "Publications"], ["users", "Utilisateurs"], ["services", "Services"], ["annonce", "Annonce"],
+  ["stats", "Tableau de bord"], ["formations", "Formations"], ["prices", "Prix"], ["cohorts", "Promotions"], ["tickets", "Tickets"],
+  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["homemgr", "Page d'accueil"], ["finance", "Trésorerie"], ["catalog", "Catalogue formations"], ["emploi", "Emploi"], ["moderation", "Modération"], ["photoadmin", "Photo : tarifs & commandes"], ["referral", "Parrainage"], ["annonce", "Notification"],
 ];
 const STATUS = { new: "Nouvelle", contacted: "Contactée", enrolled: "Inscrite", cancelled: "Annulée" };
 const missing = "Installe le SQL « partie 9 » dans Supabase.";
 
-export default function AdminSpace({ onNotify }) {
+export default function AdminSpace({ user, catalog, onNotify }) {
   const [tab, setTab] = useState("stats");
   const [stats, setStats] = useState(null);
   const [regs, setRegs] = useState([]);
   const [posts, setPosts] = useState([]);
   const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState([]);
   const [search, setSearch] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -33,6 +46,9 @@ export default function AdminSpace({ onNotify }) {
     } else if (which === "posts") {
       const { data, error } = await supabase.from("publications").select("id, title, body, category, is_published, created_at").order("created_at", { ascending: false }).limit(60);
       if (error) fail(error); else setPosts(data || []);
+    } else if (which === "reports") {
+      const { data, error } = await supabase.rpc("staff_list_reports");
+      if (error) fail(error); else setReports(Array.isArray(data) ? data : []);
     } else if (which === "users") {
       const { data, error } = await supabase.rpc("admin_list_users");
       if (error) fail(error); else setUsers(Array.isArray(data) ? data : []);
@@ -44,6 +60,10 @@ export default function AdminSpace({ onNotify }) {
   async function setRegStatus(id, status) {
     const { error } = await supabase.from("course_registrations").update({ status }).eq("id", id);
     if (error) fail(error); else load("formations");
+  }
+  async function resolveReport(report, hide) {
+    const { error } = await supabase.rpc("staff_resolve_report", { p_report_id: report.id, p_hide: hide });
+    if (error) fail(error); else { onNotify?.(hide ? "Publication masquée." : "Signalement ignoré."); load("reports"); }
   }
   async function togglePost(post) {
     const { error } = await supabase.from("publications").update({ is_published: !post.is_published }).eq("id", post.id);
@@ -95,6 +115,7 @@ export default function AdminSpace({ onNotify }) {
                 <strong>{r.full_name}</strong> — {r.course_title}
                 <p><a href={`tel:${r.phone}`}>{r.phone}</a>{r.email ? ` · ${r.email}` : ""}</p>
                 {r.message && <p>{r.message}</p>}
+                <RegPayment reg={r} onDone={() => load("formations")} onNotify={onNotify} />
                 <small>{new Date(r.created_at).toLocaleString("fr-FR")}</small>
               </div>
               <select value={r.status} onChange={(e) => setRegStatus(r.id, e.target.value)} aria-label="Statut">
@@ -106,6 +127,10 @@ export default function AdminSpace({ onNotify }) {
       )}
 
       {tab === "tickets" && <WorkshopReservationsAdmin onNotify={onNotify} />}
+
+      {tab === "cohorts" && <CohortAdmin onNotify={onNotify} />}
+
+      {tab === "prices" && catalog && <PriceManager catalog={catalog} onNotify={onNotify} />}
 
       {tab === "posts" && (
         <div className="account-content-card">
@@ -139,7 +164,45 @@ export default function AdminSpace({ onNotify }) {
         </div>
       )}
 
+      {tab === "reports" && (
+        <div className="account-content-card">
+          <h3>Publications signalées</h3>
+          {reports.length === 0 && <p>Aucun signalement en attente.</p>}
+          {reports.map((r) => (
+            <div className="admin-row" key={r.id}>
+              <div>
+                <strong>{r.title || "Sans titre"}</strong> <small>({r.reason})</small>
+                <p>{(r.body || "").slice(0, 160)}</p>
+                {r.details && <p><i>« {r.details} »</i></p>}
+              </div>
+              <div className="admin-row-actions">
+                <button type="button" className="button button-danger" onClick={() => resolveReport(r, true)}>Masquer</button>
+                <button type="button" className="button button-outline" onClick={() => resolveReport(r, false)}>Ignorer</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {tab === "services" && <ServiceManager onNotify={onNotify} />}
+
+      {tab === "home" && <AnnouncementEditor user={user} onNotify={onNotify} />}
+
+      {tab === "videos" && <VideoManager user={user} onNotify={onNotify} />}
+
+      {tab === "homemgr" && <HomeManager user={user} onNotify={onNotify} />}
+
+      {tab === "finance" && <FinanceManager onNotify={onNotify} />}
+
+      {tab === "catalog" && <CatalogManager onNotify={onNotify} />}
+
+      {tab === "emploi" && <JobsAdmin onNotify={onNotify} />}
+
+      {tab === "moderation" && <ModerationManager onNotify={onNotify} />}
+
+      {tab === "photoadmin" && <PhotoAdmin onNotify={onNotify} />}
+
+      {tab === "referral" && <AdminReferral onNotify={onNotify} />}
 
       {tab === "annonce" && (
         <form className="account-content-card" onSubmit={sendAnnouncement}>

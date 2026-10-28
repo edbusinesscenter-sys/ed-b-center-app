@@ -7,6 +7,23 @@ import AtelierSection from "./AtelierSection";
 import Messenger from "./Messenger";
 import ProfileCardModal from "./ProfileCardModal";
 import AdminSpace from "./AdminSpace";
+import FollowLists from "./FollowLists";
+import DeleteAccount from "./DeleteAccount";
+import Parcours from "./Parcours";
+import ParcoursManager from "./ParcoursManager";
+import HomeGate, { TopLearner } from "./HomeSections";
+import FollowCounts from "./FollowCounts";
+import SearchBox from "./SearchBox";
+import { JobsHome, JobsPage } from "./JobsSection";
+import SchoolButton from "./SchoolButton";
+import { useCourseCatalog } from "./CourseCatalog";
+import CatalogPhoto, { CatalogsHome } from "./CatalogPhoto";
+import { BottomNav, BellButton, SecondaryMenu } from "./BottomNav";
+import ReferralPanel from "./ReferralPanel";
+import ReferralBadge from "./ReferralBadge";
+import HomeAnnouncement from "./HomeAnnouncement";
+import LearnerVideos from "./LearnerVideos";
+import { playPing } from "./sound";
 import NewsSection from "./NewsSection";
 import CoordinatorPanel from "./CoordinatorPanel";
 import ImageLibrarySection from "./ImageLibrarySection";
@@ -428,6 +445,8 @@ function Header({
           </span>
         </button>
 
+        <span className="header-tools"><BellButton /><SecondaryMenu /></span>
+
         <button
           className="mobile-menu-button"
           type="button"
@@ -820,7 +839,7 @@ function ServicesSection({ onNavigate, onSelectService }) {
                 <div className="service-card-content">
                   <h3>{service.name}</h3>
 
-                  <p>{service.description}</p>
+                  <p>{service.description}</p>{service.price && <p className="service-price">{service.price}</p>}
 
                   <ul className="service-details">
                     {service.details.slice(0, 3).map((detail) => (
@@ -881,15 +900,16 @@ function ServicesSection({ onNavigate, onSelectService }) {
 ===================================================== */
 
 function CoursesSection({ onRegister, onNavigate }) {
+  const courses = useCourseCatalog(COURSES);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Toutes");
 
   const categories = [
     "Toutes",
-    ...new Set(COURSES.map((course) => course.category)),
+    ...new Set(courses.map((course) => course.category)),
   ];
 
-  const filteredCourses = COURSES.filter((course) => {
+  const filteredCourses = courses.filter((course) => {
     const matchesSearch =
       course.title.toLowerCase().includes(search.toLowerCase()) ||
       course.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -1070,6 +1090,7 @@ function ContactSection() {
     subject: "Demande d'information",
     message: "",
   });
+  const [open, setOpen] = useState(false);
 
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1202,7 +1223,9 @@ function ContactSection() {
           </div>
         </div>
 
-        <form className="contact-form" onSubmit={handleSubmit}>
+        {open ? (
+        <form className="contact-form" onSubmit={(event) => { handleSubmit(event); setOpen(false); }}>
+          <button type="button" className="contact-close" onClick={() => setOpen(false)}>Fermer</button>
           <h3>Envoie-nous un message</h3>
 
           <p>
@@ -1303,6 +1326,9 @@ function ContactSection() {
             L'envoi final du message se fait dans WhatsApp.
           </small>
         </form>
+        ) : (
+          <button type="button" className="button button-primary contact-open" onClick={() => setOpen(true)}>Envoyez-nous un message</button>
+        )}
       </div>
     </section>
   );
@@ -1803,6 +1829,9 @@ function AccountSection({
               user={{ ...profile, ...user, full_name: displayName }}
               size="large"
             />
+            <FollowCounts onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            <SchoolButton onOpen={() => setActiveTab("learner")} />
+            <ReferralBadge />
 
             <h3>{displayName}</h3>
 
@@ -1862,6 +1891,31 @@ function AccountSection({
               <span aria-hidden="true">✉</span>
               Messagerie
             </button>
+
+
+            {role === "apprenant" && (
+              <button type="button" className={activeTab === "learner" ? "account-nav-active" : ""} onClick={() => setActiveTab("learner")}>
+                <span aria-hidden="true">★</span>
+                Mon parcours
+              </button>
+            )}
+            {(role === "trainer" || role === "admin") && (
+              <button type="button" className={activeTab === "trainer" ? "account-nav-active" : ""} onClick={() => setActiveTab("trainer")}>
+                <span aria-hidden="true">✎</span>
+                Espace formateur
+              </button>
+            )}
+
+            {["apprenant", "trainer", "admin"].includes(role) && (
+              <button
+                type="button"
+                className={activeTab === "learning" ? "account-nav-active" : ""}
+                onClick={() => setActiveTab("learning")}
+              >
+                <span aria-hidden="true">✎</span>
+                {role === "apprenant" ? "Mon parcours" : "Apprenants"}
+              </button>
+            )}
 
             {(role === "admin" || role === "trainer") && (
               <button
@@ -2035,6 +2089,7 @@ function AccountSection({
                   Modifier mon profil
                 </button>
               </div>
+            <DeleteAccount onDeleted={onLogout} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
             </div>
           )}
 
@@ -2086,6 +2141,46 @@ function AccountSection({
             </div>
           )}
 
+          {activeTab === "learning" && ["apprenant", "trainer", "admin"].includes(role) && (
+            <div className="account-tab-content">
+              <div className="account-section-title">
+                <div>
+                  <span className="eyebrow">SUIVI DES APPRENANTS</span>
+                  <h2>{role === "apprenant" ? "Mon parcours" : "Gestion des apprenants"}</h2>
+                </div>
+              </div>
+              {role === "apprenant"
+                ? <Parcours user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+                : <ParcoursManager user={user} role={role} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />}
+            </div>
+          )}
+
+          {activeTab === "learner" && role === "apprenant" && (
+            <div className="account-tab-content">
+              <div className="account-section-title"><div><span className="eyebrow">ESPACE APPRENANT</span><h2>Mon parcours</h2></div></div>
+              <Parcours user={user} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            </div>
+          )}
+
+          {activeTab === "trainer" && (role === "trainer" || role === "admin") && (
+            <div className="account-tab-content">
+              <div className="account-section-title"><div><span className="eyebrow">SUIVI DES APPRENANTS</span><h2>Espace formateur</h2></div></div>
+              <ParcoursManager user={user} role={role} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            </div>
+          )}
+
+          {activeTab === "network" && (
+            <div className="account-tab-content">
+              <div className="account-section-title">
+                <div>
+                  <span className="eyebrow">COMMUNAUTÉ</span>
+                  <h2>Mon réseau</h2>
+                </div>
+              </div>
+              <FollowLists onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            </div>
+          )}
+
           {activeTab === "messages" && (
             <div className="account-tab-content">
               <div className="account-section-title">
@@ -2094,31 +2189,11 @@ function AccountSection({
                   <h2>Ma messagerie</h2>
                 </div>
               </div>
-
-              <div className="account-content-card">
-                <div className="empty-state">
-                  <img className="account-feature-preview" src={image("interface-messagerie.png")} alt="Aperçu de la messagerie" loading="lazy" />
-                  <span className="empty-state-icon" aria-hidden="true">
-                    ✉
-                  </span>
-
-                  <h3>Ta messagerie personnelle</h3>
-
-                  <p>
-                    L'affichage des messages privés nécessite une table
-                    de messagerie configurée dans Supabase.
-                  </p>
-
-                  <a
-                    className="button button-primary"
-                    href={BRAND.whatsapp}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Contacter l'équipe sur WhatsApp
-                  </a>
-                </div>
-              </div>
+              <Messenger
+                user={user}
+                role={role}
+                onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))}
+              />
             </div>
           )}
 
@@ -2129,7 +2204,7 @@ function AccountSection({
           )}
 
           {activeTab === "admin" && (role === "admin" || role === "trainer") && (
-            <AdminSpace onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
+            <AdminSpace user={user} catalog={{ courses: COURSES.map((c) => ({ key: c.id, label: c.title, price: c.price, old: c.oldPrice })), services: SERVICES.map((s) => ({ key: s.id, label: s.name, text: s.price || "" })) }} onNotify={(message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }))} />
           )}
         </div>
       </div>
@@ -2313,6 +2388,18 @@ function App() {
   const [role, setRole] = useState("client");
 
   const [activePage, setActivePage] = useState("home");
+
+  useEffect(() => {
+    const handler = (event) => {
+      const value = String(event.detail || "");
+      const map = { "publication": "community", "workshop": "atelier", "job": "jobs", "messages": "messages", "school": "account" };
+      const kind = value.includes(":") ? value.split(":")[0] : "";
+      const target = kind ? map[kind] : value;
+      if (target) navigateTo(target);
+    };
+    window.addEventListener("ed-navigate", handler);
+    return () => window.removeEventListener("ed-navigate", handler);
+  }, []);
   const [authModal, setAuthModal] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [enrollCourse, setEnrollCourse] = useState(null);
@@ -2340,6 +2427,22 @@ function App() {
     const hide = (event) => { if (event.target?.tagName === "IMG") event.target.classList.add("img-broken"); };
     document.addEventListener("error", hide, true);
     return () => document.removeEventListener("error", hide, true);
+  }, []);
+
+  /* Prix des formations et des services modifiables depuis l'administration */
+  const [, setPriceTick] = useState(0);
+  useEffect(() => {
+    async function loadPrices() {
+      const { data, error } = await supabase.from("catalog_prices").select("*");
+      if (error || !data) return;
+      const map = Object.fromEntries(data.map((r) => [r.item_key, r]));
+      COURSES.forEach((c) => { const o = map[c.id]; if (o) { if (o.price_xaf != null) c.price = o.price_xaf; c.oldPrice = o.old_price_xaf ?? null; } });
+      SERVICES.forEach((s) => { s.price = map[s.id]?.price_text || ""; });
+      setPriceTick((t) => t + 1);
+    }
+    loadPrices();
+    window.addEventListener("ed-prices-updated", loadPrices);
+    return () => window.removeEventListener("ed-prices-updated", loadPrices);
   }, []);
 
   /* Notifications */
@@ -2447,7 +2550,7 @@ function App() {
     refreshUnread();
     const channel = supabase
       .channel(`notification-count-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, refreshUnread)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, (payload) => { if (payload.eventType === "INSERT") playPing(); refreshUnread(); })
       .subscribe();
     return () => {
       active = false;
@@ -2828,28 +2931,52 @@ return (
       <main>
         {activePage === "home" && (
           <>
+            <SearchBox />
+
             <MotivationCarousel />
 
-            <IntroSection
-              onNavigate={navigateTo}
-              onRegister={() => openRegister()}
-            />
+            <HomeGate section="announcement"><HomeAnnouncement /></HomeGate>
 
-            <ServicesSection
-              onNavigate={navigateTo}
-              onSelectService={handleSelectService}
-            />
+            <HomeGate section="videos"><LearnerVideos /></HomeGate>
 
-            <CoursesSection
-              onRegister={openRegister}
-              onNavigate={navigateTo}
-            />
+            <HomeGate section="top_learner"><TopLearner /></HomeGate>
+
+            <HomeGate section="intro">
+              <IntroSection
+                onNavigate={navigateTo}
+                onRegister={() => openRegister()}
+              />
+            </HomeGate>
+
+            <HomeGate section="services">
+              <ServicesSection
+                onNavigate={navigateTo}
+                onSelectService={handleSelectService}
+              />
+            </HomeGate>
+
+            <HomeGate section="catalogs"><CatalogsHome /></HomeGate>
+
+            <HomeGate section="jobs"><JobsHome /></HomeGate>
+
+            <HomeGate section="courses" defaultVisible={false}>
+              <CoursesSection
+                onRegister={openRegister}
+                onNavigate={navigateTo}
+              />
+            </HomeGate>
 
             <ContactSection />
           </>
         )}
 
         {activePage === "news" && <NewsSection user={user} role={role} onNotify={notify} />}
+
+        {activePage === "jobs" && <JobsPage />}
+
+        {activePage === "photo" && <CatalogPhoto />}
+
+        {activePage === "referral" && <ReferralPanel />}
 
         {activePage === "images" && (role === "admin" ? <ImageLibrarySection onNotify={notify} /> : <section className="section-container"><h1>Accès réservé</h1><p>La médiathèque est réservée aux administrateurs.</p></section>)}
 
@@ -2951,6 +3078,8 @@ return (
           )
         )}
       </main>
+
+      <BottomNav activePage={activePage} />
 
       {/* Pied de page */}
       <footer className="site-footer">
