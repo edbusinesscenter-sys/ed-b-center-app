@@ -13,16 +13,26 @@
     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <title>ED BUSINESS CENTER</title>
+    <script>
+      // Capte l'invitation d'installation d'Android pour l'afficher au bon moment
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        window.deferredInstallPrompt = event;
+        window.dispatchEvent(new Event("ed-install-available"));
+      });
+      window.addEventListener("appinstalled", () => {
+        window.deferredInstallPrompt = null;
+        window.dispatchEvent(new Event("ed-install-done"));
+      });
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch((err) => console.warn("Service worker :", err));
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js").catch(() => {});
-        });
-      }
-    </script>
   </body>
 </html>
