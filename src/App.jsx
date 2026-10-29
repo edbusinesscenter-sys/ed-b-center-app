@@ -19,6 +19,8 @@ import SchoolButton from "./SchoolButton";
 import { useCourseCatalog } from "./CourseCatalog";
 import CatalogPhoto, { CatalogsHome } from "./CatalogPhoto";
 import { BottomNav, BellButton, SecondaryMenu } from "./BottomNav";
+import PendingReferral from "./PendingReferral";
+import { HeaderBalance } from "./ReferralBadge";
 import ReferralPanel from "./ReferralPanel";
 import ReferralBadge from "./ReferralBadge";
 import HomeAnnouncement from "./HomeAnnouncement";
@@ -445,7 +447,7 @@ function Header({
           </span>
         </button>
 
-        <span className="header-tools"><BellButton /><SecondaryMenu /></span>
+        <span className="header-tools"><HeaderBalance /><BellButton /><SecondaryMenu /></span>
 
         <button
           className="mobile-menu-button"
@@ -1500,6 +1502,7 @@ function RegisterModal({
     sex: "",
     password: "",
     confirmPassword: "",
+    referral: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -1534,6 +1537,9 @@ function RegisterModal({
 
     setLoading(true);
 
+    if (form.referral.trim()) {
+      try { sessionStorage.setItem("ed-pending-ref", form.referral.trim().toUpperCase()); } catch (e) { /* ignoré */ }
+    }
     try {
       const { data, error: signUpError } =
         await supabase.auth.signUp({
@@ -1655,6 +1661,20 @@ function RegisterModal({
               onChange={updateField}
               placeholder="nom@exemple.com"
               required
+            />
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="register-referral">Code de parrainage (facultatif)</label>
+            <input
+              id="register-referral"
+              name="referral"
+              type="text"
+              autoCapitalize="characters"
+              value={form.referral}
+              onChange={updateField}
+              placeholder="ED-B0000000"
+              maxLength={10}
             />
           </div>
 
@@ -3079,6 +3099,7 @@ return (
         )}
       </main>
 
+      <PendingReferral />
       <BottomNav activePage={activePage} />
 
       {/* Pied de page */}

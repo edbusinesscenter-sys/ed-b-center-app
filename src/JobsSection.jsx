@@ -61,9 +61,9 @@ export function JobsPage() {
         <button type="button" className={tab === "offers" ? "pq-tab pq-tab-on" : "pq-tab"} onClick={() => setTab("offers")}>Offres ({offers.length})</button>
         <button type="button" className={tab === "seekers" ? "pq-tab pq-tab-on" : "pq-tab"} onClick={() => setTab("seekers")}>Candidats ({seekers.length})</button>
       </nav>
-      {tab === "offers" && offers.map((o) => <OfferCard key={o.id} offer={o} onApply={() => setApplying(o)} />)}
+      {tab === "offers" && offers.map((o) => <OfferCard key={o.id} offer={o} onApply={() => setApplying(o)} onDeleted={(id) => setOffers((prev) => prev.filter((x) => x.id !== id))} />)}
       {tab === "offers" && offers.length === 0 && <p>Aucune offre publiée pour le moment.</p>}
-      {tab === "seekers" && seekers.map((s) => <SeekerCard key={s.id} s={s} />)}
+      {tab === "seekers" && seekers.map((s) => <SeekerCard key={s.id} s={s} onDeleted={() => setSeekers((prev) => prev.filter((x) => x.id !== s.id))} />)}
       {tab === "seekers" && seekers.length === 0 && <p>Aucun profil publié pour le moment.</p>}
       {applying && <ApplyModal offer={applying} onClose={() => setApplying(null)} />}
       {modal === "recruiter" && <RecruiterModal onClose={() => setModal(null)} />}
@@ -72,8 +72,14 @@ export function JobsPage() {
   );
 }
 
-function OfferCard({ offer, compact, onApply }) {
+function OfferCard({ offer, compact, onApply, onDeleted }) {
   const [asking, setAsking] = useState(false);
+  async function removeMine() {
+    if (!window.confirm("Supprimer définitivement cette annonce ?")) return;
+    const { error } = await supabase.rpc("delete_my_job_offer", { p_offer: offer.id });
+    if (error) { notify(errMsg(error)); return; }
+    notify("Annonce supprimée."); onDeleted?.(offer.id);
+  }
   const [text, setText] = useState("");
   async function contact() {
     if (text.trim().length < 2) return;
@@ -94,6 +100,7 @@ function OfferCard({ offer, compact, onApply }) {
         <div className="job-actions">
           {onApply && <button type="button" className="button button-primary" onClick={onApply}>Postuler</button>}
           <button type="button" className="button button-outline" onClick={() => setAsking(!asking)}>Contacter l'employeur</button>
+          {offer.mine && <button type="button" className="button button-danger" onClick={removeMine}>Supprimer mon annonce</button>}
         </div>
       )}
       {asking && (
@@ -106,10 +113,17 @@ function OfferCard({ offer, compact, onApply }) {
   );
 }
 
-function SeekerCard({ s }) {
+function SeekerCard({ s, onDeleted }) {
+  async function removeMine() {
+    if (!window.confirm("Supprimer ton profil de recherche d'emploi ?")) return;
+    const { error } = await supabase.rpc("delete_my_seeker_profile");
+    if (error) { notify(errMsg(error)); return; }
+    notify("Profil supprimé."); onDeleted?.();
+  }
   return (
     <article className="account-content-card job-card">
       <strong>Candidat anonyme</strong>
+      {s.mine && <button type="button" className="button button-danger" onClick={removeMine}>Supprimer mon profil</button>}
       <small>{[s.sex, s.age ? `${s.age} ans` : "", s.city, s.country].filter(Boolean).join(" · ")}</small>
       <p><b>Compétences :</b> {s.skills || "—"}</p>
       <p><b>Diplôme :</b> {s.diploma || "—"}</p>

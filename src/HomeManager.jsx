@@ -56,6 +56,18 @@ export default function HomeManager({ user, onNotify }) {
 
   const set = (k) => (e) => setTl({ ...tl, [k]: e.target.value });
 
+  async function removePhoto() {
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_set_top_learner", {
+      p_first: tl.first, p_last: tl.last, p_nationality: tl.nationality, p_project: tl.project, p_portfolio: tl.portfolio,
+      p_period: tl.period, p_message: tl.message, p_photo: "", p_email: tl.email,
+    });
+    setBusy(false);
+    if (error) { onNotify?.(errText(error)); return; }
+    setTl((p) => ({ ...p, photo: "" }));
+    onNotify?.("Photo retirée.");
+  }
+
   return (
     <>
       <div className="account-content-card">
@@ -82,6 +94,7 @@ export default function HomeManager({ user, onNotify }) {
         <input type="email" value={tl.email} onChange={set("email")} placeholder="E-mail du compte membre (pour Contacter / Encourager)" />
         <label>Photo<input type="file" accept="image/*" onChange={pickPhoto} disabled={busy} /></label>
         {tl.photo && <img className="top-learner-preview" src={tl.photo} alt="Aperçu" />}
+        {tl.photo && <button type="button" className="button button-danger" onClick={removePhoto} disabled={busy}>Retirer la photo</button>}
         <button type="submit" className="button button-primary" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer"}</button>
       </form>
     </>

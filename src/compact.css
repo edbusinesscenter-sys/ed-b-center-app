@@ -54,3 +54,8 @@
   .auth-modal input, .auth-modal select { min-height: 44px; }
   .modal-actions .button, .auth-required-content .button { width: 100%; }
 }
+
+/* Solde en haut à droite */
+.header-balance { display: grid; justify-items: end; gap: 0; padding: 4px 10px; border: 1px solid rgba(255,255,255,.35); border-radius: 12px; background: rgba(255,255,255,.12); color: #fff; line-height: 1.1; }
+.header-balance-amount { font-size: .8rem; font-weight: 800; }
+.header-balance small { font-size: .6rem; color: var(--ed-turquoise-light); text-decoration: underline; }
