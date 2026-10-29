@@ -2,13 +2,27 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#071b2b" />
-    <meta name="description" content="ED BUSINESS CENTER — Apprendre, pratiquer, entreprendre." />
-    <title>ED B-CENTER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="ED BUSINESS CENTER : apprendre, pratiquer, entreprendre !" />
+    <meta name="theme-color" content="#052b3a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ED B-CENTER" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <title>ED BUSINESS CENTER</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>
