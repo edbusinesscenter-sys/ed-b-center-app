@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { uploadFile } from "./Attachments";
 import PaymentFlow from "./PaymentFlow";
+import { useSlot } from "./mediaSlots";
 import { frameQuote } from "./pricing";
 import "./catalogs.css";
 
@@ -17,6 +18,7 @@ export function CatalogPage({ catalog }) {
   const [quoting, setQuoting] = useState(null);
   const [china, setChina] = useState("");
   const [ordering, setOrdering] = useState(null);
+  const hero = useSlot("cover_" + catalog);
 
   useEffect(() => {
     supabase.rpc("list_catalog", { p_catalog: catalog }).then(({ data, error }) => {
@@ -33,6 +35,7 @@ export function CatalogPage({ catalog }) {
       <button type="button" className="text-button" onClick={() => go("home")}>← Retour</button>
       <span className="eyebrow">CATALOGUE</span>
       <h1>{CATALOG_TITLES[catalog]}</h1>
+      {hero && <img className="catalog-hero" src={hero} alt="" />}
       {catalog === "chine" && china && (
         <a className="button button-primary button-full" href={china} target="_blank" rel="noopener noreferrer">Rejoindre le groupe de précommande</a>
       )}

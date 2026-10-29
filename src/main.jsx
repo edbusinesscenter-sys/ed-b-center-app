@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import SplashScreen from "./SplashScreen.jsx";
-import InstallApp from "./InstallApp.jsx";
 import "./styles.css";
 import "./design.css";
 import "./compact.css";
@@ -23,6 +22,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <SplashScreen>
       <App />
     </SplashScreen>
-    <InstallApp />
   </React.StrictMode>
 );

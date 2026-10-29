@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { imageUrl } from "./imageCatalog";
 import CoursePayment from "./CoursePayment";
+import { useSlot } from "./mediaSlots";
 
 const WA_URL = "https://wa.me/237690275953";
 const notify = (message) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: message }));
@@ -12,6 +13,7 @@ export default function HomeAnnouncement() {
   const [reg, setReg] = useState(null);
   const [form, setForm] = useState({ full_name: "", phone: "", email: "" });
   const [busy, setBusy] = useState(false);
+  const override = useSlot("announcement_image");
 
   useEffect(() => {
     let active = true;
@@ -49,7 +51,7 @@ export default function HomeAnnouncement() {
   return (
     <section className="home-announcement section-container" aria-label="Annonce">
       <figure className="home-announcement-image">
-        <img src={/^https?:\/\//i.test(item.image_name) ? item.image_name : imageUrl(item.image_name)} alt={item.title || "Annonce"} width="1122" height="1402" />
+        <img src={override || (/^https?:\/\//i.test(item.image_name) ? item.image_name : imageUrl(item.image_name))} alt={item.title || "Annonce"} width="1122" height="1402" />
       </figure>
       <div className="home-announcement-info">
         <span className="eyebrow">ANNONCE</span>

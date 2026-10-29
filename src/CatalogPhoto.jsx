@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import PaymentFlow from "./PaymentFlow";
 import { studioConfigFrom, studioQuote } from "./pricing";
 import { PhotoGallery } from "./CatalogPages";
+import { useSlot } from "./mediaSlots";
 import "./catalog.css";
 
 const go = (page) => window.dispatchEvent(new CustomEvent("ed-navigate", { detail: page }));
@@ -10,18 +11,27 @@ const fmt = (n) => `${Number(n || 0).toLocaleString("fr-FR")} FCFA`;
 const errMsg = (e) => (/function|schema cache|does not exist/i.test(e?.message || "") ? "Installe le SQL « partie 27 » dans Supabase." : e?.message || "Erreur");
 const notify = (m) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: m }));
 
+function CoverCard({ slot, title, desc, page }) {
+  const url = useSlot(slot);
+  return (
+    <button type="button" className="catalog-card catalog-card-cover" onClick={() => go(page)}>
+      {url && <img src={url} alt="" loading="lazy" />}
+      <strong>{title}</strong>
+      <span>{desc}</span>
+    </button>
+  );
+}
+
 export function CatalogsHome() {
   return (
     <section className="section-container catalogs-home" aria-label="Catalogues">
       <span className="eyebrow">CATALOGUES</span>
       <h2>Nos catalogues</h2>
       <div className="catalog-cards">
-        <button type="button" className="catalog-card" onClick={() => go("photo")}>
-          <strong>Photographie</strong><span>Séances studio et événements</span>
-        </button>
-        <button type="button" className="catalog-card" onClick={() => go("tableaux")}><strong>Tableaux muraux</strong><span>Formats bois, sur mesure</span></button>
-        <button type="button" className="catalog-card" onClick={() => go("chine")}><strong>Précommandes Chine</strong><span>Commande via le groupe WhatsApp</span></button>
-        <button type="button" className="catalog-card" onClick={() => go("design")}><strong>Services infographie</strong><span>Logos, flyers, roll-up, data</span></button>
+        <CoverCard slot="cover_photo" page="photo" title="Photographie" desc="Séances studio et événements" />
+        <CoverCard slot="cover_tableaux" page="tableaux" title="Tableaux muraux" desc="Formats bois, sur mesure" />
+        <CoverCard slot="cover_chine" page="chine" title="Précommandes Chine" desc="Commande via le groupe WhatsApp" />
+        <CoverCard slot="cover_design" page="design" title="Services infographie" desc="Logos, flyers, roll-up, data" />
       </div>
     </section>
   );
