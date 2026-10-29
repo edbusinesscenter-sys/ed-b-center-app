@@ -23,6 +23,7 @@ import PendingReferral from "./PendingReferral";
 import { HeaderBalance } from "./ReferralBadge";
 import ReferralPanel from "./ReferralPanel";
 import ReferralBadge from "./ReferralBadge";
+import { CatalogPage } from "./CatalogPages";
 import HomeAnnouncement from "./HomeAnnouncement";
 import LearnerVideos from "./LearnerVideos";
 import { playPing } from "./sound";
@@ -2997,6 +2998,12 @@ return (
         {activePage === "photo" && <CatalogPhoto />}
 
         {activePage === "referral" && <ReferralPanel />}
+
+        {activePage === "tableaux" && <CatalogPage catalog="tableaux" />}
+
+        {activePage === "chine" && <CatalogPage catalog="chine" />}
+
+        {activePage === "design" && <CatalogPage catalog="design" />}
 
         {activePage === "images" && (role === "admin" ? <ImageLibrarySection onNotify={notify} /> : <section className="section-container"><h1>Accès réservé</h1><p>La médiathèque est réservée aux administrateurs.</p></section>)}
 

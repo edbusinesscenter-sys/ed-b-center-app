@@ -11,13 +11,14 @@ import JobsAdmin from "./JobsAdmin";
 import ModerationManager from "./ModerationManager";
 import { PhotoAdmin } from "./CatalogPhoto";
 import AdminReferral from "./AdminReferral";
+import { CatalogAdmin } from "./CatalogPages";
 import PriceManager from "./PriceManager";
 import CohortAdmin from "./CohortAdmin";
 import RegPayment from "./RegPayment";
 
 const TABS = [
   ["stats", "Tableau de bord"], ["formations", "Formations"], ["prices", "Prix"], ["cohorts", "Promotions"], ["tickets", "Tickets"],
-  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["homemgr", "Page d'accueil"], ["finance", "Trésorerie"], ["catalog", "Catalogue formations"], ["emploi", "Emploi"], ["moderation", "Modération"], ["photoadmin", "Photo : tarifs & commandes"], ["referral", "Parrainage"], ["annonce", "Notification"],
+  ["posts", "Publications"], ["users", "Utilisateurs"], ["reports", "Signalements"], ["services", "Services"], ["home", "Annonce accueil"], ["videos", "Vidéos"], ["homemgr", "Page d'accueil"], ["finance", "Trésorerie"], ["catalog", "Catalogue formations"], ["emploi", "Emploi"], ["moderation", "Modération"], ["photoadmin", "Photo : tarifs & commandes"], ["referral", "Parrainage"], ["catalogs2", "Catalogues & devis"], ["annonce", "Notification"],
 ];
 const STATUS = { new: "Nouvelle", contacted: "Contactée", enrolled: "Inscrite", cancelled: "Annulée" };
 const missing = "Installe le SQL « partie 9 » dans Supabase.";
@@ -203,6 +204,8 @@ export default function AdminSpace({ user, catalog, onNotify }) {
       {tab === "photoadmin" && <PhotoAdmin onNotify={onNotify} />}
 
       {tab === "referral" && <AdminReferral onNotify={onNotify} />}
+
+      {tab === "catalogs2" && <CatalogAdmin onNotify={onNotify} />}
 
       {tab === "annonce" && (
         <form className="account-content-card" onSubmit={sendAnnouncement}>

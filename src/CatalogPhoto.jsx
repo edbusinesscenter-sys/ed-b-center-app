@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import PaymentFlow from "./PaymentFlow";
 import { studioConfigFrom, studioQuote } from "./pricing";
+import { PhotoGallery } from "./CatalogPages";
 import "./catalog.css";
 
 const go = (page) => window.dispatchEvent(new CustomEvent("ed-navigate", { detail: page }));
@@ -18,9 +19,9 @@ export function CatalogsHome() {
         <button type="button" className="catalog-card" onClick={() => go("photo")}>
           <strong>Photographie</strong><span>Séances studio et événements</span>
         </button>
-        <div className="catalog-card catalog-soon"><strong>Tableaux muraux</strong><span>Bientôt</span></div>
-        <div className="catalog-card catalog-soon"><strong>Précommandes Chine</strong><span>Bientôt</span></div>
-        <div className="catalog-card catalog-soon"><strong>Services infographie</strong><span>Bientôt</span></div>
+        <button type="button" className="catalog-card" onClick={() => go("tableaux")}><strong>Tableaux muraux</strong><span>Formats bois, sur mesure</span></button>
+        <button type="button" className="catalog-card" onClick={() => go("chine")}><strong>Précommandes Chine</strong><span>Commande via le groupe WhatsApp</span></button>
+        <button type="button" className="catalog-card" onClick={() => go("design")}><strong>Services infographie</strong><span>Logos, flyers, roll-up, data</span></button>
       </div>
     </section>
   );
@@ -48,6 +49,7 @@ export default function CatalogPhoto() {
       <button type="button" className="text-button" onClick={() => (mode ? setMode(null) : go("home"))}>← Retour</button>
       <span className="eyebrow">PHOTOGRAPHIE</span>
       <h1>Réserver une séance photo</h1>
+      {!mode && <PhotoGallery />}
       {!mode && (
         <div className="catalog-cards">
           <button type="button" className="catalog-card" onClick={() => setMode("studio")}><strong>Séance studio</strong><span>Calcul en direct, paiement en ligne</span></button>
