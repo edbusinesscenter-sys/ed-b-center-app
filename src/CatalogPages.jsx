@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { uploadFile } from "./Attachments";
+import PaymentFlow from "./PaymentFlow";
+import { frameQuote } from "./pricing";
 import "./catalogs.css";
 
 const notify = (m) => window.dispatchEvent(new CustomEvent("ed-bcenter-notify", { detail: m }));
@@ -14,6 +16,7 @@ export function CatalogPage({ catalog }) {
   const [items, setItems] = useState(null);
   const [quoting, setQuoting] = useState(null);
   const [china, setChina] = useState("");
+  const [ordering, setOrdering] = useState(null);
 
   useEffect(() => {
     supabase.rpc("list_catalog", { p_catalog: catalog }).then(({ data, error }) => {
@@ -36,14 +39,15 @@ export function CatalogPage({ catalog }) {
       {items === null && <p>Chargement…</p>}
       {items && items.length === 0 && <p>Aucun article pour le moment.</p>}
       <div className="catalog-grid">
-        {(items || []).map((it) => <ItemCard key={it.id} item={it} catalog={catalog} onQuote={() => setQuoting(it)} />)}
+        {(items || []).map((it) => <ItemCard key={it.id} item={it} catalog={catalog} onQuote={() => setQuoting(it)} onOrder={catalog === "tableaux" ? () => setOrdering(it) : null} />)}
       </div>
       {quoting && <QuoteModal catalog={catalog} item={quoting} onClose={() => setQuoting(null)} />}
+      {ordering && <TableauOrder item={ordering} onClose={() => setOrdering(null)} />}
     </section>
   );
 }
 
-export function ItemCard({ item, onQuote }) {
+export function ItemCard({ item, onQuote, onOrder }) {
   const [idx, setIdx] = useState(0);
   const photos = item.gallery || [];
   return (
@@ -64,7 +68,8 @@ export function ItemCard({ item, onQuote }) {
         <strong>{item.title}</strong>
         {item.description && <p>{item.description}</p>}
         <span className="catalog-price">{item.price_text || "Devis après étude"}</span>
-        <button type="button" className="button button-primary catalog-cta" onClick={onQuote}>Demander un devis</button>
+        {onOrder && <button type="button" className="button button-primary catalog-cta" onClick={onOrder}>Commander</button>}
+        <button type="button" className={onOrder ? "button button-outline catalog-cta" : "button button-primary catalog-cta"} onClick={onQuote}>Demander un devis</button>
       </div>
     </article>
   );
@@ -260,6 +265,81 @@ function QuoteRow({ q, onSave }) {
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note interne" maxLength={1000} />
         <button type="button" className="button button-outline" onClick={() => onSave(q.id, q.status, note)}>Enregistrer la note</button>
       </div>
+    </div>
+  );
+}
+
+// Commande de tableau : options, calcul en direct, paiement ou demande de devis
+export function TableauOrder({ item, onClose }) {
+  const [settings, setSettings] = useState(null);
+  const [f, setF] = useState({ quantity: 1, plexiglas: false, multi: false, delivery: false, express: false, frames: 0, name: "", phone: "" });
+  const [order, setOrder] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { supabase.rpc("get_price_settings").then(({ data }) => setSettings(data || {})); }, []);
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
+
+  if (!settings) return <div className="modal-backdrop"><div className="auth-modal"><p>Chargement…</p></div></div>;
+  const cfg = {
+    sizes: { [item.id]: item.price_xaf || 0 },
+    framePrice: Number(settings.frame_price) > 0 ? Number(settings.frame_price) : null,
+    express: { available: Number(settings.express_available) === 1, fee: Number(settings.express_fee ?? 2000) },
+    deliveryFrom: null,
+    montageFee: Number(settings.montage_fee ?? 1000),
+  };
+  const q = frameQuote({ size: item.id, quantity: Number(f.quantity) || 1, plexiglas: f.plexiglas, multiPhoto: f.multi,
+    delivery: f.delivery, express: f.express, frameCount: Number(f.frames) || 0 }, cfg);
+  const fmt = (n) => `${Number(n || 0).toLocaleString("fr-FR")} FCFA`;
+
+  async function send(event) {
+    event.preventDefault();
+    if (f.name.trim().length < 2 || f.phone.trim().length < 5) { notify("Nom et téléphone obligatoires."); return; }
+    setBusy(true);
+    const { data, error } = await supabase.rpc("create_tableau_order", { p_payload: {
+      item_id: item.id, quantity: Number(f.quantity) || 1, plexiglas: f.plexiglas, multi_photo: f.multi,
+      delivery: f.delivery, express: f.express, frames: Number(f.frames) || 0, name: f.name, phone: f.phone } });
+    setBusy(false);
+    if (error) { notify(errMsg(error)); return; }
+    if (data.mode === "quote") { notify("Ta commande contient des éléments à confirmer : demande de devis envoyée."); onClose(); return; }
+    setOrder({ id: data.order_id, amount: data.amount });
+  }
+
+  if (order) return (
+    <div className="modal-backdrop"><div className="auth-modal quote-modal">
+      <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">×</button>
+      <h2>Paiement de ta commande</h2>
+      <PaymentFlow amount={order.amount}
+        onSubmit={async ({ transactionId, proofUrl }) => {
+          const { error } = await supabase.rpc("submit_photo_payment", { p_order: order.id, p_tx: transactionId, p_proof: proofUrl });
+          if (error) throw error;
+        }}
+        onDone={() => notify("Paiement envoyé. L'équipe confirme ta commande.")}
+        doneMessage="Paiement envoyé. L'équipe vérifie ton paiement : tu recevras la confirmation dans tes notifications." />
+    </div></div>
+  );
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <form className="auth-modal quote-modal" onSubmit={send} role="dialog" aria-modal="true" aria-label="Commander un tableau">
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">×</button>
+        <h2>Commander</h2>
+        <p className="auth-description">{item.title}</p>
+        <label>Quantité<input type="number" min="1" max="50" value={f.quantity} onChange={set("quantity")} /></label>
+        <label className="admin-check"><input type="checkbox" checked={f.plexiglas} onChange={set("plexiglas")} /> Plexiglas (double le prix du tableau)</label>
+        <label className="admin-check"><input type="checkbox" checked={f.multi} onChange={set("multi")} /> Montage de plusieurs photos (+ {fmt(cfg.montageFee)})</label>
+        <label className="admin-check"><input type="checkbox" checked={f.delivery} onChange={set("delivery")} /> Livraison (tarif selon la zone)</label>
+        <label className="admin-check"><input type="checkbox" checked={f.express} onChange={set("express")} disabled={!cfg.express.available} /> Commande express {cfg.express.available ? `(+ ${fmt(cfg.express.fee)})` : "(non disponible)"}</label>
+        <label>Nombre de cadres<input type="number" min="0" value={f.frames} onChange={set("frames")} /></label>
+        <input value={f.name} onChange={set("name")} placeholder="Nom complet" required maxLength={120} />
+        <input value={f.phone} onChange={set("phone")} placeholder="Téléphone" required maxLength={30} />
+        <div className="quote-box">
+          {q.lines.map((l, i) => <div key={i} className="quote-line"><span>{l.label}</span><b>{fmt(l.amount)}</b></div>)}
+          <div className="quote-total"><span>Total estimé</span><b>{fmt(q.total)}</b></div>
+          {q.pending.map((p, i) => <small key={i}>⚠ {p}</small>)}
+        </div>
+        <button type="submit" className="button button-primary button-full" disabled={busy}>
+          {busy ? "Envoi…" : q.pending.length ? "Envoyer en demande de devis" : "Commander et payer"}
+        </button>
+      </form>
     </div>
   );
 }
