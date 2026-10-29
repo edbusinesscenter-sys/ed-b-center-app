@@ -1,0 +1,10 @@
+.install-app-button {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  z-index: 1400; min-height: 42px; padding: 0 18px; border: 0; border-radius: 999px;
+  background: var(--ed-gradient-button, #0b7d8c); color: #fff; font-weight: 800; font-size: .88rem;
+  box-shadow: 0 10px 24px rgba(4, 24, 38, .25);
+}
+@media (min-width: 1180px) { .install-app-button { bottom: 24px; } }
+.install-backdrop { position: fixed; inset: 0; z-index: 2000; background: rgba(7, 27, 43, .55); display: flex; align-items: flex-end; }
+.install-sheet { width: 100%; display: grid; gap: 12px; padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); background: #fff; border-radius: 20px 20px 0 0; }
+.install-sheet ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; line-height: 1.45; }
