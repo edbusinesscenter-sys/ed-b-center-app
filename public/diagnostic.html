@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Diagnostic PWA — ED B-CENTER</title>
+<style>
+  body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 16px; background: #f4f8f9; color: #0b1f33; }
+  h1 { font-size: 1.2rem; margin: 4px 0 12px; }
+  .row { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px; border: 1px solid #dde7ea; }
+  .ok { color: #0a7a3d; font-weight: 700; }
+  .ko { color: #b42318; font-weight: 700; }
+  .info { color: #475467; font-size: .85rem; word-break: break-all; }
+  button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: #1d4ed8; color: #fff; font-weight: 700; width: 100%; }
+</style>
+</head>
+<body>
+<h1>Diagnostic PWA — ED B-CENTER</h1>
+<div id="out">Analyse en cours…</div>
+<p><button onclick="location.reload()">Relancer le diagnostic</button></p>
+<script>
+const out = document.getElementById("out");
+const lines = [];
+function add(ok, label, detail) {
+  lines.push(`<div class="row"><span class="${ok ? "ok" : "ko"}">${ok ? "✔" : "✘"} ${label}</span>${detail ? `<div class="info">${detail}</div>` : ""}</div>`);
+}
+async function run() {
+  const base = new URL("./", location.href).href;
+  add(location.protocol === "https:", "Connexion sécurisée (HTTPS)", location.href);
+  add(true, "Mode d'affichage", window.matchMedia("(display-mode: standalone)").matches ? "Application installée (standalone)" : "Dans le navigateur");
+
+  // Manifeste
+  try {
+    const r = await fetch(base + "manifest.json", { cache: "no-store" });
+    add(r.ok, "Manifeste accessible", `HTTP ${r.status}`);
+    const m = await r.json();
+    add(!!m.name && !!m.short_name, "Nom de l'application", `${m.name} / ${m.short_name}`);
+    add(m.display === "standalone" || m.display === "fullscreen", "Affichage plein écran", `display = ${m.display}`);
+    add(!!m.start_url, "Adresse de départ (start_url)", m.start_url);
+    const icons = (m.icons || []);
+    const big = icons.filter(i => i.sizes === "192x192" || i.sizes === "512x512");
+    add(big.length >= 2, "Icônes 192 et 512 déclarées", icons.map(i => i.sizes).join(", "));
+    for (const ic of icons) {
+      try {
+        const ri = await fetch(new URL(ic.src, base).href, { cache: "no-store" });
+        add(ri.ok && (ri.headers.get("content-type") || "").startsWith("image/"), `Icône ${ic.sizes}`, `${ic.src} → HTTP ${ri.status} (${ri.headers.get("content-type") || "?"})`);
+      } catch (e) { add(false, `Icône ${ic.sizes}`, `${ic.src} : ${e.message}`); }
+    }
+  } catch (e) {
+    add(false, "Manifeste accessible", e.message);
+  }
+
+  // Service worker
+  if (!("serviceWorker" in navigator)) {
+    add(false, "Service worker pris en charge", "Ce navigateur ne le supporte pas");
+  } else {
+    try {
+      const src = await (await fetch(base + "sw.js", { cache: "no-store" })).text();
+      add(/addEventListener\(\s*["']fetch["']/.test(src), "sw.js contient le gestionnaire « fetch » (version à jour)", src.length + " caractères");
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        add(false, "Service worker enregistré", "Aucun. Recharge la page une fois, puis relance le diagnostic.");
+      } else {
+        const st = reg.active ? "actif" : (reg.installing ? "en installation" : (reg.waiting ? "en attente" : "inconnu"));
+        add(!!reg.active, "Service worker enregistré", `Portée : ${reg.scope} — état : ${st}`);
+      }
+      add(!!navigator.serviceWorker.controller, "Page contrôlée par le service worker", navigator.serviceWorker.controller ? "Oui" : "Non : recharge la page après l'installation du service worker");
+    } catch (e) {
+      add(false, "sw.js accessible", e.message);
+    }
+  }
+
+  // Installation
+  add(!!window.deferredInstallPrompt || window.__installCaptured === true, "Invitation d'installation Chrome disponible", "Si « non » : vérifie les lignes ci-dessus en rouge");
+  add(true, "Navigateur", navigator.userAgent.slice(0, 160));
+
+  out.innerHTML = lines.join("");
+}
+window.addEventListener("beforeinstallprompt", () => { window.__installCaptured = true; });
+run();
+</script>
+</body>
+</html>
