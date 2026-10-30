@@ -6,6 +6,7 @@ import "./styles.css";
 import "./design.css";
 import "./compact.css";
 import "./theme.css";
+import "./app-shell.css";
 
 // Évite l'icône d'image cassée si un fichier n'existe pas encore dans Supabase.
 // L'image de secours est locale (SVG intégré), aucun service supplémentaire requis.
